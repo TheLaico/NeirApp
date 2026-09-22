@@ -1520,6 +1520,636 @@
           }
         }
       }
+    },
+    "/api/v1/wallet/balance": {
+      "get": {
+        "tags": [
+          "wallet"
+        ],
+        "summary": "Get Balance",
+        "operationId": "get_balance_api_v1_wallet_balance_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BalanceResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/wallet/ledger": {
+      "get": {
+        "tags": [
+          "wallet"
+        ],
+        "summary": "List Ledger",
+        "operationId": "list_ledger_api_v1_wallet_ledger_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/LedgerEntryResponse"
+                  },
+                  "type": "array",
+                  "title": "Response List Ledger Api V1 Wallet Ledger Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/wallet/withdrawals": {
+      "post": {
+        "tags": [
+          "wallet"
+        ],
+        "summary": "Request Withdrawal",
+        "operationId": "request_withdrawal_api_v1_wallet_withdrawals_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RequestWithdrawalRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerEntryResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/couriers/me": {
+      "get": {
+        "tags": [
+          "dispatch"
+        ],
+        "summary": "My Courier Profile",
+        "operationId": "my_courier_profile_api_v1_couriers_me_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/CourierProfileResponse"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Response My Courier Profile Api V1 Couriers Me Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "dispatch"
+        ],
+        "summary": "Create Courier Profile",
+        "operationId": "create_courier_profile_api_v1_couriers_me_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCourierProfileRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CourierProfileResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/couriers/pending": {
+      "get": {
+        "tags": [
+          "dispatch"
+        ],
+        "summary": "List Pending Couriers",
+        "operationId": "list_pending_couriers_api_v1_couriers_pending_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CourierProfileResponse"
+                  },
+                  "type": "array",
+                  "title": "Response List Pending Couriers Api V1 Couriers Pending Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/couriers/{profile_id}/verification": {
+      "patch": {
+        "tags": [
+          "dispatch"
+        ],
+        "summary": "Verify Courier",
+        "operationId": "verify_courier_api_v1_couriers__profile_id__verification_patch",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "profile_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Profile Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetCourierVerificationRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CourierProfileResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/deliveries/available": {
+      "get": {
+        "tags": [
+          "dispatch"
+        ],
+        "summary": "List Available Deliveries",
+        "operationId": "list_available_deliveries_api_v1_deliveries_available_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ClaimableOrderResponse"
+                  },
+                  "type": "array",
+                  "title": "Response List Available Deliveries Api V1 Deliveries Available Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/deliveries/{order_id}/claim": {
+      "post": {
+        "tags": [
+          "dispatch"
+        ],
+        "summary": "Claim Delivery",
+        "operationId": "claim_delivery_api_v1_deliveries__order_id__claim_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "order_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Order Id"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeliveryResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/deliveries/mine/active": {
+      "get": {
+        "tags": [
+          "dispatch"
+        ],
+        "summary": "My Active Delivery",
+        "operationId": "my_active_delivery_api_v1_deliveries_mine_active_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/DeliveryResponse"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Response My Active Delivery Api V1 Deliveries Mine Active Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/deliveries/mine/history": {
+      "get": {
+        "tags": [
+          "dispatch"
+        ],
+        "summary": "My Delivery History",
+        "operationId": "my_delivery_history_api_v1_deliveries_mine_history_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/DeliveryResponse"
+                  },
+                  "type": "array",
+                  "title": "Response My Delivery History Api V1 Deliveries Mine History Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/deliveries/{delivery_id}/confirm-delivery": {
+      "post": {
+        "tags": [
+          "dispatch"
+        ],
+        "summary": "Confirm Delivery",
+        "operationId": "confirm_delivery_api_v1_deliveries__delivery_id__confirm_delivery_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "delivery_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Delivery Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfirmDeliveryRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeliveryResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/deliveries/{delivery_id}/cancel": {
+      "post": {
+        "tags": [
+          "dispatch"
+        ],
+        "summary": "Cancel Delivery",
+        "operationId": "cancel_delivery_api_v1_deliveries__delivery_id__cancel_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "delivery_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Delivery Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeliveryResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/deliveries/store-orders/{store_order_id}/confirm-pickup": {
+      "post": {
+        "tags": [
+          "dispatch"
+        ],
+        "summary": "Confirm Pickup",
+        "operationId": "confirm_pickup_api_v1_deliveries_store_orders__store_order_id__confirm_pickup_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "store_order_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Store Order Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfirmPickupRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeliveryStopResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/deliveries/by-order/{order_id}": {
+      "get": {
+        "tags": [
+          "dispatch"
+        ],
+        "summary": "Delivery For Customer",
+        "operationId": "delivery_for_customer_api_v1_deliveries_by_order__order_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "order_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Order Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/CustomerDeliveryResponse"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Response Delivery For Customer Api V1 Deliveries By Order  Order Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1556,6 +2186,193 @@
           "tokens"
         ],
         "title": "AuthResponse"
+      },
+      "BalanceResponse": {
+        "properties": {
+          "balance_cop": {
+            "type": "integer",
+            "title": "Balance Cop"
+          }
+        },
+        "type": "object",
+        "required": [
+          "balance_cop"
+        ],
+        "title": "BalanceResponse"
+      },
+      "ClaimableOrderResponse": {
+        "properties": {
+          "order_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Order Id"
+          },
+          "delivery_lat": {
+            "type": "number",
+            "title": "Delivery Lat"
+          },
+          "delivery_lng": {
+            "type": "number",
+            "title": "Delivery Lng"
+          },
+          "delivery_notes": {
+            "type": "string",
+            "title": "Delivery Notes"
+          },
+          "stops": {
+            "items": {
+              "$ref": "#/components/schemas/ClaimableStopResponse"
+            },
+            "type": "array",
+            "title": "Stops"
+          }
+        },
+        "type": "object",
+        "required": [
+          "order_id",
+          "delivery_lat",
+          "delivery_lng",
+          "delivery_notes",
+          "stops"
+        ],
+        "title": "ClaimableOrderResponse"
+      },
+      "ClaimableStopResponse": {
+        "properties": {
+          "store_order_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Store Order Id"
+          },
+          "store_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Store Id"
+          },
+          "store_name": {
+            "type": "string",
+            "title": "Store Name"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          }
+        },
+        "type": "object",
+        "required": [
+          "store_order_id",
+          "store_id",
+          "store_name",
+          "status"
+        ],
+        "title": "ClaimableStopResponse"
+      },
+      "ConfirmDeliveryRequest": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "maxLength": 16,
+            "minLength": 1,
+            "title": "Code"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code"
+        ],
+        "title": "ConfirmDeliveryRequest"
+      },
+      "ConfirmPickupRequest": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "maxLength": 16,
+            "minLength": 1,
+            "title": "Code"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code"
+        ],
+        "title": "ConfirmPickupRequest"
+      },
+      "CourierProfileResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "User Id"
+          },
+          "vehicle_type": {
+            "$ref": "#/components/schemas/VehicleType"
+          },
+          "plate": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Plate"
+          },
+          "id_document_number": {
+            "type": "string",
+            "title": "Id Document Number"
+          },
+          "is_verified": {
+            "type": "boolean",
+            "title": "Is Verified"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "user_id",
+          "vehicle_type",
+          "plate",
+          "id_document_number",
+          "is_verified"
+        ],
+        "title": "CourierProfileResponse"
+      },
+      "CreateCourierProfileRequest": {
+        "properties": {
+          "vehicle_type": {
+            "$ref": "#/components/schemas/VehicleType"
+          },
+          "plate": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 16
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Plate"
+          },
+          "id_document_number": {
+            "type": "string",
+            "maxLength": 32,
+            "minLength": 4,
+            "title": "Id Document Number"
+          }
+        },
+        "type": "object",
+        "required": [
+          "vehicle_type",
+          "id_document_number"
+        ],
+        "title": "CreateCourierProfileRequest"
       },
       "CreateOrderRequest": {
         "properties": {
@@ -1673,6 +2490,191 @@
         ],
         "title": "CreateStoreRequest"
       },
+      "CustomerDeliveryResponse": {
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/DeliveryStatus"
+          },
+          "delivery_code": {
+            "type": "string",
+            "title": "Delivery Code"
+          },
+          "stops_picked_up": {
+            "type": "integer",
+            "title": "Stops Picked Up"
+          },
+          "stops_total": {
+            "type": "integer",
+            "title": "Stops Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "delivery_code",
+          "stops_picked_up",
+          "stops_total"
+        ],
+        "title": "CustomerDeliveryResponse",
+        "description": "Lo que ve el cliente: el código que le tiene que dar al repartidor, y cuántas paradas\nfaltan — nunca los códigos de recogida de las tiendas (esos son entre el repartidor y ellas)."
+      },
+      "DeliveryResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "order_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Order Id"
+          },
+          "status": {
+            "$ref": "#/components/schemas/DeliveryStatus"
+          },
+          "stops": {
+            "items": {
+              "$ref": "#/components/schemas/DeliveryStopResponse"
+            },
+            "type": "array",
+            "title": "Stops"
+          },
+          "suggested_stop_order": {
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "type": "array",
+            "title": "Suggested Stop Order"
+          },
+          "delivery_lat": {
+            "type": "number",
+            "title": "Delivery Lat"
+          },
+          "delivery_lng": {
+            "type": "number",
+            "title": "Delivery Lng"
+          },
+          "all_stops_picked_up": {
+            "type": "boolean",
+            "title": "All Stops Picked Up"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          },
+          "delivered_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Delivered At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "order_id",
+          "status",
+          "stops",
+          "suggested_stop_order",
+          "delivery_lat",
+          "delivery_lng",
+          "all_stops_picked_up",
+          "created_at",
+          "updated_at",
+          "delivered_at"
+        ],
+        "title": "DeliveryResponse",
+        "description": "No incluye `delivery_code`: ese código lo tiene el cliente, no el repartidor — ver\n`CustomerDeliveryResponse` para la vista del cliente."
+      },
+      "DeliveryStatus": {
+        "type": "string",
+        "enum": [
+          "assigned",
+          "delivered",
+          "cancelled"
+        ],
+        "title": "DeliveryStatus"
+      },
+      "DeliveryStopResponse": {
+        "properties": {
+          "store_order_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Store Order Id"
+          },
+          "store_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Store Id"
+          },
+          "store_name": {
+            "type": "string",
+            "title": "Store Name"
+          },
+          "lat": {
+            "type": "number",
+            "title": "Lat"
+          },
+          "lng": {
+            "type": "number",
+            "title": "Lng"
+          },
+          "pickup_code": {
+            "type": "string",
+            "title": "Pickup Code"
+          },
+          "is_picked_up": {
+            "type": "boolean",
+            "title": "Is Picked Up"
+          },
+          "picked_up_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Picked Up At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "store_order_id",
+          "store_id",
+          "store_name",
+          "lat",
+          "lng",
+          "pickup_code",
+          "is_picked_up",
+          "picked_up_at"
+        ],
+        "title": "DeliveryStopResponse"
+      },
+      "EntryType": {
+        "type": "string",
+        "enum": [
+          "credit",
+          "debit"
+        ],
+        "title": "EntryType"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -1685,6 +2687,53 @@
         },
         "type": "object",
         "title": "HTTPValidationError"
+      },
+      "LedgerEntryResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "type": {
+            "$ref": "#/components/schemas/EntryType"
+          },
+          "amount_cop": {
+            "type": "integer",
+            "title": "Amount Cop"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason"
+          },
+          "reference_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reference Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "type",
+          "amount_cop",
+          "reason",
+          "reference_id",
+          "created_at"
+        ],
+        "title": "LedgerEntryResponse"
       },
       "LoginRequest": {
         "properties": {
@@ -1924,6 +2973,21 @@
         ],
         "title": "RegisterRequest"
       },
+      "RequestWithdrawalRequest": {
+        "properties": {
+          "amount_cop": {
+            "type": "integer",
+            "maximum": 50000000.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Amount Cop"
+          }
+        },
+        "type": "object",
+        "required": [
+          "amount_cop"
+        ],
+        "title": "RequestWithdrawalRequest"
+      },
       "Role": {
         "type": "string",
         "enum": [
@@ -1949,6 +3013,19 @@
           "store"
         ],
         "title": "SearchResultResponse"
+      },
+      "SetCourierVerificationRequest": {
+        "properties": {
+          "is_verified": {
+            "type": "boolean",
+            "title": "Is Verified"
+          }
+        },
+        "type": "object",
+        "required": [
+          "is_verified"
+        ],
+        "title": "SetCourierVerificationRequest"
       },
       "SetProductAvailabilityRequest": {
         "properties": {
@@ -2070,10 +3147,11 @@
           "accepted",
           "rejected",
           "preparing",
-          "ready"
+          "ready",
+          "handed_over"
         ],
         "title": "StoreOrderStatus",
-        "description": "Máquina de estados del pedido de una tienda dentro de un `Order`.\n\nNo incluye `HANDED_OVER` todavía: la entrega a un repartidor es la Fase 3 del roadmap\n(módulo `dispatch`), que no existe aún. `READY` es el estado terminal de esta fase."
+        "description": "Máquina de estados del pedido de una tienda dentro de un `Order`.\n\n`HANDED_OVER` (Fase 3): el comercio confirmó el código del repartidor que lo recogió. Quién\ndispara esa transición vive en el módulo `dispatch` (ver `MarkStoreOrderHandedOverRaw`), no\naquí — `ordering` solo expone el estado y la transición en sí."
       },
       "StoreResponse": {
         "properties": {
@@ -2412,6 +3490,15 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "VehicleType": {
+        "type": "string",
+        "enum": [
+          "bike",
+          "motorcycle",
+          "car"
+        ],
+        "title": "VehicleType"
       }
     },
     "securitySchemes": {

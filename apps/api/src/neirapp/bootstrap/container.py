@@ -6,6 +6,29 @@ from typing import Any
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from neirapp.bootstrap.settings import Settings
+from neirapp.modules.dispatch.application.app import DispatchApp
+from neirapp.modules.dispatch.application.couriers import (
+    CreateCourierProfile,
+    GetMyCourierProfile,
+    ListPendingCouriers,
+    VerifyCourier,
+)
+from neirapp.modules.dispatch.application.deliveries import (
+    CancelDelivery,
+    ClaimDelivery,
+    ConfirmDelivery,
+    ConfirmPickup,
+    GetDeliveryForCustomer,
+    GetMyActiveDelivery,
+    ListAvailableDeliveries,
+    ListMyDeliveryHistory,
+)
+from neirapp.modules.dispatch.infrastructure.ordering_adapter import OrderingAdapter
+from neirapp.modules.dispatch.infrastructure.stores_adapter import StoresAdapter
+from neirapp.modules.dispatch.infrastructure.unit_of_work import (
+    SqlAlchemyUnitOfWork as DispatchSqlAlchemyUnitOfWork,
+)
+from neirapp.modules.dispatch.infrastructure.wallet_adapter import WalletAdapter
 from neirapp.modules.identity.application.app import IdentityApp
 from neirapp.modules.identity.application.dto import TermsPolicy
 from neirapp.modules.identity.application.profile import (
@@ -25,8 +48,11 @@ from neirapp.modules.ordering.application.orders import (
     AcceptStoreOrder,
     CreateOrder,
     GetOrder,
+    GetOrderRaw,
+    ListClaimableOrders,
     ListMyOrders,
     ListStoreOrders,
+    MarkStoreOrderHandedOverRaw,
     MarkStoreOrderReady,
     PayOrder,
     RejectStoreOrder,
@@ -60,6 +86,16 @@ from neirapp.modules.stores.application.stores import (
 )
 from neirapp.modules.stores.infrastructure.unit_of_work import (
     SqlAlchemyUnitOfWork as StoresSqlAlchemyUnitOfWork,
+)
+from neirapp.modules.wallet.application.app import WalletApp
+from neirapp.modules.wallet.application.wallet import (
+    CreditCourier,
+    GetBalance,
+    ListLedger,
+    RequestWithdrawal,
+)
+from neirapp.modules.wallet.infrastructure.unit_of_work import (
+    SqlAlchemyUnitOfWork as WalletSqlAlchemyUnitOfWork,
 )
 from neirapp.shared.application.ports import Clock
 from neirapp.shared.infrastructure.clock import SystemClock
@@ -149,4 +185,53 @@ def build_ordering(
         reject_store_order=RejectStoreOrder(uow_factory, clock),
         start_preparing_store_order=StartPreparingStoreOrder(uow_factory, clock),
         mark_store_order_ready=MarkStoreOrderReady(uow_factory, clock),
+        get_order_raw=GetOrderRaw(uow_factory),
+        list_claimable_orders=ListClaimableOrders(uow_factory),
+        mark_store_order_handed_over_raw=MarkStoreOrderHandedOverRaw(uow_factory, clock),
+    )
+
+
+def build_wallet(session_factory: async_sessionmaker[Any], clock: Clock | None = None) -> WalletApp:
+    clock = clock or SystemClock()
+
+    def uow_factory() -> WalletSqlAlchemyUnitOfWork:
+        return WalletSqlAlchemyUnitOfWork(session_factory)
+
+    return WalletApp(
+        credit_courier=CreditCourier(uow_factory, clock),
+        get_balance=GetBalance(uow_factory),
+        list_ledger=ListLedger(uow_factory),
+        request_withdrawal=RequestWithdrawal(uow_factory, clock),
+    )
+
+
+def build_dispatch(
+    session_factory: async_sessionmaker[Any],
+    stores: StoresApp,
+    ordering: OrderingApp,
+    wallet: WalletApp,
+    clock: Clock | None = None,
+) -> DispatchApp:
+    clock = clock or SystemClock()
+
+    def uow_factory() -> DispatchSqlAlchemyUnitOfWork:
+        return DispatchSqlAlchemyUnitOfWork(session_factory)
+
+    stores_port = StoresAdapter(stores)
+    ordering_port = OrderingAdapter(ordering)
+    wallet_port = WalletAdapter(wallet)
+
+    return DispatchApp(
+        create_courier_profile=CreateCourierProfile(uow_factory, clock),
+        get_my_courier_profile=GetMyCourierProfile(uow_factory),
+        list_pending_couriers=ListPendingCouriers(uow_factory),
+        verify_courier=VerifyCourier(uow_factory),
+        list_available_deliveries=ListAvailableDeliveries(uow_factory, ordering_port),
+        claim_delivery=ClaimDelivery(uow_factory, ordering_port, stores_port, clock),
+        get_my_active_delivery=GetMyActiveDelivery(uow_factory),
+        list_my_delivery_history=ListMyDeliveryHistory(uow_factory),
+        confirm_pickup=ConfirmPickup(uow_factory, ordering_port, clock),
+        confirm_delivery=ConfirmDelivery(uow_factory, wallet_port, clock),
+        cancel_delivery=CancelDelivery(uow_factory, clock),
+        get_delivery_for_customer=GetDeliveryForCustomer(uow_factory, ordering_port),
     )

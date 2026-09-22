@@ -1,9 +1,40 @@
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Bike } from "lucide-react";
 import { Link, useParams } from "react-router";
 import { formatCop } from "../../lib/money";
 import { Navbar } from "../../shared/ui/Navbar";
+import { useDeliveryForOrder } from "../dispatch/api";
 import { useOrder } from "./api";
 import { StoreOrderStatusBadge } from "./StoreOrderStatusBadge";
+
+function DeliveryStatusCard({ orderId }: { orderId: string }) {
+  const delivery = useDeliveryForOrder(orderId);
+  if (!delivery.data) return null;
+
+  const { status, delivery_code, stops_picked_up, stops_total } = delivery.data;
+  return (
+    <div className="mb-4 rounded-card border border-line bg-white p-4 shadow-soft">
+      <div className="mb-2 flex items-center gap-2">
+        <Bike size={18} className="text-brand" aria-hidden="true" />
+        <h2 className="font-display text-base font-semibold">Tu repartidor va en camino</h2>
+      </div>
+      {status === "assigned" && (
+        <>
+          <p className="text-sm text-muted">
+            {stops_picked_up} de {stops_total} recogidas confirmadas.
+          </p>
+          <p className="mt-2 text-sm text-ink">
+            Dale este código al repartidor cuando te entregue tu pedido:{" "}
+            <span className="font-mono text-base font-semibold">{delivery_code}</span>
+          </p>
+        </>
+      )}
+      {status === "delivered" && <p className="text-sm text-brand">Pedido entregado.</p>}
+      {status === "cancelled" && (
+        <p className="text-sm text-terracotta">La entrega se canceló. La tienda te contactará.</p>
+      )}
+    </div>
+  );
+}
 
 export function OrderDetailPage() {
   const { orderId } = useParams<{ orderId: string }>();
@@ -33,6 +64,8 @@ export function OrderDetailPage() {
                 timeStyle: "short",
               })}
             </p>
+
+            <DeliveryStatusCard orderId={order.data.id} />
 
             <div className="space-y-4">
               {order.data.store_orders.map((storeOrder) => (

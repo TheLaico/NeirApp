@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import exists, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from neirapp.modules.ordering.application.dto import StoreOrderView
@@ -95,6 +95,25 @@ class SqlAlchemyOrderRepository:
         result = await self._session.execute(
             select(OrderModel)
             .where(OrderModel.customer_id == customer_id)
+            .order_by(OrderModel.created_at.desc())
+        )
+        return [_to_order(m) for m in result.scalars()]
+
+    async def list_claimable(self) -> list[Order]:
+        claimable_statuses = (
+            StoreOrderStatus.ACCEPTED.value,
+            StoreOrderStatus.PREPARING.value,
+            StoreOrderStatus.READY.value,
+        )
+        has_claimable_store_order = exists(
+            select(StoreOrderModel.id).where(
+                StoreOrderModel.order_id == OrderModel.id,
+                StoreOrderModel.status.in_(claimable_statuses),
+            )
+        )
+        result = await self._session.execute(
+            select(OrderModel)
+            .where(has_claimable_store_order)
             .order_by(OrderModel.created_at.desc())
         )
         return [_to_order(m) for m in result.scalars()]

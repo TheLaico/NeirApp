@@ -14,8 +14,9 @@ from neirapp.modules.ordering.domain.geofence import is_within_neira
 class StoreOrderStatus(StrEnum):
     """Máquina de estados del pedido de una tienda dentro de un `Order`.
 
-    No incluye `HANDED_OVER` todavía: la entrega a un repartidor es la Fase 3 del roadmap
-    (módulo `dispatch`), que no existe aún. `READY` es el estado terminal de esta fase.
+    `HANDED_OVER` (Fase 3): el comercio confirmó el código del repartidor que lo recogió. Quién
+    dispara esa transición vive en el módulo `dispatch` (ver `MarkStoreOrderHandedOverRaw`), no
+    aquí — `ordering` solo expone el estado y la transición en sí.
     """
 
     PENDING_PAYMENT = "pending_payment"
@@ -24,6 +25,7 @@ class StoreOrderStatus(StrEnum):
     REJECTED = "rejected"
     PREPARING = "preparing"
     READY = "ready"
+    HANDED_OVER = "handed_over"
 
 
 # Transiciones válidas: origen -> destinos permitidos. Cualquier otro salto es un bug del llamador
@@ -33,8 +35,9 @@ _TRANSITIONS: dict[StoreOrderStatus, frozenset[StoreOrderStatus]] = {
     StoreOrderStatus.PAID: frozenset({StoreOrderStatus.ACCEPTED, StoreOrderStatus.REJECTED}),
     StoreOrderStatus.ACCEPTED: frozenset({StoreOrderStatus.PREPARING}),
     StoreOrderStatus.PREPARING: frozenset({StoreOrderStatus.READY}),
+    StoreOrderStatus.READY: frozenset({StoreOrderStatus.HANDED_OVER}),
     StoreOrderStatus.REJECTED: frozenset(),
-    StoreOrderStatus.READY: frozenset(),
+    StoreOrderStatus.HANDED_OVER: frozenset(),
 }
 
 
@@ -93,6 +96,9 @@ class StoreOrder:
 
     def mark_ready(self, now: datetime) -> None:
         self._transition(StoreOrderStatus.READY, now)
+
+    def mark_handed_over(self, now: datetime) -> None:
+        self._transition(StoreOrderStatus.HANDED_OVER, now)
 
     def is_owned_by_store(self, user_id: UUID) -> bool:
         return self.store_owner_user_id == user_id

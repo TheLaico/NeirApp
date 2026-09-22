@@ -54,7 +54,12 @@ export function AdminStoresPage() {
           Volver al mapa
         </Link>
 
-        <h1 className="mb-4 text-2xl">Tiendas por aprobar</h1>
+        <div className="mb-4 flex items-center justify-between">
+          <h1 className="text-2xl">Tiendas por aprobar</h1>
+          <Link to="/admin/repartidores" className="text-sm font-medium text-brand hover:underline">
+            Ver repartidores por aprobar
+          </Link>
+        </div>
 
         {pending.isPending && <p className="text-muted">Cargando…</p>}
         {pending.isError && <p className="text-terracotta">No pudimos cargar las tiendas pendientes.</p>}

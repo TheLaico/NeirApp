@@ -212,6 +212,122 @@ el total y cada tienda recibe y gestiona su parte por separado.
 | POST | `/store-orders/{id}/ready` | Bearer, dueño de la tienda | `preparing → ready`. |
 | WS | `/stores/{id}/orders/ws?token=` | Query token, dueño de la tienda | Aviso de pedido nuevo. |
 
+## Módulos `dispatch` y `wallet` (implementados, Fase 3)
+
+Reparto de pedidos por repartidores independientes y su billetera de ganancias.
+
+### `dispatch`
+
+- **`CourierProfile`**: se crea con `is_verified=False`; un admin lo aprueba (`PATCH
+  /couriers/{id}/verification`) antes de que el repartidor pueda ver o tomar pedidos —
+  `_require_verified_courier` en `application/deliveries.py` es el único punto que gatea esto.
+  Deliberadamente **no** se usa un rol de `identity` (`Role.COURIER`): eso habría requerido un
+  nuevo puerto cruzado `IdentityPort.grant_role`; en vez de eso, dispatch gatea por su propio
+  `CourierProfile.is_verified`, y un usuario sin perfil (o no verificado) simplemente no puede
+  reclamar entregas — el resto de la app no necesita saber que alguien es repartidor.
+- **`Delivery` / `DeliveryStop`**: una entrega tiene una parada por cada `StoreOrder` del pedido
+  (varias tiendas → varias recogidas, una sola entrega final al cliente). Máquina de estados simple:
+  `assigned → delivered | cancelled` (ambos terminales). Cada `DeliveryStop` lleva su propio código
+  de recogida (`pickup_code`); la entrega completa tiene un `delivery_code` separado que ve el
+  cliente, no el repartidor.
+- **Reclamar un pedido es atómico vía restricción de base de datos, no un lock aplicativo**:
+  `dispatch_deliveries.order_id` es `unique`. `ClaimDelivery` arma el `Delivery` en memoria, intenta
+  insertarlo, y si otro repartidor ganó la carrera el `IntegrityError` se traduce a
+  `OrderAlreadyClaimed()` (mismo patrón que `EmailAlreadyRegistered` en `identity`, Fase 0). No hace
+  falta ningún `SELECT ... FOR UPDATE`: dos repartidores pueden intentar el mismo pedido a la vez y
+  solo uno gana, sin condiciones de carrera.
+- **Quién confirma cada código**: la **tienda** confirma la recogida (recibe el código de manos del
+  repartidor y lo escribe en su panel — `POST /deliveries/store-orders/{store_order_id}/confirm-
+  pickup`), y el **repartidor** confirma la entrega final (recibe el código del cliente —
+  `POST /deliveries/{delivery_id}/confirm-delivery`). Ninguno de los dos endpoints vuelve a llamar a
+  `stores` para autorizar: `store_owner_user_id` va copiado en cada `DeliveryStop` desde el momento
+  de reclamar (vía `StoresPort.get_store`), el mismo patrón que `ordering` usa con sus `StoreOrder`.
+- **Capas anticorrupción**: `StoresPort`, `OrderingPort` y `WalletPort` (`application/ports.py`) son
+  los únicos puntos por los que `dispatch` sabe que esos módulos existen; los adaptadores concretos
+  (`infrastructure/{stores,ordering,wallet}_adapter.py`) son infraestructura, no dominio ni
+  aplicación — verificado por `import-linter`. `OrderingPort.get_order_customer_id(order_id)` existe
+  solo para que el cliente pueda consultar su código de entrega a partir del `order_id` que ya
+  conoce (no tiene forma de saber el `delivery_id`).
+- **`suggest_route` (heurística de vecino más cercano)**: sin GPS en vivo del repartidor, la "ruta
+  óptima" real no se puede calcular — no se sabe desde dónde arranca. Arranca en la primera parada
+  tal como llega del backend y visita las demás por cercanía (Haversine), terminando en la
+  dirección de entrega. No resuelve el TSP de forma óptima (NP-difícil) pero para las pocas paradas
+  de un pedido típico da una ruta razonable; reemplazar por un motor real (OSRM, Valhalla) es la
+  evolución natural.
+- **`compute_earnings_cop` (tarifa plana + por parada)**: modelo de ingresos deliberadamente simple
+  (`domain/pricing.py`), placeholder explícito para una decisión de negocio pendiente (tarifa por
+  distancia, comisión, o ambas). Todo lo que depende de esto llama a esta función, nunca calcula el
+  número por su cuenta.
+- **Códigos sin hashear**: a diferencia de los refresh tokens de `identity` (SHA-256 hasheados), los
+  códigos de recogida/entrega se guardan en texto plano (`domain/codes.py`, alfabeto sin
+  0/O/1/I/L vía `secrets.choice()`). El riesgo es distinto: un refresh token filtrado da acceso
+  indefinido a una cuenta; un código de recogida filtrado solo sirve para una única confirmación de
+  una entrega específica, ya autenticada y autorizada por otros medios (`store_owner_user_id`,
+  `is_owned_by_courier`) — el código es una prueba de "estuviste físicamente ahí", no una credencial.
+- **Decisión de fusión**: el perfil de repartidor vive dentro de `dispatch` (no es un módulo propio)
+  por la misma razón que `payments` se fusionó en `ordering` en la Fase 2 — no hay suficiente
+  complejidad propia todavía para justificar el costo de otro módulo con sus propias capas.
+
+### `wallet`
+
+- **El saldo nunca se guarda editable**: siempre se calcula sumando `LedgerEntry.signed_amount_cop`
+  (`compute_balance`, `domain/entities.py`) — créditos suman, débitos restan. Una fila mal escrita
+  no puede "perder" plata sin dejar rastro: el histórico completo es la única fuente de verdad
+  (estilo ledger de doble entrada, aunque aquí es de una sola columna por simplicidad).
+- **`wallet` no depende de ningún otro módulo** (ni siquiera de `dispatch`): `CreditCourier` recibe
+  un `courier_id: UUID` desnudo y un `reason`/`reference_id` de texto — no sabe qué es una entrega ni
+  qué es un pedido. Es `dispatch` quien llama a `WalletPort.credit_courier` al confirmar una entrega
+  (vía `infrastructure/wallet_adapter.py`), nunca al revés. Es el módulo con el contrato de
+  aislamiento más estricto de toda la app (ver el contrato de import-linter dedicado), acorde a que
+  es el único que toca dinero.
+- **Retiro sin pasarela real**: `RequestWithdrawal` valida contra el saldo actual y aplica el débito
+  al instante — mismo placeholder que `FakePaymentGateway` en `ordering` (Fase 2). Conectar una
+  pasarela de desembolso real (transferencia bancaria, Nequi, Daviplata) es la evolución natural,
+  probablemente con un estado `pending` intermedio en vez de aplicar el débito de inmediato.
+- **`GET /wallet/balance` y `/ledger` nunca reciben un `courier_id` del cliente**: siempre usan
+  `user.id` del token autenticado. Un usuario que nunca ha repartido simplemente tiene saldo 0 y no
+  puede retirar nada — no hace falta verificar aparte que sea repartidor para que el endpoint sea
+  seguro (a diferencia de `dispatch`, que sí gatea explícitamente por `is_verified`).
+
+### `courier_id` es el `user_id` de `identity`, no el id del `CourierProfile`
+
+**Bug real encontrado en esta fase** (tests de integración, no en el navegador): `Delivery.courier_id`
+se pobló inicialmente con `CourierProfile.id` (razonable a primera vista: es el id "propio" de
+dispatch para un repartidor). Pero `WalletPort.credit_courier` recibe ese mismo `delivery.courier_id`
+y lo pasa tal cual a `wallet`, cuyo `GET /wallet/balance` calcula el saldo por `user.id` del token —
+un id completamente distinto. Resultado: `ConfirmDelivery` acreditaba saldo a un id que el propio
+repartidor nunca podía consultar (el saldo se "perdía" silenciosamente). Un test de integración que
+confirmaba el flujo completo (reclamar → recoger → entregar → **consultar saldo**) lo detectó de
+inmediato; un test que solo verificara "la entrega se marcó como entregada" no lo habría notado.
+
+La corrección: `_require_verified_courier` devuelve `user_id` (no `profile.id`), así que
+`Delivery.courier_id` es el mismo id que usan `wallet` y el resto de la app para identificar al
+usuario. Esto también simplificó `CancelDelivery`/`ConfirmDelivery` — ya no hace falta resolver el
+`CourierProfile` solo para comparar contra `delivery.courier_id`, una comparación directa contra
+`user_id` alcanza. Lección: cuando dos módulos comparten un identificador de usuario a través de un
+puerto, ese identificador debe ser el mismo en ambos lados desde el día uno — un id "propio" del
+módulo que por casualidad también identifica al mismo usuario es una trampa.
+
+### Endpoints (`/api/v1`)
+
+| Método/protocolo | Ruta | Auth | Notas |
+|---|---|---|---|
+| POST | `/couriers/me` | Bearer | Crea el perfil de repartidor (`is_verified=False`). |
+| GET | `/couriers/me` | Bearer | El perfil propio, o `null` si no existe. |
+| GET | `/couriers/pending` | Bearer, admin | Perfiles sin verificar. |
+| PATCH | `/couriers/{id}/verification` | Bearer, admin | Aprueba/revoca un perfil. |
+| GET | `/deliveries/available` | Bearer, repartidor verificado | Pedidos listos para reclamar. |
+| POST | `/deliveries/{order_id}/claim` | Bearer, repartidor verificado | Atómico (ver arriba). |
+| GET | `/deliveries/mine/active` | Bearer, repartidor | La entrega en curso, o `null`. |
+| GET | `/deliveries/mine/history` | Bearer, repartidor | Entregas terminadas (entregadas/canceladas). |
+| POST | `/deliveries/{id}/confirm-delivery` | Bearer, repartidor dueño | Con el código del cliente. |
+| POST | `/deliveries/{id}/cancel` | Bearer, repartidor dueño | Cancela una entrega en curso. |
+| POST | `/deliveries/store-orders/{id}/confirm-pickup` | Bearer, dueño de la tienda | Con el código del repartidor. |
+| GET | `/deliveries/by-order/{order_id}` | Bearer, cliente dueño del pedido | Código de entrega y progreso. |
+| GET | `/wallet/balance` | Bearer | Saldo del usuario autenticado. |
+| GET | `/wallet/ledger` | Bearer | Historial de movimientos. |
+| POST | `/wallet/withdrawals` | Bearer | Retira saldo (al instante, sin pasarela real). |
+
 ## Frontend
 
 `apps/web` (Vite + React 19 + TypeScript). Estructura *feature-based*:
@@ -227,6 +343,8 @@ src/
     search/   # página de búsqueda con filtros
     cart/     # carrito multi-tienda (Zustand+persist)
     orders/   # checkout, mis pedidos, panel de pedidos del comercio, WS en vivo
+    dispatch/ # onboarding de repartidor, pedidos disponibles, entrega activa/historial, admin
+    wallet/   # saldo, movimientos, retiro
     admin/    # backoffice: aprobar/rechazar tiendas pendientes
     home/     # mapa + filtros por categoría
   lib/        # cliente API, manejo de errores, env, formato de moneda
@@ -291,6 +409,34 @@ probando la app real en el navegador con la API y la web corriendo por separado.
 - **Identidad visual**: los tokens de `@neirapp/design-tokens` (colores, tipografía, radios) se
   exponen como utilidades de Tailwind vía `theme.css`. El mismo `tokens.ts` alimentará el estilo
   del mapa (Fase 1) y, más adelante, la app de React Native.
+
+### Repartidor y billetera (Fase 3)
+
+`features/dispatch/CourierOnboardingPage.tsx` crea el perfil y refleja su estado (pendiente/
+verificado) sin recargar — `useMyCourierProfile` invalidado tras el `POST`.
+`AvailableDeliveriesPage.tsx` lista pedidos reclamables (`refetchInterval: 15s`, mismo patrón que
+`useStoreOrders`) y al reclamar navega directo a `ActiveDeliveryPage.tsx`, que muestra las paradas
+en el orden sugerido por el backend (`suggested_stop_order`) con el código de recogida de cada una,
+y el formulario de código de entrega solo aparece cuando `all_stops_picked_up` es verdadero. La
+confirmación de recogida vive del lado de la tienda: se agregó como una variante más de
+`StoreOrderActions` en `StoreOrdersPage.tsx` (Fase 2) para el estado `ready`, en vez de una página
+aparte — la tienda ya está viendo esa lista de pedidos, no tiene sentido mandarla a otro lugar.
+Simétricamente, `OrderDetailPage.tsx` (cliente) gana una `DeliveryStatusCard` que solo se renderiza
+si `GET /deliveries/by-order/{id}` devuelve algo distinto de `null` (nadie ha reclamado el pedido
+todavía) y muestra el código de entrega mientras la entrega esté `assigned`.
+`features/wallet/WalletPage.tsx` sigue el mismo patrón de balance+lista+formulario que el resto de
+la app. `AdminCouriersPage.tsx` es un calco de `AdminStoresPage.tsx` (Fase 1); ambas páginas de
+backoffice ahora se enlazan entre sí para no depender de que el admin recuerde las dos URLs.
+
+**Lección de esta fase — sesión compartida entre pestañas del navegador durante la verificación
+manual:** `useAuthStore` persiste en `localStorage`, que es *un solo* almacén por origen compartido
+por todas las pestañas. Abrir varias pestañas para simular varios roles a la vez (dueño, admin,
+repartidor, cliente) no funciona como sesiones independientes — cualquier `navigate` de página
+completa en una pestaña relee el `localStorage` *actual*, que puede haber sido sobrescrito por otra
+pestaña que inició sesión después. La única forma confiable de probar flujos multi-rol a mano es
+secuencial en una sola pestaña (cerrar sesión → iniciar sesión con el siguiente usuario), nunca en
+paralelo entre pestañas del mismo navegador — no es un bug de la app, es cómo funciona
+`localStorage`, pero vale la pena dejarlo anotado para la próxima verificación manual.
 
 ## Camino a la app móvil
 
@@ -357,6 +503,20 @@ para poder reusarse. Cuando llegue la Fase 5:
   `CreateStoreForm`, y por lo tanto casi todo el flujo de compra) solo se verifican corriendo la
   app de verdad en el navegador. Si se agregan más páginas con lógica de estado no trivial, vale
   la pena revisar sus selectores con la misma lupa.
+- **Sin rastreo GPS del repartidor**: `suggest_route` (módulo `dispatch`) asume que la primera
+  parada es donde arranca el repartidor porque no hay ninguna señal de ubicación en vivo. Antes de
+  confiar en la ruta sugerida para algo más que una referencia, hace falta compartir ubicación en
+  tiempo real (WebSocket, similar al de notificaciones de `ordering`, o un proveedor de mapas con
+  tracking).
+- **Tarifa de repartidor sin validar con el negocio**: `compute_earnings_cop` (tarifa plana + por
+  parada) es un placeholder explícito — ver la nota del módulo `dispatch`. Cambiarlo es aislado
+  (una sola función), pero el modelo de negocio real (por distancia, por tiempo, comisión sobre el
+  pedido) todavía no está definido.
+- **Retiro de billetera sin pasarela real**: mismo patrón que `FakePaymentGateway` — ver la nota del
+  módulo `wallet`. No hay dinero real moviéndose todavía.
+- **Códigos de recogida/entrega en texto plano**: ver la nota del módulo `dispatch` sobre por qué el
+  riesgo es distinto al de un refresh token filtrado. Igual conviene revisarlo si el modelo de
+  autorización alrededor cambia (por ejemplo, si se permite confirmar sin sesión autenticada).
 
 ## Cómo conceder el rol admin en desarrollo
 

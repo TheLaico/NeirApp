@@ -465,6 +465,245 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/wallet/balance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Balance */
+        get: operations["get_balance_api_v1_wallet_balance_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/wallet/ledger": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Ledger */
+        get: operations["list_ledger_api_v1_wallet_ledger_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/wallet/withdrawals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Request Withdrawal */
+        post: operations["request_withdrawal_api_v1_wallet_withdrawals_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/couriers/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** My Courier Profile */
+        get: operations["my_courier_profile_api_v1_couriers_me_get"];
+        put?: never;
+        /** Create Courier Profile */
+        post: operations["create_courier_profile_api_v1_couriers_me_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/couriers/pending": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Pending Couriers */
+        get: operations["list_pending_couriers_api_v1_couriers_pending_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/couriers/{profile_id}/verification": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Verify Courier */
+        patch: operations["verify_courier_api_v1_couriers__profile_id__verification_patch"];
+        trace?: never;
+    };
+    "/api/v1/deliveries/available": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Available Deliveries */
+        get: operations["list_available_deliveries_api_v1_deliveries_available_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/deliveries/{order_id}/claim": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Claim Delivery */
+        post: operations["claim_delivery_api_v1_deliveries__order_id__claim_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/deliveries/mine/active": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** My Active Delivery */
+        get: operations["my_active_delivery_api_v1_deliveries_mine_active_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/deliveries/mine/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** My Delivery History */
+        get: operations["my_delivery_history_api_v1_deliveries_mine_history_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/deliveries/{delivery_id}/confirm-delivery": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Confirm Delivery */
+        post: operations["confirm_delivery_api_v1_deliveries__delivery_id__confirm_delivery_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/deliveries/{delivery_id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel Delivery */
+        post: operations["cancel_delivery_api_v1_deliveries__delivery_id__cancel_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/deliveries/store-orders/{store_order_id}/confirm-pickup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Confirm Pickup */
+        post: operations["confirm_pickup_api_v1_deliveries_store_orders__store_order_id__confirm_pickup_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/deliveries/by-order/{order_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Delivery For Customer */
+        get: operations["delivery_for_customer_api_v1_deliveries_by_order__order_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -479,6 +718,82 @@ export interface components {
         AuthResponse: {
             user: components["schemas"]["UserResponse"];
             tokens: components["schemas"]["TokensResponse"];
+        };
+        /** BalanceResponse */
+        BalanceResponse: {
+            /** Balance Cop */
+            balance_cop: number;
+        };
+        /** ClaimableOrderResponse */
+        ClaimableOrderResponse: {
+            /**
+             * Order Id
+             * Format: uuid
+             */
+            order_id: string;
+            /** Delivery Lat */
+            delivery_lat: number;
+            /** Delivery Lng */
+            delivery_lng: number;
+            /** Delivery Notes */
+            delivery_notes: string;
+            /** Stops */
+            stops: components["schemas"]["ClaimableStopResponse"][];
+        };
+        /** ClaimableStopResponse */
+        ClaimableStopResponse: {
+            /**
+             * Store Order Id
+             * Format: uuid
+             */
+            store_order_id: string;
+            /**
+             * Store Id
+             * Format: uuid
+             */
+            store_id: string;
+            /** Store Name */
+            store_name: string;
+            /** Status */
+            status: string;
+        };
+        /** ConfirmDeliveryRequest */
+        ConfirmDeliveryRequest: {
+            /** Code */
+            code: string;
+        };
+        /** ConfirmPickupRequest */
+        ConfirmPickupRequest: {
+            /** Code */
+            code: string;
+        };
+        /** CourierProfileResponse */
+        CourierProfileResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * User Id
+             * Format: uuid
+             */
+            user_id: string;
+            vehicle_type: components["schemas"]["VehicleType"];
+            /** Plate */
+            plate: string | null;
+            /** Id Document Number */
+            id_document_number: string;
+            /** Is Verified */
+            is_verified: boolean;
+        };
+        /** CreateCourierProfileRequest */
+        CreateCourierProfileRequest: {
+            vehicle_type: components["schemas"]["VehicleType"];
+            /** Plate */
+            plate?: string | null;
+            /** Id Document Number */
+            id_document_number: string;
         };
         /** CreateOrderRequest */
         CreateOrderRequest: {
@@ -523,10 +838,119 @@ export interface components {
             /** Lng */
             lng: number;
         };
+        /**
+         * CustomerDeliveryResponse
+         * @description Lo que ve el cliente: el código que le tiene que dar al repartidor, y cuántas paradas
+         *     faltan — nunca los códigos de recogida de las tiendas (esos son entre el repartidor y ellas).
+         */
+        CustomerDeliveryResponse: {
+            status: components["schemas"]["DeliveryStatus"];
+            /** Delivery Code */
+            delivery_code: string;
+            /** Stops Picked Up */
+            stops_picked_up: number;
+            /** Stops Total */
+            stops_total: number;
+        };
+        /**
+         * DeliveryResponse
+         * @description No incluye `delivery_code`: ese código lo tiene el cliente, no el repartidor — ver
+         *     `CustomerDeliveryResponse` para la vista del cliente.
+         */
+        DeliveryResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Order Id
+             * Format: uuid
+             */
+            order_id: string;
+            status: components["schemas"]["DeliveryStatus"];
+            /** Stops */
+            stops: components["schemas"]["DeliveryStopResponse"][];
+            /** Suggested Stop Order */
+            suggested_stop_order: string[];
+            /** Delivery Lat */
+            delivery_lat: number;
+            /** Delivery Lng */
+            delivery_lng: number;
+            /** All Stops Picked Up */
+            all_stops_picked_up: boolean;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /** Delivered At */
+            delivered_at: string | null;
+        };
+        /**
+         * DeliveryStatus
+         * @enum {string}
+         */
+        DeliveryStatus: "assigned" | "delivered" | "cancelled";
+        /** DeliveryStopResponse */
+        DeliveryStopResponse: {
+            /**
+             * Store Order Id
+             * Format: uuid
+             */
+            store_order_id: string;
+            /**
+             * Store Id
+             * Format: uuid
+             */
+            store_id: string;
+            /** Store Name */
+            store_name: string;
+            /** Lat */
+            lat: number;
+            /** Lng */
+            lng: number;
+            /** Pickup Code */
+            pickup_code: string;
+            /** Is Picked Up */
+            is_picked_up: boolean;
+            /** Picked Up At */
+            picked_up_at: string | null;
+        };
+        /**
+         * EntryType
+         * @enum {string}
+         */
+        EntryType: "credit" | "debit";
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
+        };
+        /** LedgerEntryResponse */
+        LedgerEntryResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            type: components["schemas"]["EntryType"];
+            /** Amount Cop */
+            amount_cop: number;
+            /** Reason */
+            reason: string;
+            /** Reference Id */
+            reference_id: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
         };
         /** LoginRequest */
         LoginRequest: {
@@ -644,6 +1068,11 @@ export interface components {
              */
             accepted_terms: boolean;
         };
+        /** RequestWithdrawalRequest */
+        RequestWithdrawalRequest: {
+            /** Amount Cop */
+            amount_cop: number;
+        };
         /**
          * Role
          * @enum {string}
@@ -653,6 +1082,11 @@ export interface components {
         SearchResultResponse: {
             product: components["schemas"]["ProductResponse"];
             store: components["schemas"]["StoreResponse"];
+        };
+        /** SetCourierVerificationRequest */
+        SetCourierVerificationRequest: {
+            /** Is Verified */
+            is_verified: boolean;
         };
         /** SetProductAvailabilityRequest */
         SetProductAvailabilityRequest: {
@@ -714,11 +1148,12 @@ export interface components {
          * StoreOrderStatus
          * @description Máquina de estados del pedido de una tienda dentro de un `Order`.
          *
-         *     No incluye `HANDED_OVER` todavía: la entrega a un repartidor es la Fase 3 del roadmap
-         *     (módulo `dispatch`), que no existe aún. `READY` es el estado terminal de esta fase.
+         *     `HANDED_OVER` (Fase 3): el comercio confirmó el código del repartidor que lo recogió. Quién
+         *     dispara esa transición vive en el módulo `dispatch` (ver `MarkStoreOrderHandedOverRaw`), no
+         *     aquí — `ordering` solo expone el estado y la transición en sí.
          * @enum {string}
          */
-        StoreOrderStatus: "pending_payment" | "paid" | "accepted" | "rejected" | "preparing" | "ready";
+        StoreOrderStatus: "pending_payment" | "paid" | "accepted" | "rejected" | "preparing" | "ready" | "handed_over";
         /** StoreResponse */
         StoreResponse: {
             /**
@@ -837,6 +1272,11 @@ export interface components {
             /** Context */
             ctx?: Record<string, never>;
         };
+        /**
+         * VehicleType
+         * @enum {string}
+         */
+        VehicleType: "bike" | "motorcycle" | "car";
     };
     responses: never;
     parameters: never;
@@ -1807,6 +2247,410 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StoreOrderResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_balance_api_v1_wallet_balance_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BalanceResponse"];
+                };
+            };
+        };
+    };
+    list_ledger_api_v1_wallet_ledger_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LedgerEntryResponse"][];
+                };
+            };
+        };
+    };
+    request_withdrawal_api_v1_wallet_withdrawals_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RequestWithdrawalRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LedgerEntryResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    my_courier_profile_api_v1_couriers_me_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CourierProfileResponse"] | null;
+                };
+            };
+        };
+    };
+    create_courier_profile_api_v1_couriers_me_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateCourierProfileRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CourierProfileResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_pending_couriers_api_v1_couriers_pending_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CourierProfileResponse"][];
+                };
+            };
+        };
+    };
+    verify_courier_api_v1_couriers__profile_id__verification_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                profile_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetCourierVerificationRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CourierProfileResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_available_deliveries_api_v1_deliveries_available_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClaimableOrderResponse"][];
+                };
+            };
+        };
+    };
+    claim_delivery_api_v1_deliveries__order_id__claim_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                order_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeliveryResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    my_active_delivery_api_v1_deliveries_mine_active_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeliveryResponse"] | null;
+                };
+            };
+        };
+    };
+    my_delivery_history_api_v1_deliveries_mine_history_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeliveryResponse"][];
+                };
+            };
+        };
+    };
+    confirm_delivery_api_v1_deliveries__delivery_id__confirm_delivery_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                delivery_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConfirmDeliveryRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeliveryResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    cancel_delivery_api_v1_deliveries__delivery_id__cancel_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                delivery_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeliveryResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    confirm_pickup_api_v1_deliveries_store_orders__store_order_id__confirm_pickup_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                store_order_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConfirmPickupRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeliveryStopResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delivery_for_customer_api_v1_deliveries_by_order__order_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                order_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustomerDeliveryResponse"] | null;
                 };
             };
             /** @description Validation Error */

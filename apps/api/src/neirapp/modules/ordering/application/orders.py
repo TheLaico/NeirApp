@@ -122,6 +122,52 @@ class ListMyOrders:
             return await uow.orders.list_by_customer(customer_id)
 
 
+class GetOrderRaw:
+    """Lectura interna sin verificar dueño, para el `OrderingPort` de `dispatch` (mismo patrón que
+    `GetStoreRaw`/`GetProductRaw` en `stores`). Nunca se expone por HTTP."""
+
+    def __init__(self, uow_factory: UnitOfWorkFactory) -> None:
+        self._uow_factory = uow_factory
+
+    async def __call__(self, order_id: UUID) -> Order | None:
+        async with self._uow_factory() as uow:
+            return await uow.orders.get(order_id)
+
+
+class ListClaimableOrders:
+    """Pedidos que un repartidor podría ofrecerse a llevar (ver `OrderRepository.list_claimable`).
+    Interna, para `dispatch` — la decisión de si ya tienen repartidor asignado no la sabe
+    `ordering`, así que esta lista puede incluir pedidos que `dispatch` ya filtre por su cuenta."""
+
+    def __init__(self, uow_factory: UnitOfWorkFactory) -> None:
+        self._uow_factory = uow_factory
+
+    async def __call__(self) -> list[Order]:
+        async with self._uow_factory() as uow:
+            return await uow.orders.list_claimable()
+
+
+class MarkStoreOrderHandedOverRaw:
+    """Transiciona un `StoreOrder` a `HANDED_OVER`. La autorización (¿es esta persona la dueña de
+    la tienda?) ya la hizo `dispatch` con su propio `StoresPort` antes de llamar aquí — este caso
+    de uso no vuelve a verificarla, y por eso nunca se expone por HTTP directamente."""
+
+    def __init__(self, uow_factory: UnitOfWorkFactory, clock: Clock) -> None:
+        self._uow_factory = uow_factory
+        self._clock = clock
+
+    async def __call__(self, store_order_id: UUID) -> StoreOrder:
+        async with self._uow_factory() as uow:
+            view = await uow.orders.get_store_order(store_order_id)
+            if view is None:
+                raise StoreOrderNotFound()
+            store_order = view.store_order
+            store_order.mark_handed_over(self._clock.now())
+            await uow.orders.update_store_order(store_order)
+            await uow.commit()
+        return store_order
+
+
 class PayOrder:
     """Cobra el pedido completo de una vez (un solo cargo cubre varias tiendas). Si la pasarela
     lo aprueba, cada `StoreOrder` pasa a `PAID` y su tienda recibe una notificación en vivo.

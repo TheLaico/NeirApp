@@ -39,6 +39,13 @@ class OrderRepository(Protocol):
 
     async def list_by_customer(self, customer_id: UUID) -> list[Order]: ...
 
+    async def list_claimable(self) -> list[Order]:
+        """Pedidos con al menos un `StoreOrder` en accepted/preparing/ready: ya pagados y con
+        algo por recoger o en camino a estarlo. Lo consume `dispatch` para ofrecer entregas —
+        `ordering` no sabe si ya tienen repartidor asignado, eso lo filtra `dispatch` con su
+        propio estado."""
+        ...
+
     async def get_store_order(self, store_order_id: UUID) -> StoreOrderView | None: ...
 
     async def list_by_store(

@@ -4,8 +4,11 @@ from neirapp.modules.ordering.application.orders import (
     AcceptStoreOrder,
     CreateOrder,
     GetOrder,
+    GetOrderRaw,
+    ListClaimableOrders,
     ListMyOrders,
     ListStoreOrders,
+    MarkStoreOrderHandedOverRaw,
     MarkStoreOrderReady,
     PayOrder,
     RejectStoreOrder,
@@ -27,3 +30,8 @@ class OrderingApp:
     reject_store_order: RejectStoreOrder
     start_preparing_store_order: StartPreparingStoreOrder
     mark_store_order_ready: MarkStoreOrderReady
+
+    # Consumo interno de `dispatch` (nunca por HTTP): ver los docstrings de cada caso de uso.
+    get_order_raw: GetOrderRaw
+    list_claimable_orders: ListClaimableOrders
+    mark_store_order_handed_over_raw: MarkStoreOrderHandedOverRaw

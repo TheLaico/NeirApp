@@ -8,6 +8,7 @@ export const STATUS_LABELS: Record<StoreOrderStatus, string> = {
   rejected: "Rechazado",
   preparing: "Preparando",
   ready: "Listo",
+  handed_over: "Con el repartidor",
 };
 
 const STATUS_COLORS: Record<StoreOrderStatus, string> = {
@@ -17,6 +18,7 @@ const STATUS_COLORS: Record<StoreOrderStatus, string> = {
   rejected: orderStatusColors.issue,
   preparing: orderStatusColors.preparing,
   ready: orderStatusColors.ready,
+  handed_over: orderStatusColors.onTheWay,
 };
 
 export function StoreOrderStatusBadge({ status }: { status: StoreOrderStatus }) {

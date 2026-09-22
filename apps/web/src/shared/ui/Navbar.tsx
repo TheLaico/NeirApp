@@ -1,4 +1,4 @@
-import { LogOut, Package, ShieldCheck, ShoppingCart, Store, UserRound } from "lucide-react";
+import { Bike, LogOut, Package, ShieldCheck, ShoppingCart, Store, UserRound, Wallet } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router";
 import { useLogout } from "../../features/auth/hooks";
@@ -55,6 +55,22 @@ export function Navbar() {
           >
             <Store size={18} aria-hidden="true" />
             Mi tienda
+          </Link>
+
+          <Link
+            to="/repartidor"
+            aria-label="Repartidor"
+            className="grid size-10 place-items-center rounded-full transition-colors hover:bg-white/10"
+          >
+            <Bike size={20} aria-hidden="true" />
+          </Link>
+
+          <Link
+            to="/billetera"
+            aria-label="Mi billetera"
+            className="grid size-10 place-items-center rounded-full transition-colors hover:bg-white/10"
+          >
+            <Wallet size={20} aria-hidden="true" />
           </Link>
 
           <Link

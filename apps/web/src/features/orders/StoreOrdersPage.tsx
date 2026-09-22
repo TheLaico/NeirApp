@@ -1,9 +1,13 @@
 import { ArrowLeft, Bell } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router";
+import { errorMessage } from "../../lib/errors";
 import { formatCop } from "../../lib/money";
+import { ErrorAlert } from "../../shared/ui/Alert";
 import { Button } from "../../shared/ui/Button";
 import { Navbar } from "../../shared/ui/Navbar";
+import { TextField } from "../../shared/ui/TextField";
+import { useConfirmPickup } from "../dispatch/api";
 import { useMyStore } from "../stores/api";
 import {
   useAcceptStoreOrder,
@@ -15,6 +19,41 @@ import {
 import { StoreOrderStatusBadge } from "./StoreOrderStatusBadge";
 import type { StoreOrderDto, StoreOrderStatus } from "./types";
 import { useStoreOrdersSocket } from "./useStoreOrdersSocket";
+
+function ConfirmPickupForm({ storeOrderId }: { storeOrderId: string }) {
+  const [code, setCode] = useState("");
+  const confirmPickup = useConfirmPickup();
+
+  return (
+    <form
+      noValidate
+      onSubmit={(e) => {
+        e.preventDefault();
+        confirmPickup.mutate({ storeOrderId, code });
+      }}
+      className="space-y-2"
+    >
+      {confirmPickup.isError && <ErrorAlert message={errorMessage(confirmPickup.error)} />}
+      {confirmPickup.isSuccess ? (
+        <p className="text-sm font-medium text-brand">Recogida confirmada.</p>
+      ) : (
+        <div className="flex items-end gap-2">
+          <div className="flex-1">
+            <TextField
+              label="Código del repartidor"
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              maxLength={16}
+            />
+          </div>
+          <Button type="submit" className="h-11 px-3" loading={confirmPickup.isPending}>
+            Confirmar
+          </Button>
+        </div>
+      )}
+    </form>
+  );
+}
 
 const TABS: { value: StoreOrderStatus | undefined; label: string }[] = [
   { value: "paid", label: "Nuevos" },
@@ -72,6 +111,9 @@ function StoreOrderActions({ storeOrder }: { storeOrder: StoreOrderDto }) {
         Marcar listo
       </Button>
     );
+  }
+  if (storeOrder.status === "ready") {
+    return <ConfirmPickupForm storeOrderId={storeOrder.id} />;
   }
   return null;
 }

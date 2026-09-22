@@ -90,6 +90,24 @@ layers = [
   "neirapp.modules.ordering.domain",
 ]
 
+[[tool.importlinter.contracts]]
+name = "dispatch: capas"
+type = "layers"
+layers = [
+  "neirapp.modules.dispatch.presentation | neirapp.modules.dispatch.infrastructure",
+  "neirapp.modules.dispatch.application",
+  "neirapp.modules.dispatch.domain",
+]
+
+[[tool.importlinter.contracts]]
+name = "wallet: capas"
+type = "layers"
+layers = [
+  "neirapp.modules.wallet.presentation | neirapp.modules.wallet.infrastructure",
+  "neirapp.modules.wallet.application",
+  "neirapp.modules.wallet.domain",
+]
+
 # El dominio es Python puro: nada de frameworks ni de infraestructura.
 [[tool.importlinter.contracts]]
 name = "el dominio no depende de frameworks"
@@ -98,6 +116,8 @@ source_modules = [
   "neirapp.modules.identity.domain",
   "neirapp.modules.stores.domain",
   "neirapp.modules.ordering.domain",
+  "neirapp.modules.dispatch.domain",
+  "neirapp.modules.wallet.domain",
   "neirapp.shared.domain",
 ]
 forbidden_modules = ["fastapi", "sqlalchemy", "pydantic", "jwt", "argon2", "starlette"]
@@ -110,6 +130,8 @@ source_modules = [
   "neirapp.modules.identity.application",
   "neirapp.modules.stores.application",
   "neirapp.modules.ordering.application",
+  "neirapp.modules.dispatch.application",
+  "neirapp.modules.wallet.application",
   "neirapp.shared.application",
 ]
 forbidden_modules = ["fastapi", "sqlalchemy", "starlette"]
@@ -151,3 +173,46 @@ source_modules = [
   "neirapp.modules.ordering.application",
 ]
 forbidden_modules = ["neirapp.modules.stores", "neirapp.modules.identity"]
+
+# `wallet` es el ledger financiero: domain/application no deben conocer a ningún otro módulo, ni
+# siquiera para leer. Todo lo que necesitan (courier_id) llega como un simple UUID desde quien los
+# llame (`dispatch`). La presentación sí reutiliza el `CurrentUser` de `identity` (composición en
+# el borde, mismo patrón que `stores`).
+[[tool.importlinter.contracts]]
+name = "el dominio/aplicación de wallet no depende de otros módulos"
+type = "forbidden"
+source_modules = [
+  "neirapp.modules.wallet.domain",
+  "neirapp.modules.wallet.application",
+]
+forbidden_modules = [
+  "neirapp.modules.identity",
+  "neirapp.modules.stores",
+  "neirapp.modules.ordering",
+  "neirapp.modules.dispatch",
+]
+
+# domain/application de `dispatch` no importan `stores`, `ordering` ni `wallet` directamente: solo
+# a través de sus propios puertos (`StoresPort`, `OrderingPort`, `WalletPort`). Los adaptadores que
+# sí los conocen viven en `infrastructure/*_adapter.py`.
+[[tool.importlinter.contracts]]
+name = "el dominio/aplicación de dispatch no depende de stores, ordering, wallet ni identity"
+type = "forbidden"
+source_modules = [
+  "neirapp.modules.dispatch.domain",
+  "neirapp.modules.dispatch.application",
+]
+forbidden_modules = [
+  "neirapp.modules.stores",
+  "neirapp.modules.ordering",
+  "neirapp.modules.wallet",
+  "neirapp.modules.identity",
+]
+
+# `stores` y `ordering` no deben enterarse de que `dispatch` existe: la relación es de un solo
+# sentido, `dispatch` depende de ellos (vía puertos), nunca al revés.
+[[tool.importlinter.contracts]]
+name = "stores y ordering no dependen de dispatch"
+type = "forbidden"
+source_modules = ["neirapp.modules.stores", "neirapp.modules.ordering"]
+forbidden_modules = ["neirapp.modules.dispatch"]
