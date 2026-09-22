@@ -1,0 +1,93 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "neirapp-api"
+version = "0.1.0"
+description = "API de NeirApp: marketplace local de Neira, Caldas."
+requires-python = ">=3.12"
+dependencies = [
+  "fastapi>=0.115",
+  "uvicorn[standard]>=0.30",
+  "sqlalchemy[asyncio]>=2.0.35",
+  "asyncpg>=0.30",
+  "alembic>=1.13",
+  "pydantic>=2.8",
+  "pydantic-settings>=2.4",
+  "email-validator>=2.2",
+  "pyjwt>=2.9",
+  "argon2-cffi>=23.1",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.3",
+  "pytest-asyncio>=0.24",
+  "httpx>=0.27",
+  "aiosqlite>=0.20",
+  "ruff>=0.6",
+  "mypy>=1.11",
+  "import-linter>=2.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/neirapp"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM", "ASYNC", "S", "RUF"]
+ignore = ["S101"]  # assert en tests
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S105", "S106"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+plugins = ["pydantic.mypy"]
+mypy_path = "src"
+packages = ["neirapp"]
+
+[tool.importlinter]
+root_package = "neirapp"
+include_external_packages = true
+
+# Cada módulo respeta la regla de dependencia: presentation e infrastructure -> application -> domain.
+[[tool.importlinter.contracts]]
+name = "identity: capas"
+type = "layers"
+layers = [
+  "neirapp.modules.identity.presentation | neirapp.modules.identity.infrastructure",
+  "neirapp.modules.identity.application",
+  "neirapp.modules.identity.domain",
+]
+
+# El dominio es Python puro: nada de frameworks ni de infraestructura.
+[[tool.importlinter.contracts]]
+name = "el dominio no depende de frameworks"
+type = "forbidden"
+source_modules = [
+  "neirapp.modules.identity.domain",
+  "neirapp.shared.domain",
+]
+forbidden_modules = ["fastapi", "sqlalchemy", "pydantic", "jwt", "argon2", "starlette"]
+
+# La capa de aplicación tampoco conoce frameworks web ni el ORM.
+[[tool.importlinter.contracts]]
+name = "la aplicación no depende de web ni ORM"
+type = "forbidden"
+source_modules = [
+  "neirapp.modules.identity.application",
+  "neirapp.shared.application",
+]
+forbidden_modules = ["fastapi", "sqlalchemy", "starlette"]

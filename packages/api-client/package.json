@@ -1,0 +1,22 @@
+{
+  "name": "@neirapp/api-client",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Cliente TypeScript tipado de la API, generado desde openapi.json.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "export-openapi": "cd ../../apps/api && .venv/Scripts/python -m neirapp.export_openapi ../../packages/api-client/openapi.json",
+    "generate": "openapi-typescript openapi.json -o src/schema.d.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "openapi-fetch": "^0.13.0"
+  },
+  "devDependencies": {
+    "openapi-typescript": "^7.4.0",
+    "typescript": "^5.6.0"
+  }
+}

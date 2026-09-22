@@ -1,0 +1,21 @@
+{
+  "name": "neirapp",
+  "private": true,
+  "version": "0.1.0",
+  "description": "NeirApp: marketplace local de Neira, Caldas.",
+  "workspaces": [
+    "apps/web",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:web": "npm run dev -w @neirapp/web",
+    "build:web": "npm run build -w @neirapp/web",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "gen:api-client": "npm run generate -w @neirapp/api-client"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
