@@ -23,6 +23,10 @@ class StoreModel(Base):
     lat: Mapped[float] = mapped_column(Float)
     lng: Mapped[float] = mapped_column(Float)
     is_open: Mapped[bool] = mapped_column(default=True)
+    # Un admin debe aprobarla antes de que sea visible para clientes (backoffice de aprobación).
+    is_approved: Mapped[bool] = mapped_column(default=False, index=True)
+    # Distingue "rechazada" de "todavía sin revisar" (las dos empiezan con is_approved=False).
+    is_rejected: Mapped[bool] = mapped_column(default=False)
     created_at: Mapped[datetime] = mapped_column(UTCDateTime)
 
 

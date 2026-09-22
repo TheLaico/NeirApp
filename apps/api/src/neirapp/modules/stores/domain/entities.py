@@ -47,6 +47,12 @@ class Store:
     lat: float
     lng: float
     is_open: bool
+    is_approved: bool
+    # Distingue "un admin ya la revisó y la rechazó" de "todavía nadie la ha revisado". Sin este
+    # campo, aprobar y rechazar lucían igual (`is_approved=False` en los dos casos) y una tienda
+    # rechazada nunca salía de la cola de pendientes del backoffice — un bug real que se encontró
+    # probando el flujo de "Rechazar" en vivo (ver docs/ARCHITECTURE.md).
+    is_rejected: bool
     created_at: datetime
 
     @classmethod
@@ -72,11 +78,24 @@ class Store:
             lat=lat,
             lng=lng,
             is_open=True,
+            # Un admin debe revisarla antes de que aparezca en el mapa (backoffice de aprobación).
+            is_approved=False,
+            is_rejected=False,
             created_at=now,
         )
 
     def is_owned_by(self, user_id: UUID) -> bool:
         return self.owner_user_id == user_id
+
+    def set_approved(self, is_approved: bool) -> None:
+        """Aprobar limpia un rechazo previo; rechazar queda marcado para no reaparecer como
+        pendiente (ver el comentario de `is_rejected` más arriba)."""
+        self.is_approved = is_approved
+        self.is_rejected = not is_approved
+
+    def is_visible_to_customers(self) -> bool:
+        """Solo las tiendas aprobadas aparecen en el mapa, la búsqueda o su propia página."""
+        return self.is_approved
 
     def update_profile(
         self,

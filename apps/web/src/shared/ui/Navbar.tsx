@@ -1,4 +1,4 @@
-import { LogOut, ShoppingCart, Store, UserRound } from "lucide-react";
+import { LogOut, Package, ShieldCheck, ShoppingCart, Store, UserRound } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router";
 import { useLogout } from "../../features/auth/hooks";
@@ -39,12 +39,30 @@ export function Navbar() {
         </Link>
 
         <div className="flex items-center gap-1.5">
+          {user?.roles.includes("admin") && (
+            <Link
+              to="/admin/tiendas"
+              className="hidden items-center gap-2 rounded-full px-3.5 py-2 text-sm font-medium transition-colors hover:bg-white/10 md:flex"
+            >
+              <ShieldCheck size={18} aria-hidden="true" />
+              Admin
+            </Link>
+          )}
+
           <Link
             to="/mi-tienda"
             className="hidden items-center gap-2 rounded-full px-3.5 py-2 text-sm font-medium transition-colors hover:bg-white/10 sm:flex"
           >
             <Store size={18} aria-hidden="true" />
             Mi tienda
+          </Link>
+
+          <Link
+            to="/pedidos"
+            aria-label="Mis pedidos"
+            className="grid size-10 place-items-center rounded-full transition-colors hover:bg-white/10"
+          >
+            <Package size={20} aria-hidden="true" />
           </Link>
 
           <Link
@@ -61,41 +79,41 @@ export function Navbar() {
           </Link>
 
           <div ref={menuRef} className="relative">
-          <button
-            type="button"
-            aria-haspopup="menu"
-            aria-expanded={open}
-            onClick={() => setOpen((v) => !v)}
-            className="flex items-center gap-2.5 rounded-full py-1 pl-1 pr-3 transition-colors hover:bg-white/10"
-          >
-            <span className="grid size-9 place-items-center rounded-full bg-brand-soft text-brand-deep">
-              <UserRound size={20} aria-hidden="true" />
-            </span>
-            <span className="text-sm">
-              Bienvenido, <strong className="font-display font-semibold">{firstName}</strong>
-            </span>
-          </button>
-
-          {open && (
-            <div
-              role="menu"
-              className="absolute right-0 mt-2 w-56 overflow-hidden rounded-card border border-line bg-white p-1.5 text-ink shadow-raised"
+            <button
+              type="button"
+              aria-haspopup="menu"
+              aria-expanded={open}
+              onClick={() => setOpen((v) => !v)}
+              className="flex items-center gap-2.5 rounded-full py-1 pl-1 pr-3 transition-colors hover:bg-white/10"
             >
-              <div className="border-b border-line px-3 py-2.5">
-                <p className="truncate text-sm font-medium">{user?.full_name}</p>
-                <p className="truncate text-xs text-muted">{user?.email}</p>
-              </div>
-              <button
-                type="button"
-                role="menuitem"
-                onClick={() => logout.mutate()}
-                className="mt-1.5 flex w-full items-center gap-2.5 rounded-control px-3 py-2.5 text-sm hover:bg-brand-soft"
+              <span className="grid size-9 place-items-center rounded-full bg-brand-soft text-brand-deep">
+                <UserRound size={20} aria-hidden="true" />
+              </span>
+              <span className="text-sm">
+                Bienvenido, <strong className="font-display font-semibold">{firstName}</strong>
+              </span>
+            </button>
+
+            {open && (
+              <div
+                role="menu"
+                className="absolute right-0 mt-2 w-56 overflow-hidden rounded-card border border-line bg-white p-1.5 text-ink shadow-raised"
               >
-                <LogOut size={16} aria-hidden="true" />
-                Cerrar sesión
-              </button>
-            </div>
-          )}
+                <div className="border-b border-line px-3 py-2.5">
+                  <p className="truncate text-sm font-medium">{user?.full_name}</p>
+                  <p className="truncate text-xs text-muted">{user?.email}</p>
+                </div>
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => logout.mutate()}
+                  className="mt-1.5 flex w-full items-center gap-2.5 rounded-control px-3 py-2.5 text-sm hover:bg-brand-soft"
+                >
+                  <LogOut size={16} aria-hidden="true" />
+                  Cerrar sesión
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>

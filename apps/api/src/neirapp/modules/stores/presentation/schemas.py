@@ -24,6 +24,10 @@ class SetStoreOpenRequest(BaseModel):
     is_open: bool
 
 
+class SetStoreApprovalRequest(BaseModel):
+    is_approved: bool
+
+
 class StoreResponse(BaseModel):
     id: UUID
     owner_user_id: UUID
@@ -33,6 +37,8 @@ class StoreResponse(BaseModel):
     lat: float
     lng: float
     is_open: bool
+    is_approved: bool
+    is_rejected: bool
 
     @classmethod
     def from_domain(cls, store: Store) -> "StoreResponse":
@@ -45,6 +51,8 @@ class StoreResponse(BaseModel):
             lat=store.lat,
             lng=store.lng,
             is_open=store.is_open,
+            is_approved=store.is_approved,
+            is_rejected=store.is_rejected,
         )
 
 

@@ -68,6 +68,20 @@ async def _load_owned_product(
     return product
 
 
+class GetProductRaw:
+    """Lectura interna para el `CatalogPort` de `ordering` (ver `GetStoreRaw` en stores.py)."""
+
+    def __init__(self, uow_factory: UnitOfWorkFactory) -> None:
+        self._uow_factory = uow_factory
+
+    async def __call__(self, store_id: UUID, product_id: UUID) -> Product | None:
+        async with self._uow_factory() as uow:
+            product = await uow.products.get(product_id)
+        if product is None or product.store_id != store_id:
+            return None
+        return product
+
+
 class UpdateProduct:
     def __init__(self, uow_factory: UnitOfWorkFactory) -> None:
         self._uow_factory = uow_factory

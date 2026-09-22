@@ -18,6 +18,8 @@ def _to_store(model: StoreModel) -> Store:
         lat=model.lat,
         lng=model.lng,
         is_open=model.is_open,
+        is_approved=model.is_approved,
+        is_rejected=model.is_rejected,
         created_at=model.created_at,
     )
 
@@ -50,6 +52,8 @@ class SqlAlchemyStoreRepository:
                 lat=store.lat,
                 lng=store.lng,
                 is_open=store.is_open,
+                is_approved=store.is_approved,
+                is_rejected=store.is_rejected,
                 created_at=store.created_at,
             )
         )
@@ -66,10 +70,18 @@ class SqlAlchemyStoreRepository:
         model = result.scalar_one_or_none()
         return _to_store(model) if model else None
 
-    async def list_all(self, *, category: StoreCategory | None = None) -> list[Store]:
+    async def list_all(
+        self, *, category: StoreCategory | None = None, is_approved: bool | None = None
+    ) -> list[Store]:
         stmt = select(StoreModel).order_by(StoreModel.created_at.desc())
         if category is not None:
             stmt = stmt.where(StoreModel.category == category.value)
+        if is_approved is not None:
+            stmt = stmt.where(StoreModel.is_approved == is_approved)
+            if is_approved is False:
+                # "Pendientes" = todavía sin revisar. Sin este filtro, una tienda rechazada
+                # (is_approved=False, is_rejected=True) nunca saldría de la cola del backoffice.
+                stmt = stmt.where(StoreModel.is_rejected.is_(False))
         result = await self._session.execute(stmt)
         return [_to_store(m) for m in result.scalars()]
 
@@ -83,6 +95,8 @@ class SqlAlchemyStoreRepository:
         model.lat = store.lat
         model.lng = store.lng
         model.is_open = store.is_open
+        model.is_approved = store.is_approved
+        model.is_rejected = store.is_rejected
         await self._session.flush()
 
 
@@ -145,6 +159,7 @@ class SqlAlchemyProductRepository:
             .join(StoreModel, StoreModel.id == StoreProductModel.store_id)
             .where(
                 StoreProductModel.is_available,
+                StoreModel.is_approved,
                 or_(
                     func.lower(StoreProductModel.name).like(needle),
                     func.lower(StoreProductModel.description).like(needle),

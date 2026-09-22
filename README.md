@@ -39,7 +39,11 @@ npm run dev:web
 ```
 
 La web queda en `http://localhost:5173`, con `/api` proxeado a la API en `:8000` (ver
-`apps/web/vite.config.ts`).
+`apps/web/vite.config.ts`; el proxy reenvía HTTP y WebSocket).
+
+Para probar el backoffice de aprobación de tiendas (`/admin/tiendas`) necesitas un usuario con rol
+`admin`; no hay flujo de autoservicio para eso — ver
+["Cómo conceder el rol admin en desarrollo"](docs/ARCHITECTURE.md#cómo-conceder-el-rol-admin-en-desarrollo).
 
 ## Comandos útiles
 

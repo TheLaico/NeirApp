@@ -179,6 +179,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/stores/pending": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Pending Stores
+         * @description Backoffice: tiendas que un admin todavía no ha aprobado ni rechazado.
+         */
+        get: operations["list_pending_stores_api_v1_stores_pending_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/stores/{store_id}": {
         parameters: {
             query?: never;
@@ -212,6 +232,26 @@ export interface paths {
         head?: never;
         /** Set Store Open */
         patch: operations["set_store_open_api_v1_stores__store_id__open_patch"];
+        trace?: never;
+    };
+    "/api/v1/stores/{store_id}/approval": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Set Store Approval
+         * @description Backoffice: aprobar o rechazar una tienda. Solo administradores.
+         */
+        patch: operations["set_store_approval_api_v1_stores__store_id__approval_patch"];
         trace?: never;
     };
     "/api/v1/stores/{store_id}/products": {
@@ -284,6 +324,147 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/orders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List My Orders */
+        get: operations["list_my_orders_api_v1_orders_get"];
+        put?: never;
+        /** Create Order */
+        post: operations["create_order_api_v1_orders_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/orders/{order_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Order */
+        get: operations["get_order_api_v1_orders__order_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/orders/{order_id}/pay": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Pay Order
+         * @description Cobra el pedido con la pasarela configurada (en desarrollo, `FakePaymentGateway`: aprueba
+         *     siempre). Ver docs/ARCHITECTURE.md sobre cómo se conecta una pasarela real.
+         */
+        post: operations["pay_order_api_v1_orders__order_id__pay_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/stores/{store_id}/orders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Store Orders */
+        get: operations["list_store_orders_api_v1_stores__store_id__orders_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/store-orders/{store_order_id}/accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Accept Store Order */
+        post: operations["accept_store_order_api_v1_store_orders__store_order_id__accept_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/store-orders/{store_order_id}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reject Store Order */
+        post: operations["reject_store_order_api_v1_store_orders__store_order_id__reject_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/store-orders/{store_order_id}/preparing": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Start Preparing Store Order */
+        post: operations["start_preparing_store_order_api_v1_store_orders__store_order_id__preparing_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/store-orders/{store_order_id}/ready": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Mark Store Order Ready */
+        post: operations["mark_store_order_ready_api_v1_store_orders__store_order_id__ready_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -298,6 +479,20 @@ export interface components {
         AuthResponse: {
             user: components["schemas"]["UserResponse"];
             tokens: components["schemas"]["TokensResponse"];
+        };
+        /** CreateOrderRequest */
+        CreateOrderRequest: {
+            /** Delivery Lat */
+            delivery_lat: number;
+            /** Delivery Lng */
+            delivery_lng: number;
+            /**
+             * Delivery Notes
+             * @default
+             */
+            delivery_notes: string;
+            /** Items */
+            items: components["schemas"]["OrderItemRequest"][];
         };
         /** CreateProductRequest */
         CreateProductRequest: {
@@ -339,6 +534,65 @@ export interface components {
             email: string;
             /** Password */
             password: string;
+        };
+        /** OrderItemRequest */
+        OrderItemRequest: {
+            /**
+             * Store Id
+             * Format: uuid
+             */
+            store_id: string;
+            /**
+             * Product Id
+             * Format: uuid
+             */
+            product_id: string;
+            /** Quantity */
+            quantity: number;
+        };
+        /** OrderLineResponse */
+        OrderLineResponse: {
+            /**
+             * Product Id
+             * Format: uuid
+             */
+            product_id: string;
+            /** Name */
+            name: string;
+            /** Price Cop */
+            price_cop: number;
+            /** Quantity */
+            quantity: number;
+            /** Subtotal Cop */
+            subtotal_cop: number;
+        };
+        /** OrderResponse */
+        OrderResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Customer Id
+             * Format: uuid
+             */
+            customer_id: string;
+            /** Delivery Lat */
+            delivery_lat: number;
+            /** Delivery Lng */
+            delivery_lng: number;
+            /** Delivery Notes */
+            delivery_notes: string;
+            /** Total Cop */
+            total_cop: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Store Orders */
+            store_orders: components["schemas"]["StoreOrderResponse"][];
         };
         /** ProductResponse */
         ProductResponse: {
@@ -405,6 +659,11 @@ export interface components {
             /** Is Available */
             is_available: boolean;
         };
+        /** SetStoreApprovalRequest */
+        SetStoreApprovalRequest: {
+            /** Is Approved */
+            is_approved: boolean;
+        };
         /** SetStoreOpenRequest */
         SetStoreOpenRequest: {
             /** Is Open */
@@ -416,6 +675,50 @@ export interface components {
          * @enum {string}
          */
         StoreCategory: "general" | "restaurant" | "supermarket" | "pharmacy" | "bakery" | "cafe";
+        /** StoreOrderResponse */
+        StoreOrderResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Order Id
+             * Format: uuid
+             */
+            order_id: string;
+            /**
+             * Store Id
+             * Format: uuid
+             */
+            store_id: string;
+            /** Store Name */
+            store_name: string;
+            status: components["schemas"]["StoreOrderStatus"];
+            /** Lines */
+            lines: components["schemas"]["OrderLineResponse"][];
+            /** Subtotal Cop */
+            subtotal_cop: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /**
+         * StoreOrderStatus
+         * @description Máquina de estados del pedido de una tienda dentro de un `Order`.
+         *
+         *     No incluye `HANDED_OVER` todavía: la entrega a un repartidor es la Fase 3 del roadmap
+         *     (módulo `dispatch`), que no existe aún. `READY` es el estado terminal de esta fase.
+         * @enum {string}
+         */
+        StoreOrderStatus: "pending_payment" | "paid" | "accepted" | "rejected" | "preparing" | "ready";
         /** StoreResponse */
         StoreResponse: {
             /**
@@ -439,6 +742,10 @@ export interface components {
             lng: number;
             /** Is Open */
             is_open: boolean;
+            /** Is Approved */
+            is_approved: boolean;
+            /** Is Rejected */
+            is_rejected: boolean;
         };
         /**
          * TermsDocument
@@ -881,6 +1188,26 @@ export interface operations {
             };
         };
     };
+    list_pending_stores_api_v1_stores_pending_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoreResponse"][];
+                };
+            };
+        };
+    };
     get_store_api_v1_stores__store_id__get: {
         parameters: {
             query?: never;
@@ -959,6 +1286,41 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["SetStoreOpenRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoreResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_store_approval_api_v1_stores__store_id__approval_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                store_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetStoreApprovalRequest"];
             };
         };
         responses: {
@@ -1173,6 +1535,278 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SearchResultResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_my_orders_api_v1_orders_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderResponse"][];
+                };
+            };
+        };
+    };
+    create_order_api_v1_orders_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateOrderRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_order_api_v1_orders__order_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                order_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    pay_order_api_v1_orders__order_id__pay_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                order_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_store_orders_api_v1_stores__store_id__orders_get: {
+        parameters: {
+            query?: {
+                status?: components["schemas"]["StoreOrderStatus"] | null;
+            };
+            header?: never;
+            path: {
+                store_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoreOrderResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    accept_store_order_api_v1_store_orders__store_order_id__accept_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                store_order_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoreOrderResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reject_store_order_api_v1_store_orders__store_order_id__reject_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                store_order_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoreOrderResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    start_preparing_store_order_api_v1_store_orders__store_order_id__preparing_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                store_order_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoreOrderResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    mark_store_order_ready_api_v1_store_orders__store_order_id__ready_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                store_order_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoreOrderResponse"];
                 };
             };
             /** @description Validation Error */

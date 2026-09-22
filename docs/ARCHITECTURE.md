@@ -3,9 +3,10 @@
 Marketplace local de Neira, Caldas: tiendas con catálogo en línea, clientes que compran de varias
 tiendas a la vez y repartidores que recogen y entregan. Este documento es la referencia de diseño.
 
-**Implementado:** Fase 0 (monorepo, módulo `identity`) y Fase 1 (mapa de Neira, módulo `stores`
-con catálogo, carrito multi-tienda, búsqueda, panel del comercio). Pendiente: Fase 2 en adelante
-(pedidos, pagos, despacho de repartidores, wallet).
+**Implementado:** Fase 0 (monorepo, módulo `identity`), Fase 1 (mapa de Neira, módulo `stores` con
+catálogo, carrito multi-tienda, búsqueda, panel del comercio) y Fase 2 (módulo `ordering`: pedidos
+multi-tienda, pago con pasarela intercambiable, notificaciones en vivo al comercio, backoffice de
+aprobación de tiendas). Pendiente: Fase 3 en adelante (despacho de repartidores, wallet real).
 
 ## Decisiones
 
@@ -117,21 +118,99 @@ el resto del sistema — los repos ya son intercambiables detrás de sus puertos
   para la Fase 4.
 - **Dinero**: `price_cop` es un entero (el peso colombiano no usa decimales), validado en el dominio
   (`0 < price_cop <= 50_000_000`).
+- **Backoffice de aprobación** (Fase 2): una tienda nace con `is_approved=False` y solo aparece en
+  el mapa, la búsqueda o su propia página pública una vez que un admin la aprueba
+  (`PATCH /stores/{id}/approval`, protegido con `require_roles(Role.ADMIN)` de `identity`). El
+  dueño puede seguir viendo y administrando su tienda mientras está pendiente (`GET /stores/me` no
+  filtra por aprobación). **Lección de esta fase:** la primera versión solo tenía `is_approved:
+  bool`, así que "aprobar" y "rechazar" dejaban el mismo valor (`False`) y una tienda rechazada
+  nunca salía de la cola de pendientes del backoffice — un admin la rechazaba y, al recargar,
+  seguía ahí. Se encontró probando el botón "Rechazar" de verdad en el navegador (ningún test
+  automatizado cubría ese flujo). El arreglo agrega `is_rejected: bool`: `set_approved(True)` limpia
+  el rechazo, `set_approved(False)` lo marca, y el listado de pendientes excluye
+  `is_rejected=True`. No hay motivo/comentario del rechazo todavía — MVP.
+- **Lectura interna sin filtrar** (`GetStoreRaw`, `GetProductRaw` en `stores/application/`): el
+  módulo `ordering` necesita saber si una tienda existe y *por qué* no está disponible (no
+  aprobada, cerrada), no solo un 404 genérico. Estos dos casos de uso nunca se exponen por HTTP;
+  solo los usa el adaptador de `ordering` (ver más abajo).
 
 ### Endpoints (`/api/v1`)
 
 | Método | Ruta | Auth | Notas |
 |---|---|---|---|
 | POST | `/stores` | Bearer | El usuario autenticado queda como dueño. |
-| GET | `/stores` | — | Filtro opcional `category`. Alimenta el mapa. |
-| GET | `/stores/me` | Bearer | La tienda del usuario, o `null`. |
-| GET | `/stores/{id}` | — | 404 si no existe. |
+| GET | `/stores` | — | Filtro opcional `category`. Solo tiendas aprobadas. Alimenta el mapa. |
+| GET | `/stores/me` | Bearer | La tienda del usuario, o `null`. No filtra por aprobación. |
+| GET | `/stores/pending` | Bearer, admin | Tiendas sin revisar (backoffice). |
+| GET | `/stores/{id}` | — | 404 si no existe o no está aprobada. |
 | PATCH | `/stores/{id}` | Bearer, dueño | Nombre/categoría/descripción. |
 | PATCH | `/stores/{id}/open` | Bearer, dueño | Abrir/cerrar la tienda. |
+| PATCH | `/stores/{id}/approval` | Bearer, admin | Aprobar o rechazar (backoffice). |
 | GET | `/stores/{id}/products` | — | Filtro opcional `only_available`. |
 | POST/PATCH/DELETE | `/stores/{id}/products/...` | Bearer, dueño | CRUD del catálogo. |
 | PATCH | `/stores/{id}/products/{id}/availability` | Bearer, dueño | Agotado/disponible. |
-| GET | `/products/search` | — | `q`, `category`, `max_price_cop`, `sort`. |
+| GET | `/products/search` | — | `q`, `category`, `max_price_cop`, `sort`. Solo tiendas aprobadas. |
+
+## Módulo `ordering` (implementado, Fase 2)
+
+Pedidos multi-tienda: el cliente arma un carrito con productos de varias tiendas, paga una vez por
+el total y cada tienda recibe y gestiona su parte por separado.
+
+- **`Order` → `StoreOrder` → `OrderLine`**: un pedido tiene un `StoreOrder` por cada tienda
+  involucrada, cada uno con su propia máquina de estados: `pending_payment → paid → accepted|
+  rejected → preparing → ready`. `ready` es terminal en esta fase — entregarle el pedido a un
+  repartidor (`HANDED_OVER`) es la Fase 3 (módulo `dispatch`, no existe aún). Las transiciones
+  inválidas (aceptar algo no pagado, marcar listo algo rechazado) se rechazan explícitas con
+  `InvalidStoreOrderTransition`, verificado con una tabla `_TRANSITIONS` en el dominio.
+- **El precio siempre sale del catálogo, nunca del cliente**: `OrderItemRequest` no tiene ningún
+  campo de precio — es estructuralmente imposible mandar uno. `CreateOrder` lee nombre/precio
+  vigentes del producto en el instante del pedido y los copia a `OrderLine` (snapshot inmutable);
+  si la tienda cambia el precio después, los pedidos ya hechos no se alteran.
+- **`CatalogPort`** (`application/ports.py`): capa anticorrupción hacia `stores`. `ordering` nunca
+  importa las entidades ni los repos de `stores`, solo dos snapshots de solo lectura
+  (`StoreSnapshot`, `ProductSnapshot`). El adaptador real (`infrastructure/catalog_adapter.py`)
+  vive en infraestructura y es el único archivo de todo el módulo que sabe que `stores` existe —
+  dos contratos de `import-linter` lo verifican (`el dominio/aplicación de ordering no depende de
+  stores ni identity`, `stores no depende de ordering`).
+- **`store_owner_user_id` va copiado en cada `StoreOrder`** (no se relee de `stores` en cada
+  acción): aceptar/rechazar/preparar/marcar-listo autorizan comparando ese campo contra el usuario
+  autenticado, sin ida y vuelta al módulo `stores`. Solo `ListStoreOrders` (listar pedidos de una
+  tienda que quizás no tiene ninguno todavía) necesita `CatalogPort` para saber quién es el dueño.
+- **Pago**: puerto `PaymentGateway` (`charge(order_id, amount_cop) -> bool`), con
+  `FakePaymentGateway` como adaptador de desarrollo (aprueba siempre, al instante, sin redirección
+  ni tarjeta). Un cobro cubre el pedido completo aunque tenga varias tiendas — la dispersión del
+  dinero a cada una, descontando comisión, es la Fase 3 (`wallet`); aquí solo se confirma el cobro.
+  Cambiar a una pasarela real (Wompi, ePayco, Mercado Pago) es un adaptador nuevo detrás del mismo
+  puerto; una integración real necesitaría además un flujo asíncrono (checkout → redirección →
+  webhook firmado e idempotente) en vez de una respuesta síncrona — ver "Riesgos abiertos".
+- **Notificaciones en vivo al comercio**: `WS /stores/{id}/orders/ws` (FastAPI WebSocket nativo).
+  `ConnectionManager` (en `presentation/`, no en `infrastructure/` — administrar objetos
+  `WebSocket` crudos es un detalle de transporte web, no un adaptador a un servicio externo) es una
+  sola instancia compartida: el router la usa directo para `connect`/`disconnect`, y se le pasa a
+  `PayOrder` como implementación (estructural) del puerto `StoreNotifier`. El mensaje es solo un
+  aviso ("algo cambió") — el cliente siempre vuelve a pedir el estado real por REST, nunca confía
+  en el payload del socket. Alcanza para un solo proceso; con varias instancias en producción hace
+  falta pub/sub (Redis) para que la notificación llegue sin importar en cuál instancia esté
+  conectado el comercio.
+- **Autenticación del WebSocket**: el navegador no puede mandar headers en el *handshake* de un
+  WebSocket, así que el access token va en la query string (`?token=...`). Es una simplificación
+  conocida — un token de corta duración en una URL puede quedar en logs del servidor o del proxy;
+  antes de producción conviene un *ticket* de un solo uso de vida cortísima en vez del JWT completo.
+
+### Endpoints (`/api/v1`)
+
+| Método/protocolo | Ruta | Auth | Notas |
+|---|---|---|---|
+| POST | `/orders` | Bearer | Crea el pedido desde el carrito (`pending_payment`). |
+| GET | `/orders` | Bearer | Los pedidos del cliente autenticado. |
+| GET | `/orders/{id}` | Bearer, dueño | Detalle de un pedido propio. |
+| POST | `/orders/{id}/pay` | Bearer, dueño | Cobra y marca cada `StoreOrder` como `paid`. |
+| GET | `/stores/{id}/orders` | Bearer, dueño de la tienda | Filtro opcional `status`. |
+| POST | `/store-orders/{id}/accept` | Bearer, dueño de la tienda | `paid → accepted`. |
+| POST | `/store-orders/{id}/reject` | Bearer, dueño de la tienda | `paid → rejected`. |
+| POST | `/store-orders/{id}/preparing` | Bearer, dueño de la tienda | `accepted → preparing`. |
+| POST | `/store-orders/{id}/ready` | Bearer, dueño de la tienda | `preparing → ready`. |
+| WS | `/stores/{id}/orders/ws?token=` | Query token, dueño de la tienda | Aviso de pedido nuevo. |
 
 ## Frontend
 
@@ -147,6 +226,8 @@ src/
     map/      # NeiraMap (MapLibre GL)
     search/   # página de búsqueda con filtros
     cart/     # carrito multi-tienda (Zustand+persist)
+    orders/   # checkout, mis pedidos, panel de pedidos del comercio, WS en vivo
+    admin/    # backoffice: aprobar/rechazar tiendas pendientes
     home/     # mapa + filtros por categoría
   lib/        # cliente API, manejo de errores, env, formato de moneda
   shared/ui/  # componentes de diseño (Button, TextField, Navbar, AuthLayout…)
@@ -177,6 +258,26 @@ en cada lectura y `useSyncExternalStore` entra en un bucle infinito de renders. 
 seleccionar el estado crudo (referencia estable) y derivar con `useMemo` en el componente. Se
 encontró en vivo en el navegador (ver "Riesgos abiertos" sobre por qué los tests con mocks no lo
 detectaron) y quedó como comentario en `cart/store.ts` para no repetirlo.
+
+### Pedidos y notificaciones en vivo
+
+`features/orders/CheckoutPage.tsx` reusa `NeiraMap` en modo `pickMode` para elegir la ubicación de
+entrega (el mismo componente que "elegir ubicación de la tienda" en Fase 1) y encadena
+`POST /orders` → `POST /orders/{id}/pay`. `features/orders/StoreOrdersPage.tsx` es el panel del
+comercio: pestañas por estado, botones de acción según el estado de cada `StoreOrder`, y
+`useStoreOrdersSocket` conectado a `WS /stores/{id}/orders/ws` para el aviso en vivo (banner +
+invalidación de la query — `useStoreOrders` además refresca cada 15 s como respaldo si la conexión
+tarda en reestablecerse). `features/admin/AdminStoresPage.tsx` es el backoffice de aprobación.
+
+**Lección de esta fase — el proxy de Vite no reenvía WebSockets por defecto:** el hook conectaba
+sin error visible, pero el servidor nunca veía la conexión (0 notificaciones en los logs de
+uvicorn, aunque REST funcionaba perfecto). La causa: `server.proxy: { "/api": "http://localhost:8000"
+}` en `vite.config.ts` reenvía HTTP pero no el *upgrade* de WebSocket — sin `ws: true` explícito,
+`ws://localhost:5173/api/...` se queda intentando conectar contra el propio Vite, que no tiene esa
+ruta. Ni los tests del backend (que hablan con FastAPI directo) ni los del frontend (WebSocket
+global mockeado) pasan por el proxy de desarrollo, así que ninguno lo detectaba — solo apareció
+probando la app real en el navegador con la API y la web corriendo por separado. El arreglo:
+`proxy: { "/api": { target: "http://localhost:8000", ws: true } }`.
 
 - **Cliente API tipado**: `packages/api-client` se genera con `openapi-typescript` a partir del
   OpenAPI exportado por la API (`npm run gen:api-client` desde la raíz, o los scripts del paquete).
@@ -219,12 +320,33 @@ para poder reusarse. Cuando llegue la Fase 5:
   son un rectángulo aproximado, no el polígono real del municipio. Reemplazar con datos de OSM
   antes de producción; ambos deben mantenerse sincronizados hasta que el backend exponga la
   geocerca por API en vez de duplicarla.
-- **Sin aprobación de tiendas**: cualquier usuario autenticado puede abrir una tienda sin revisión
-  de un admin. Aceptable para probar con pocas tiendas reales (ver roadmap); antes de abrir el
-  registro al público hace falta el backoffice de aprobación (Fase 2/4) o al menos un flag manual.
-- **Carrito sin persistencia de servidor**: vive solo en `localStorage` del cliente (ver "Carrito"
-  arriba). Se pierde entre dispositivos y no bloquea inventario. Se resuelve con `Order`/
-  `StoreOrder` en la Fase 2.
+- **Carrito sin persistencia de servidor**: el carrito (antes de pagar) vive solo en `localStorage`
+  del cliente — se pierde entre dispositivos y no bloquea inventario mientras está en el carrito.
+  Una vez que el cliente paga, el pedido sí es 100% del servidor (`Order`/`StoreOrder`, Fase 2).
+- **Sin aprobación automática de un `store_staff`**: seguir sin ese rol (ver la nota de Fase 1) es
+  cada vez más notorio ahora que existe backoffice — hoy el único filtro es "un admin la aprobó",
+  no "quién puede administrarla". Sigue siendo aceptable a esta escala (una tienda, un dueño).
+- **No hay motivo de rechazo ni aviso al dueño**: `PATCH /stores/{id}/approval` con
+  `is_approved=false` rechaza la tienda pero no guarda por qué ni le notifica al dueño — el dueño
+  solo lo nota si vuelve a `/mi-tienda` y ve el aviso de "en revisión" (que hoy no distingue
+  "pendiente" de "rechazada" en el texto, aunque el backend sí lo sabe con `is_rejected`).
+- **Pasarela de pago falsa**: `FakePaymentGateway` aprueba cualquier cobro al instante — no hay
+  dinero real moviéndose. Conectar una pasarela real (Wompi, ePayco, Mercado Pago) es un adaptador
+  nuevo detrás de `PaymentGateway`, pero probablemente necesite cambiar el flujo síncrono actual
+  (`POST /orders/{id}/pay` responde ya pagado) por uno asíncrono con webhook firmado e idempotente
+  — en ese punto vale la pena extraer un módulo `payments` propio (ver la nota en el módulo
+  `ordering` sobre por qué se mantuvo fusionado por ahora).
+- **Token del WebSocket en la URL**: ver la nota de autenticación del WS en el módulo `ordering`.
+  Un JWT de 15 minutos en la query string puede quedar en logs de acceso; antes de producción,
+  cambiar a un *ticket* de un solo uso.
+- **Notificaciones en vivo sin Redis**: `ConnectionManager` guarda las conexiones WebSocket en
+  memoria del proceso. Funciona para un solo proceso (desarrollo y un despliegue pequeño), pero con
+  varias instancias detrás de un balanceador una notificación puede no llegarle a un comercio
+  conectado a otra instancia — hace falta pub/sub (Redis) antes de escalar horizontalmente.
+- **El cliente no recibe notificaciones en vivo de su pedido**: solo el comercio tiene WebSocket
+  (`ver "un comercio que no ve el pedido es el peor fallo posible"` del enunciado original). El
+  cliente ve el estado de su pedido solo al volver a `/pedidos/{id}` (REST, sin *polling*
+  automático todavía). Agregar esto es sencillo con la misma infraestructura de `ConnectionManager`.
 - **Mapa sin geografía real**: `NeiraMap` no usa tiles de OSM (ver "Mapa" arriba); las formas de
   vegetación/río son decorativas. La Fase 1 del plan original preveía un extracto de OSM en
   PMTiles — quedó pendiente por requerir datos y herramientas externas (tippecanoe) no disponibles
@@ -235,6 +357,36 @@ para poder reusarse. Cuando llegue la Fase 5:
   `CreateStoreForm`, y por lo tanto casi todo el flujo de compra) solo se verifican corriendo la
   app de verdad en el navegador. Si se agregan más páginas con lógica de estado no trivial, vale
   la pena revisar sus selectores con la misma lupa.
+
+## Cómo conceder el rol admin en desarrollo
+
+No hay ningún flujo de autoservicio para volverse admin (a propósito: sería un hueco de
+seguridad). En desarrollo, se otorga insertando una fila en `identity_user_roles` — pero
+**hazlo con SQLAlchemy, no con SQL crudo apuntando directo al archivo SQLite**. `Uuid` de
+SQLAlchemy guarda los UUID en SQLite como 32 caracteres hex *sin guiones* (no hay tipo UUID
+nativo); un `INSERT` a mano con el formato con guiones que devuelve la API en JSON
+(`"44a8ef6d-ca66-..."`) inserta una fila que nunca hace *match* con las que escribe la propia
+app, y cualquier query de roles la ignora en silencio. Esto se descubrió verificando el
+backoffice en vivo: el rol "existía" en la tabla pero `/stores/pending` seguía devolviendo 403.
+Ejemplo correcto (fuera de un endpoint HTTP, nunca expuesto):
+
+```python
+import asyncio
+from uuid import UUID
+from neirapp.bootstrap.settings import Settings
+from neirapp.shared.infrastructure.db import create_engine, create_session_factory
+from neirapp.modules.identity.infrastructure.models import UserRoleModel
+
+async def grant_admin(user_id: str) -> None:
+    engine = create_engine(Settings().database_url)
+    async with create_session_factory(engine)() as session:
+        # UUID(...), no el string tal cual: así SQLAlchemy lo serializa igual que el resto de la app.
+        session.add(UserRoleModel(user_id=UUID(user_id), role="admin"))
+        await session.commit()
+    await engine.dispose()
+
+asyncio.run(grant_admin("44a8ef6d-ca66-4c7e-a199-9613c85886ca"))
+```
 
 ## Cómo correr el proyecto
 

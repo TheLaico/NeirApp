@@ -1,6 +1,6 @@
 import { ArrowLeft, ShoppingBag, Trash2 } from "lucide-react";
 import { useMemo } from "react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { formatCop } from "../../lib/money";
 import { Button } from "../../shared/ui/Button";
 import { Navbar } from "../../shared/ui/Navbar";
@@ -8,6 +8,7 @@ import { QuantityStepper } from "../../shared/ui/QuantityStepper";
 import { cartGroups, cartTotalCop, useCartStore } from "./store";
 
 export function CartPage() {
+  const navigate = useNavigate();
   const rawGroups = useCartStore((s) => s.groups);
   const groups = useMemo(() => cartGroups(rawGroups), [rawGroups]);
   const total = useMemo(() => cartTotalCop(rawGroups), [rawGroups]);
@@ -77,8 +78,8 @@ export function CartPage() {
               <span className="font-display text-xl font-bold text-ink">{formatCop(total)}</span>
             </div>
 
-            <Button fullWidth disabled title="El pago llega en la Fase 2 del roadmap">
-              Continuar (próximamente)
+            <Button fullWidth onClick={() => navigate("/checkout")}>
+              Continuar
             </Button>
           </div>
         )}

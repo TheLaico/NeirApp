@@ -1,8 +1,10 @@
+from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Response, status
+from fastapi import APIRouter, Depends, Response, status
 
-from neirapp.modules.identity.presentation.dependencies import CurrentUser
+from neirapp.modules.identity.domain.entities import Role, User
+from neirapp.modules.identity.presentation.dependencies import CurrentUser, require_roles
 from neirapp.modules.stores.application.products import (
     CreateProductCommand,
     SearchProductsQuery,
@@ -16,11 +18,14 @@ from neirapp.modules.stores.presentation.schemas import (
     ProductResponse,
     SearchResultResponse,
     SetProductAvailabilityRequest,
+    SetStoreApprovalRequest,
     SetStoreOpenRequest,
     StoreResponse,
     UpdateProductRequest,
     UpdateStoreRequest,
 )
+
+RequireAdmin = Annotated[User, Depends(require_roles(Role.ADMIN))]
 
 router = APIRouter(tags=["stores"])
 
@@ -59,6 +64,13 @@ async def my_store(user: CurrentUser, stores: StoresDep) -> StoreResponse | None
     return StoreResponse.from_domain(store) if store else None
 
 
+@router.get("/stores/pending", response_model=list[StoreResponse])
+async def list_pending_stores(_admin: RequireAdmin, stores: StoresDep) -> list[StoreResponse]:
+    """Backoffice: tiendas que un admin todavía no ha aprobado ni rechazado."""
+    result = await stores.list_stores(is_approved=False)
+    return [StoreResponse.from_domain(s) for s in result]
+
+
 @router.get("/stores/{store_id}", response_model=StoreResponse)
 async def get_store(store_id: UUID, stores: StoresDep) -> StoreResponse:
     return StoreResponse.from_domain(await stores.get_store(store_id))
@@ -79,6 +91,15 @@ async def set_store_open(
     store_id: UUID, body: SetStoreOpenRequest, user: CurrentUser, stores: StoresDep
 ) -> StoreResponse:
     store = await stores.set_store_open(store_id, user.id, is_open=body.is_open)
+    return StoreResponse.from_domain(store)
+
+
+@router.patch("/stores/{store_id}/approval", response_model=StoreResponse)
+async def set_store_approval(
+    store_id: UUID, body: SetStoreApprovalRequest, _admin: RequireAdmin, stores: StoresDep
+) -> StoreResponse:
+    """Backoffice: aprobar o rechazar una tienda. Solo administradores."""
+    store = await stores.set_store_approval(store_id, is_approved=body.is_approved)
     return StoreResponse.from_domain(store)
 
 

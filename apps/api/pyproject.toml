@@ -81,6 +81,15 @@ layers = [
   "neirapp.modules.stores.domain",
 ]
 
+[[tool.importlinter.contracts]]
+name = "ordering: capas"
+type = "layers"
+layers = [
+  "neirapp.modules.ordering.presentation | neirapp.modules.ordering.infrastructure",
+  "neirapp.modules.ordering.application",
+  "neirapp.modules.ordering.domain",
+]
+
 # El dominio es Python puro: nada de frameworks ni de infraestructura.
 [[tool.importlinter.contracts]]
 name = "el dominio no depende de frameworks"
@@ -88,6 +97,7 @@ type = "forbidden"
 source_modules = [
   "neirapp.modules.identity.domain",
   "neirapp.modules.stores.domain",
+  "neirapp.modules.ordering.domain",
   "neirapp.shared.domain",
 ]
 forbidden_modules = ["fastapi", "sqlalchemy", "pydantic", "jwt", "argon2", "starlette"]
@@ -99,24 +109,45 @@ type = "forbidden"
 source_modules = [
   "neirapp.modules.identity.application",
   "neirapp.modules.stores.application",
+  "neirapp.modules.ordering.application",
   "neirapp.shared.application",
 ]
 forbidden_modules = ["fastapi", "sqlalchemy", "starlette"]
 
 # `stores` reutiliza el CurrentUser de `identity` en su capa de presentación (composición en el
-# borde), pero la dependencia es de un solo sentido: `identity` no debe saber que `stores` existe.
+# borde), pero la dependencia es de un solo sentido: `identity` no debe saber que `stores` (ni
+# `ordering`) existen.
 [[tool.importlinter.contracts]]
-name = "identity no depende de stores"
+name = "identity no depende de stores ni ordering"
 type = "forbidden"
 source_modules = ["neirapp.modules.identity"]
-forbidden_modules = ["neirapp.modules.stores"]
+forbidden_modules = ["neirapp.modules.stores", "neirapp.modules.ordering"]
 
-# domain/application de `stores` no conocen a `identity` en absoluto (solo la presentación).
+# domain/application de `stores` no conocen a `identity` ni a `ordering` (solo la presentación).
 [[tool.importlinter.contracts]]
-name = "el dominio/aplicación de stores no depende de identity"
+name = "el dominio/aplicación de stores no depende de identity ni ordering"
 type = "forbidden"
 source_modules = [
   "neirapp.modules.stores.domain",
   "neirapp.modules.stores.application",
 ]
-forbidden_modules = ["neirapp.modules.identity"]
+forbidden_modules = ["neirapp.modules.identity", "neirapp.modules.ordering"]
+
+# `ordering` orquesta tiendas y pagos, pero `stores` no debe enterarse de que `ordering` existe.
+[[tool.importlinter.contracts]]
+name = "stores no depende de ordering"
+type = "forbidden"
+source_modules = ["neirapp.modules.stores"]
+forbidden_modules = ["neirapp.modules.ordering"]
+
+# domain/application de `ordering` no importan `stores` ni `identity` directamente: solo hablan
+# con ellos a través de sus propios puertos (`CatalogPort`, …). El adaptador que sí los conoce
+# (`infrastructure/catalog_adapter.py`) es presentación/infraestructura, no dominio ni aplicación.
+[[tool.importlinter.contracts]]
+name = "el dominio/aplicación de ordering no depende de stores ni identity"
+type = "forbidden"
+source_modules = [
+  "neirapp.modules.ordering.domain",
+  "neirapp.modules.ordering.application",
+]
+forbidden_modules = ["neirapp.modules.stores", "neirapp.modules.identity"]

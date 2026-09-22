@@ -20,10 +20,29 @@ from neirapp.modules.identity.application.sessions import Login, Logout, Refresh
 from neirapp.modules.identity.domain.entities import TermsDocument
 from neirapp.modules.identity.infrastructure.security import Argon2PasswordHasher, JwtTokenService
 from neirapp.modules.identity.infrastructure.unit_of_work import SqlAlchemyUnitOfWork
+from neirapp.modules.ordering.application.app import OrderingApp
+from neirapp.modules.ordering.application.orders import (
+    AcceptStoreOrder,
+    CreateOrder,
+    GetOrder,
+    ListMyOrders,
+    ListStoreOrders,
+    MarkStoreOrderReady,
+    PayOrder,
+    RejectStoreOrder,
+    StartPreparingStoreOrder,
+)
+from neirapp.modules.ordering.infrastructure.catalog_adapter import StoresCatalogAdapter
+from neirapp.modules.ordering.infrastructure.fake_payment_gateway import FakePaymentGateway
+from neirapp.modules.ordering.infrastructure.unit_of_work import (
+    SqlAlchemyUnitOfWork as OrderingSqlAlchemyUnitOfWork,
+)
+from neirapp.modules.ordering.presentation.ws_manager import ConnectionManager
 from neirapp.modules.stores.application.app import StoresApp
 from neirapp.modules.stores.application.products import (
     CreateProduct,
     DeleteProduct,
+    GetProductRaw,
     ListStoreProducts,
     SearchProducts,
     SetProductAvailability,
@@ -33,7 +52,9 @@ from neirapp.modules.stores.application.stores import (
     CreateStore,
     GetMyStore,
     GetStore,
+    GetStoreRaw,
     ListStores,
+    SetStoreApproval,
     SetStoreOpen,
     UpdateStore,
 )
@@ -91,11 +112,41 @@ def build_stores(session_factory: async_sessionmaker[Any], clock: Clock | None =
         list_stores=ListStores(uow_factory),
         update_store=UpdateStore(uow_factory),
         set_store_open=SetStoreOpen(uow_factory),
+        set_store_approval=SetStoreApproval(uow_factory),
         get_my_store=GetMyStore(uow_factory),
+        get_store_raw=GetStoreRaw(uow_factory),
         create_product=CreateProduct(uow_factory, clock),
         list_store_products=ListStoreProducts(uow_factory),
         update_product=UpdateProduct(uow_factory),
         set_product_availability=SetProductAvailability(uow_factory),
         delete_product=DeleteProduct(uow_factory),
         search_products=SearchProducts(uow_factory),
+        get_product_raw=GetProductRaw(uow_factory),
+    )
+
+
+def build_ordering(
+    session_factory: async_sessionmaker[Any],
+    stores: StoresApp,
+    notifier: ConnectionManager,
+    clock: Clock | None = None,
+) -> OrderingApp:
+    clock = clock or SystemClock()
+
+    def uow_factory() -> OrderingSqlAlchemyUnitOfWork:
+        return OrderingSqlAlchemyUnitOfWork(session_factory)
+
+    catalog = StoresCatalogAdapter(stores)
+    gateway = FakePaymentGateway()
+
+    return OrderingApp(
+        create_order=CreateOrder(uow_factory, catalog, clock),
+        get_order=GetOrder(uow_factory),
+        list_my_orders=ListMyOrders(uow_factory),
+        pay_order=PayOrder(uow_factory, gateway, notifier, clock),
+        list_store_orders=ListStoreOrders(uow_factory, catalog),
+        accept_store_order=AcceptStoreOrder(uow_factory, clock),
+        reject_store_order=RejectStoreOrder(uow_factory, clock),
+        start_preparing_store_order=StartPreparingStoreOrder(uow_factory, clock),
+        mark_store_order_ready=MarkStoreOrderReady(uow_factory, clock),
     )

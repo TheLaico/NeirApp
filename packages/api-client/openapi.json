@@ -456,6 +456,37 @@
         ]
       }
     },
+    "/api/v1/stores/pending": {
+      "get": {
+        "tags": [
+          "stores"
+        ],
+        "summary": "List Pending Stores",
+        "description": "Backoffice: tiendas que un admin todavía no ha aprobado ni rechazado.",
+        "operationId": "list_pending_stores_api_v1_stores_pending_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/StoreResponse"
+                  },
+                  "type": "array",
+                  "title": "Response List Pending Stores Api V1 Stores Pending Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/stores/{store_id}": {
       "get": {
         "tags": [
@@ -585,6 +616,65 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/SetStoreOpenRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoreResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/stores/{store_id}/approval": {
+      "patch": {
+        "tags": [
+          "stores"
+        ],
+        "summary": "Set Store Approval",
+        "description": "Backoffice: aprobar o rechazar una tienda. Solo administradores.",
+        "operationId": "set_store_approval_api_v1_stores__store_id__approval_patch",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "store_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Store Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetStoreApprovalRequest"
               }
             }
           }
@@ -999,6 +1089,437 @@
           }
         }
       }
+    },
+    "/api/v1/orders": {
+      "get": {
+        "tags": [
+          "ordering"
+        ],
+        "summary": "List My Orders",
+        "operationId": "list_my_orders_api_v1_orders_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/OrderResponse"
+                  },
+                  "type": "array",
+                  "title": "Response List My Orders Api V1 Orders Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "ordering"
+        ],
+        "summary": "Create Order",
+        "operationId": "create_order_api_v1_orders_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateOrderRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/orders/{order_id}": {
+      "get": {
+        "tags": [
+          "ordering"
+        ],
+        "summary": "Get Order",
+        "operationId": "get_order_api_v1_orders__order_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "order_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Order Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/orders/{order_id}/pay": {
+      "post": {
+        "tags": [
+          "ordering"
+        ],
+        "summary": "Pay Order",
+        "description": "Cobra el pedido con la pasarela configurada (en desarrollo, `FakePaymentGateway`: aprueba\nsiempre). Ver docs/ARCHITECTURE.md sobre cómo se conecta una pasarela real.",
+        "operationId": "pay_order_api_v1_orders__order_id__pay_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "order_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Order Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/stores/{store_id}/orders": {
+      "get": {
+        "tags": [
+          "ordering"
+        ],
+        "summary": "List Store Orders",
+        "operationId": "list_store_orders_api_v1_stores__store_id__orders_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "store_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Store Id"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/StoreOrderStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/StoreOrderResponse"
+                  },
+                  "title": "Response List Store Orders Api V1 Stores  Store Id  Orders Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/store-orders/{store_order_id}/accept": {
+      "post": {
+        "tags": [
+          "ordering"
+        ],
+        "summary": "Accept Store Order",
+        "operationId": "accept_store_order_api_v1_store_orders__store_order_id__accept_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "store_order_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Store Order Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoreOrderResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/store-orders/{store_order_id}/reject": {
+      "post": {
+        "tags": [
+          "ordering"
+        ],
+        "summary": "Reject Store Order",
+        "operationId": "reject_store_order_api_v1_store_orders__store_order_id__reject_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "store_order_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Store Order Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoreOrderResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/store-orders/{store_order_id}/preparing": {
+      "post": {
+        "tags": [
+          "ordering"
+        ],
+        "summary": "Start Preparing Store Order",
+        "operationId": "start_preparing_store_order_api_v1_store_orders__store_order_id__preparing_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "store_order_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Store Order Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoreOrderResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/store-orders/{store_order_id}/ready": {
+      "post": {
+        "tags": [
+          "ordering"
+        ],
+        "summary": "Mark Store Order Ready",
+        "operationId": "mark_store_order_ready_api_v1_store_orders__store_order_id__ready_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "store_order_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Store Order Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoreOrderResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1035,6 +1556,43 @@
           "tokens"
         ],
         "title": "AuthResponse"
+      },
+      "CreateOrderRequest": {
+        "properties": {
+          "delivery_lat": {
+            "type": "number",
+            "maximum": 90.0,
+            "minimum": -90.0,
+            "title": "Delivery Lat"
+          },
+          "delivery_lng": {
+            "type": "number",
+            "maximum": 180.0,
+            "minimum": -180.0,
+            "title": "Delivery Lng"
+          },
+          "delivery_notes": {
+            "type": "string",
+            "maxLength": 500,
+            "title": "Delivery Notes",
+            "default": ""
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/OrderItemRequest"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": [
+          "delivery_lat",
+          "delivery_lng",
+          "items"
+        ],
+        "title": "CreateOrderRequest"
       },
       "CreateProductRequest": {
         "properties": {
@@ -1145,6 +1703,121 @@
           "password"
         ],
         "title": "LoginRequest"
+      },
+      "OrderItemRequest": {
+        "properties": {
+          "store_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Store Id"
+          },
+          "product_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Product Id"
+          },
+          "quantity": {
+            "type": "integer",
+            "maximum": 20.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Quantity"
+          }
+        },
+        "type": "object",
+        "required": [
+          "store_id",
+          "product_id",
+          "quantity"
+        ],
+        "title": "OrderItemRequest"
+      },
+      "OrderLineResponse": {
+        "properties": {
+          "product_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Product Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "price_cop": {
+            "type": "integer",
+            "title": "Price Cop"
+          },
+          "quantity": {
+            "type": "integer",
+            "title": "Quantity"
+          },
+          "subtotal_cop": {
+            "type": "integer",
+            "title": "Subtotal Cop"
+          }
+        },
+        "type": "object",
+        "required": [
+          "product_id",
+          "name",
+          "price_cop",
+          "quantity",
+          "subtotal_cop"
+        ],
+        "title": "OrderLineResponse"
+      },
+      "OrderResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "customer_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Customer Id"
+          },
+          "delivery_lat": {
+            "type": "number",
+            "title": "Delivery Lat"
+          },
+          "delivery_lng": {
+            "type": "number",
+            "title": "Delivery Lng"
+          },
+          "delivery_notes": {
+            "type": "string",
+            "title": "Delivery Notes"
+          },
+          "total_cop": {
+            "type": "integer",
+            "title": "Total Cop"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "store_orders": {
+            "items": {
+              "$ref": "#/components/schemas/StoreOrderResponse"
+            },
+            "type": "array",
+            "title": "Store Orders"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "customer_id",
+          "delivery_lat",
+          "delivery_lng",
+          "delivery_notes",
+          "total_cop",
+          "created_at",
+          "store_orders"
+        ],
+        "title": "OrderResponse"
       },
       "ProductResponse": {
         "properties": {
@@ -1290,6 +1963,19 @@
         ],
         "title": "SetProductAvailabilityRequest"
       },
+      "SetStoreApprovalRequest": {
+        "properties": {
+          "is_approved": {
+            "type": "boolean",
+            "title": "Is Approved"
+          }
+        },
+        "type": "object",
+        "required": [
+          "is_approved"
+        ],
+        "title": "SetStoreApprovalRequest"
+      },
       "SetStoreOpenRequest": {
         "properties": {
           "is_open": {
@@ -1315,6 +2001,79 @@
         ],
         "title": "StoreCategory",
         "description": "Coincide con los íconos y colores de marcadores definidos en la identidad visual."
+      },
+      "StoreOrderResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "order_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Order Id"
+          },
+          "store_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Store Id"
+          },
+          "store_name": {
+            "type": "string",
+            "title": "Store Name"
+          },
+          "status": {
+            "$ref": "#/components/schemas/StoreOrderStatus"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/OrderLineResponse"
+            },
+            "type": "array",
+            "title": "Lines"
+          },
+          "subtotal_cop": {
+            "type": "integer",
+            "title": "Subtotal Cop"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "order_id",
+          "store_id",
+          "store_name",
+          "status",
+          "lines",
+          "subtotal_cop",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "StoreOrderResponse"
+      },
+      "StoreOrderStatus": {
+        "type": "string",
+        "enum": [
+          "pending_payment",
+          "paid",
+          "accepted",
+          "rejected",
+          "preparing",
+          "ready"
+        ],
+        "title": "StoreOrderStatus",
+        "description": "Máquina de estados del pedido de una tienda dentro de un `Order`.\n\nNo incluye `HANDED_OVER` todavía: la entrega a un repartidor es la Fase 3 del roadmap\n(módulo `dispatch`), que no existe aún. `READY` es el estado terminal de esta fase."
       },
       "StoreResponse": {
         "properties": {
@@ -1350,6 +2109,14 @@
           "is_open": {
             "type": "boolean",
             "title": "Is Open"
+          },
+          "is_approved": {
+            "type": "boolean",
+            "title": "Is Approved"
+          },
+          "is_rejected": {
+            "type": "boolean",
+            "title": "Is Rejected"
           }
         },
         "type": "object",
@@ -1361,7 +2128,9 @@
           "description",
           "lat",
           "lng",
-          "is_open"
+          "is_open",
+          "is_approved",
+          "is_rejected"
         ],
         "title": "StoreResponse"
       },
