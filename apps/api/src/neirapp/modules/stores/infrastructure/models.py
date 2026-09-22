@@ -1,0 +1,40 @@
+from datetime import datetime
+from uuid import UUID
+
+from sqlalchemy import Float, ForeignKey, Index, Integer, String, Uuid
+from sqlalchemy.orm import Mapped, mapped_column
+
+from neirapp.shared.infrastructure.db import Base, UTCDateTime
+
+# `owner_user_id` referencia a identity_users.id, pero deliberadamente NO lleva una foreign key:
+# los módulos no deben acoplarse a nivel de esquema, para poder extraer `stores` a su propio
+# servicio/base de datos más adelante sin tocar `identity`. La integridad se garantiza en el
+# caso de uso (el owner_user_id viene siempre del usuario autenticado).
+
+
+class StoreModel(Base):
+    __tablename__ = "stores"
+
+    id: Mapped[UUID] = mapped_column(Uuid, primary_key=True)
+    owner_user_id: Mapped[UUID] = mapped_column(Uuid, index=True)
+    name: Mapped[str] = mapped_column(String(120))
+    category: Mapped[str] = mapped_column(String(32))
+    description: Mapped[str] = mapped_column(String(500))
+    lat: Mapped[float] = mapped_column(Float)
+    lng: Mapped[float] = mapped_column(Float)
+    is_open: Mapped[bool] = mapped_column(default=True)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime)
+
+
+class StoreProductModel(Base):
+    __tablename__ = "store_products"
+    __table_args__ = (Index("ix_store_products_store_id_name", "store_id", "name"),)
+
+    id: Mapped[UUID] = mapped_column(Uuid, primary_key=True)
+    store_id: Mapped[UUID] = mapped_column(ForeignKey("stores.id", ondelete="CASCADE"), index=True)
+    name: Mapped[str] = mapped_column(String(120))
+    description: Mapped[str] = mapped_column(String(500))
+    price_cop: Mapped[int] = mapped_column(Integer)
+    image_url: Mapped[str | None] = mapped_column(String(2048))
+    is_available: Mapped[bool] = mapped_column(default=True)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime)

@@ -4,9 +4,10 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from neirapp.bootstrap.container import build_identity
+from neirapp.bootstrap.container import build_identity, build_stores
 from neirapp.bootstrap.settings import Settings
 from neirapp.modules.identity.presentation.router import router as identity_router
+from neirapp.modules.stores.presentation.router import router as stores_router
 from neirapp.shared.application.ports import Clock
 from neirapp.shared.infrastructure.db import create_engine, create_session_factory
 from neirapp.shared.presentation.errors import register_exception_handlers
@@ -32,6 +33,7 @@ def create_app(settings: Settings | None = None, clock: Clock | None = None) -> 
     app.state.settings = settings
     app.state.engine = engine
     app.state.identity = build_identity(settings, session_factory, clock)
+    app.state.stores = build_stores(session_factory, clock)
 
     app.add_middleware(
         CORSMiddleware,
@@ -46,4 +48,5 @@ def create_app(settings: Settings | None = None, clock: Clock | None = None) -> 
         return {"status": "ok"}
 
     app.include_router(identity_router, prefix="/api/v1")
+    app.include_router(stores_router, prefix="/api/v1")
     return app

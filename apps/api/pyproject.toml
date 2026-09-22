@@ -72,12 +72,22 @@ layers = [
   "neirapp.modules.identity.domain",
 ]
 
+[[tool.importlinter.contracts]]
+name = "stores: capas"
+type = "layers"
+layers = [
+  "neirapp.modules.stores.presentation | neirapp.modules.stores.infrastructure",
+  "neirapp.modules.stores.application",
+  "neirapp.modules.stores.domain",
+]
+
 # El dominio es Python puro: nada de frameworks ni de infraestructura.
 [[tool.importlinter.contracts]]
 name = "el dominio no depende de frameworks"
 type = "forbidden"
 source_modules = [
   "neirapp.modules.identity.domain",
+  "neirapp.modules.stores.domain",
   "neirapp.shared.domain",
 ]
 forbidden_modules = ["fastapi", "sqlalchemy", "pydantic", "jwt", "argon2", "starlette"]
@@ -88,6 +98,25 @@ name = "la aplicación no depende de web ni ORM"
 type = "forbidden"
 source_modules = [
   "neirapp.modules.identity.application",
+  "neirapp.modules.stores.application",
   "neirapp.shared.application",
 ]
 forbidden_modules = ["fastapi", "sqlalchemy", "starlette"]
+
+# `stores` reutiliza el CurrentUser de `identity` en su capa de presentación (composición en el
+# borde), pero la dependencia es de un solo sentido: `identity` no debe saber que `stores` existe.
+[[tool.importlinter.contracts]]
+name = "identity no depende de stores"
+type = "forbidden"
+source_modules = ["neirapp.modules.identity"]
+forbidden_modules = ["neirapp.modules.stores"]
+
+# domain/application de `stores` no conocen a `identity` en absoluto (solo la presentación).
+[[tool.importlinter.contracts]]
+name = "el dominio/aplicación de stores no depende de identity"
+type = "forbidden"
+source_modules = [
+  "neirapp.modules.stores.domain",
+  "neirapp.modules.stores.application",
+]
+forbidden_modules = ["neirapp.modules.identity"]

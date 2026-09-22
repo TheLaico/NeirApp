@@ -20,6 +20,26 @@ from neirapp.modules.identity.application.sessions import Login, Logout, Refresh
 from neirapp.modules.identity.domain.entities import TermsDocument
 from neirapp.modules.identity.infrastructure.security import Argon2PasswordHasher, JwtTokenService
 from neirapp.modules.identity.infrastructure.unit_of_work import SqlAlchemyUnitOfWork
+from neirapp.modules.stores.application.app import StoresApp
+from neirapp.modules.stores.application.products import (
+    CreateProduct,
+    DeleteProduct,
+    ListStoreProducts,
+    SearchProducts,
+    SetProductAvailability,
+    UpdateProduct,
+)
+from neirapp.modules.stores.application.stores import (
+    CreateStore,
+    GetMyStore,
+    GetStore,
+    ListStores,
+    SetStoreOpen,
+    UpdateStore,
+)
+from neirapp.modules.stores.infrastructure.unit_of_work import (
+    SqlAlchemyUnitOfWork as StoresSqlAlchemyUnitOfWork,
+)
 from neirapp.shared.application.ports import Clock
 from neirapp.shared.infrastructure.clock import SystemClock
 
@@ -56,4 +76,26 @@ def build_identity(
         update_profile=UpdateProfile(uow_factory, policy),
         accept_terms=AcceptTerms(uow_factory, policy, clock),
         terms_policy=policy,
+    )
+
+
+def build_stores(session_factory: async_sessionmaker[Any], clock: Clock | None = None) -> StoresApp:
+    clock = clock or SystemClock()
+
+    def uow_factory() -> StoresSqlAlchemyUnitOfWork:
+        return StoresSqlAlchemyUnitOfWork(session_factory)
+
+    return StoresApp(
+        create_store=CreateStore(uow_factory, clock),
+        get_store=GetStore(uow_factory),
+        list_stores=ListStores(uow_factory),
+        update_store=UpdateStore(uow_factory),
+        set_store_open=SetStoreOpen(uow_factory),
+        get_my_store=GetMyStore(uow_factory),
+        create_product=CreateProduct(uow_factory, clock),
+        list_store_products=ListStoreProducts(uow_factory),
+        update_product=UpdateProduct(uow_factory),
+        set_product_availability=SetProductAvailability(uow_factory),
+        delete_product=DeleteProduct(uow_factory),
+        search_products=SearchProducts(uow_factory),
     )

@@ -1,8 +1,11 @@
 # Arquitectura de NeirApp
 
 Marketplace local de Neira, Caldas: tiendas con catálogo en línea, clientes que compran de varias
-tiendas a la vez y repartidores que recogen y entregan. Este documento es la referencia de diseño;
-el [Fase 0] fue el primer corte implementado (monorepo, módulo `identity`).
+tiendas a la vez y repartidores que recogen y entregan. Este documento es la referencia de diseño.
+
+**Implementado:** Fase 0 (monorepo, módulo `identity`) y Fase 1 (mapa de Neira, módulo `stores`
+con catálogo, carrito multi-tienda, búsqueda, panel del comercio). Pendiente: Fase 2 en adelante
+(pedidos, pagos, despacho de repartidores, wallet).
 
 ## Decisiones
 
@@ -15,7 +18,7 @@ el [Fase 0] fue el primer corte implementado (monorepo, módulo `identity`).
 | Frontend | React + TypeScript + Vite, PWA mobile-first | — |
 | App móvil futura | Monorepo compartiendo tipos, cliente API, validaciones y design tokens | Ver "Camino a móvil". |
 | Contrato API↔Web | OpenAPI → cliente TypeScript generado (`packages/api-client`) | El front nunca escribe fetch a mano ni se desincroniza del back. |
-| Mapa | MapLibre GL + tiles vectoriales propios (pendiente, Fase 1) | Para no parecer Google Maps. |
+| Mapa | MapLibre GL, estilo propio sin tiles externos (ver "Mapa" más abajo) | Para no parecer Google Maps; funciona offline y sin costo de tiles. |
 
 ## Estructura del monorepo
 
@@ -86,6 +89,50 @@ términos y política de privacidad (una vez, versionada), login, roles (`custom
 | GET | `/terms` | — | Versiones vigentes de los documentos legales. |
 | POST | `/terms/accept` | Bearer | Exige que `version` sea la vigente. |
 
+## Módulo `stores` (implementado)
+
+Cubre el catálogo en línea de cada tienda y el "buscador inteligente" (versión simple). **Decisión
+deliberada:** a diferencia del plan original (`stores` y `catalog` como módulos separados), aquí
+`Store` y `Product` viven en un solo módulo `stores`. Son entidades pequeñas, muy acopladas (todo
+acceso a un producto pasa por validar el dueño de su tienda) y separarlas habría significado
+inventar un puerto entre módulos para una necesidad que hoy no existe (YAGNI). Si `catalog` crece
+(variantes, inventario, varias fotos) se puede extraer como módulo propio sin tocar `identity` ni
+el resto del sistema — los repos ya son intercambiables detrás de sus puertos.
+
+- **Geocerca de Neira**: `domain/geofence.py` valida con un punto-en-polígono (ray casting, Python
+  puro, sin PostGIS) que la tienda quede dentro de un rectángulo aproximado del municipio. Es un
+  placeholder documentado en el propio archivo — el polígono real del municipio llega con datos de
+  OSM (ver "Riesgos abiertos"). Se aplica al crear la tienda y al reubicarla.
+- **Dueño de la tienda**: cualquier usuario autenticado puede abrir una tienda (es dueño desde que
+  la crea); no hay rol `store_staff` ni aprobación de un admin todavía. La autorización para editar
+  el catálogo compara `store.owner_user_id` contra el usuario autenticado — más simple que un rol
+  global, y suficiente mientras no haya varios empleados por tienda.
+- **Acoplamiento entre módulos, solo en el borde**: `stores/presentation` reutiliza el `CurrentUser`
+  de `identity/presentation` para autenticar (composición al nivel de FastAPI, no de dominio). Dos
+  contratos de `import-linter` (`identity no depende de stores`, `dominio/aplicación de stores no
+  depende de identity`) verifican en CI que la dependencia es de un solo sentido.
+- **Búsqueda**: `LIKE` simple sobre nombre/descripción, con filtro por categoría y precio máximo, y
+  orden por precio o nombre — portable entre SQLite (tests) y Postgres (prod) sin extensiones. Es
+  la Etapa 1 descrita en el plan original; `tsvector`+`pg_trgm` y luego un motor dedicado quedan
+  para la Fase 4.
+- **Dinero**: `price_cop` es un entero (el peso colombiano no usa decimales), validado en el dominio
+  (`0 < price_cop <= 50_000_000`).
+
+### Endpoints (`/api/v1`)
+
+| Método | Ruta | Auth | Notas |
+|---|---|---|---|
+| POST | `/stores` | Bearer | El usuario autenticado queda como dueño. |
+| GET | `/stores` | — | Filtro opcional `category`. Alimenta el mapa. |
+| GET | `/stores/me` | Bearer | La tienda del usuario, o `null`. |
+| GET | `/stores/{id}` | — | 404 si no existe. |
+| PATCH | `/stores/{id}` | Bearer, dueño | Nombre/categoría/descripción. |
+| PATCH | `/stores/{id}/open` | Bearer, dueño | Abrir/cerrar la tienda. |
+| GET | `/stores/{id}/products` | — | Filtro opcional `only_available`. |
+| POST/PATCH/DELETE | `/stores/{id}/products/...` | Bearer, dueño | CRUD del catálogo. |
+| PATCH | `/stores/{id}/products/{id}/availability` | Bearer, dueño | Agotado/disponible. |
+| GET | `/products/search` | — | `q`, `category`, `max_price_cop`, `sort`. |
+
 ## Frontend
 
 `apps/web` (Vite + React 19 + TypeScript). Estructura *feature-based*:
@@ -95,11 +142,41 @@ src/
   app/        # router, providers (React Query)
   features/
     auth/     # store (Zustand+persist), sesión con refresh, páginas de login/registro, TermsGate
-    home/     # placeholder del mapa (Fase 1 lo reemplaza)
-  lib/        # cliente API, manejo de errores, env
+    stores/   # tipos, hooks de tiendas, mapa→tienda, crear tienda, panel "mi tienda"
+    catalog/  # hooks de productos, tarjeta de producto, formulario, lista de gestión
+    map/      # NeiraMap (MapLibre GL)
+    search/   # página de búsqueda con filtros
+    cart/     # carrito multi-tienda (Zustand+persist)
+    home/     # mapa + filtros por categoría
+  lib/        # cliente API, manejo de errores, env, formato de moneda
   shared/ui/  # componentes de diseño (Button, TextField, Navbar, AuthLayout…)
   styles/     # Tailwind v4 + theme.css de @neirapp/design-tokens
 ```
+
+### Mapa
+
+`features/map/NeiraMap.tsx` usa MapLibre GL con un estilo propio: sin tiles externos, solo un
+fondo del color de marca y un par de formas GeoJSON ilustrativas (vegetación, río) — ver el
+comentario en el archivo sobre por qué son decorativas y no geografía real. Los marcadores de
+tienda son componentes React (`StoreIcon`) renderizados a HTML estático (`react-dom/server`) e
+insertados como `Marker({element})`; el color y el ícono salen de `@neirapp/design-tokens`. El
+mismo componente sirve para "elegir ubicación" (`pickMode`) al crear una tienda.
+
+**Vite + maplibre-gl:** el pre-bundler de Vite reescribe la ruta del Web Worker interno de
+MapLibre y lo rompe (las capas GeoJSON no cargan, aunque el mapa base sí). Se resolvió con
+`optimizeDeps: { exclude: ["maplibre-gl"] }` en `vite.config.ts`.
+
+### Carrito
+
+`features/cart/store.ts` (Zustand+persist) guarda el carrito por tienda — un pedido puede mezclar
+varias tiendas, como pide el negocio. Es solo del cliente por ahora: no hay endpoint de carrito en
+el backend (llega con `Order`/`StoreOrder` en la Fase 2). **Lección de esta fase:** las funciones
+derivadas (`cartGroups`, `cartTotalCop`, …) reciben el `groups` crudo del store, nunca el store
+completo — pasarlas directo como selector de `useCartStore(cartGroups)` construye un array nuevo
+en cada lectura y `useSyncExternalStore` entra en un bucle infinito de renders. El patrón correcto:
+seleccionar el estado crudo (referencia estable) y derivar con `useMemo` en el componente. Se
+encontró en vivo en el navegador (ver "Riesgos abiertos" sobre por qué los tests con mocks no lo
+detectaron) y quedó como comentario en `cart/store.ts` para no repetirlo.
 
 - **Cliente API tipado**: `packages/api-client` se genera con `openapi-typescript` a partir del
   OpenAPI exportado por la API (`npm run gen:api-client` desde la raíz, o los scripts del paquete).
@@ -138,6 +215,26 @@ para poder reusarse. Cuando llegue la Fase 5:
   integración también contra Postgres real (testcontainers), porque SQLite no soporta esos tipos.
 - **Verificación de correo/teléfono**: el registro no verifica el correo ni el celular. Antes de
   producción, decidir si se exige (afecta el flujo de UX y las notificaciones de pedidos).
+- **Geocerca placeholder**: `NEIRA_POLYGON` (backend) y `NEIRA_BOUNDS` (frontend, en `NeiraMap.tsx`)
+  son un rectángulo aproximado, no el polígono real del municipio. Reemplazar con datos de OSM
+  antes de producción; ambos deben mantenerse sincronizados hasta que el backend exponga la
+  geocerca por API en vez de duplicarla.
+- **Sin aprobación de tiendas**: cualquier usuario autenticado puede abrir una tienda sin revisión
+  de un admin. Aceptable para probar con pocas tiendas reales (ver roadmap); antes de abrir el
+  registro al público hace falta el backoffice de aprobación (Fase 2/4) o al menos un flag manual.
+- **Carrito sin persistencia de servidor**: vive solo en `localStorage` del cliente (ver "Carrito"
+  arriba). Se pierde entre dispositivos y no bloquea inventario. Se resuelve con `Order`/
+  `StoreOrder` en la Fase 2.
+- **Mapa sin geografía real**: `NeiraMap` no usa tiles de OSM (ver "Mapa" arriba); las formas de
+  vegetación/río son decorativas. La Fase 1 del plan original preveía un extracto de OSM en
+  PMTiles — quedó pendiente por requerir datos y herramientas externas (tippecanoe) no disponibles
+  en esta sesión de desarrollo.
+- **Selectores de Zustand**: ver la nota en "Carrito" sobre selectores que devuelven una referencia
+  nueva en cada llamada. Ningún test (backend con mocks de fetch, ni componentes con jsdom) lo
+  detectó — jsdom no puede montar MapLibre (WebGL), así que las páginas que lo usan (`HomePage`,
+  `CreateStoreForm`, y por lo tanto casi todo el flujo de compra) solo se verifican corriendo la
+  app de verdad en el navegador. Si se agregan más páginas con lógica de estado no trivial, vale
+  la pena revisar sus selectores con la misma lupa.
 
 ## Cómo correr el proyecto
 
