@@ -220,3 +220,17 @@ class GetDeliveryForCustomer:
             raise NotOrderCustomer()
         async with self._uow_factory() as uow:
             return await uow.deliveries.get_by_order(order_id)
+
+
+class GetDeliveryCourierUserIdRaw:
+    """Lectura interna: el `user_id` (no el id de la entrega) del repartidor asignado al pedido,
+    para el `DispatchPort` de `incidents` (necesita saber si quien reporta es el repartidor de ese
+    pedido). Nunca se expone por HTTP."""
+
+    def __init__(self, uow_factory: UnitOfWorkFactory) -> None:
+        self._uow_factory = uow_factory
+
+    async def __call__(self, order_id: UUID) -> UUID | None:
+        async with self._uow_factory() as uow:
+            delivery = await uow.deliveries.get_by_order(order_id)
+        return delivery.courier_id if delivery else None

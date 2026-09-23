@@ -11,6 +11,7 @@ from neirapp.modules.dispatch.application.deliveries import (
     ClaimDelivery,
     ConfirmDelivery,
     ConfirmPickup,
+    GetDeliveryCourierUserIdRaw,
     GetDeliveryForCustomer,
     GetMyActiveDelivery,
     ListAvailableDeliveries,
@@ -33,3 +34,6 @@ class DispatchApp:
     confirm_delivery: ConfirmDelivery
     cancel_delivery: CancelDelivery
     get_delivery_for_customer: GetDeliveryForCustomer
+
+    # Consumo interno de `incidents` (nunca por HTTP).
+    get_delivery_courier_user_id_raw: GetDeliveryCourierUserIdRaw

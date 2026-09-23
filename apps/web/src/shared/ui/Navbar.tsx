@@ -1,4 +1,14 @@
-import { Bike, LogOut, Package, ShieldCheck, ShoppingCart, Store, UserRound, Wallet } from "lucide-react";
+import {
+  AlertTriangle,
+  Bike,
+  LogOut,
+  Package,
+  ShieldCheck,
+  ShoppingCart,
+  Store,
+  UserRound,
+  Wallet,
+} from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router";
 import { useLogout } from "../../features/auth/hooks";
@@ -119,11 +129,20 @@ export function Navbar() {
                   <p className="truncate text-sm font-medium">{user?.full_name}</p>
                   <p className="truncate text-xs text-muted">{user?.email}</p>
                 </div>
+                <Link
+                  to="/mis-reportes"
+                  role="menuitem"
+                  onClick={() => setOpen(false)}
+                  className="mt-1.5 flex w-full items-center gap-2.5 rounded-control px-3 py-2.5 text-sm hover:bg-brand-soft"
+                >
+                  <AlertTriangle size={16} aria-hidden="true" />
+                  Mis reportes
+                </Link>
                 <button
                   type="button"
                   role="menuitem"
                   onClick={() => logout.mutate()}
-                  className="mt-1.5 flex w-full items-center gap-2.5 rounded-control px-3 py-2.5 text-sm hover:bg-brand-soft"
+                  className="flex w-full items-center gap-2.5 rounded-control px-3 py-2.5 text-sm hover:bg-brand-soft"
                 >
                   <LogOut size={16} aria-hidden="true" />
                   Cerrar sesión

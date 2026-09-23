@@ -50,11 +50,19 @@ export function AdminCouriersPage() {
           Volver al mapa
         </Link>
 
-        <div className="mb-4 flex items-center justify-between">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
           <h1 className="text-2xl">Repartidores por aprobar</h1>
-          <Link to="/admin/tiendas" className="text-sm font-medium text-brand hover:underline">
-            Ver tiendas por aprobar
-          </Link>
+          <div className="flex gap-4">
+            <Link to="/admin/tiendas" className="text-sm font-medium text-brand hover:underline">
+              Ver tiendas por aprobar
+            </Link>
+            <Link
+              to="/admin/incidencias"
+              className="text-sm font-medium text-brand hover:underline"
+            >
+              Ver reportes de problemas
+            </Link>
+          </div>
         </div>
 
         {pending.isPending && <p className="text-muted">Cargando…</p>}

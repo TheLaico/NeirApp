@@ -1,7 +1,7 @@
 from collections.abc import Callable
 from uuid import UUID
 
-from sqlalchemy import ColumnElement, asc, delete, desc, func, or_, select
+from sqlalchemy import ColumnElement, asc, case, delete, desc, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from neirapp.modules.stores.domain.entities import Product, Store, StoreCategory
@@ -103,8 +103,23 @@ class SqlAlchemyStoreRepository:
 _SORTS: dict[str, Callable[[], ColumnElement[object]]] = {
     "price_asc": lambda: asc(StoreProductModel.price_cop),
     "price_desc": lambda: desc(StoreProductModel.price_cop),
-    "relevance": lambda: asc(StoreProductModel.name),
 }
+
+
+def _relevance_score(query_lower: str, needle: str) -> ColumnElement[int]:
+    """Ordena por dónde coincidió la búsqueda, no solo si coincidió: nombre exacto > nombre
+    empieza así > nombre de la tienda coincide > nombre contiene > tienda contiene > solo la
+    descripción contiene. Es una heurística simple (no tsvector/pg_trgm, ver el roadmap Fase 4
+    original) pero ya no es un orden alfabético disfrazado de "relevancia"."""
+    return case(
+        (func.lower(StoreProductModel.name) == query_lower, 5),
+        (func.lower(StoreProductModel.name).like(f"{query_lower}%"), 4),
+        (func.lower(StoreModel.name) == query_lower, 3),
+        (func.lower(StoreModel.name).like(f"{query_lower}%"), 3),
+        (func.lower(StoreProductModel.name).like(needle), 2),
+        (func.lower(StoreModel.name).like(needle), 1),
+        else_=0,
+    )
 
 
 class SqlAlchemyProductRepository:
@@ -152,8 +167,9 @@ class SqlAlchemyProductRepository:
     ) -> list[tuple[Product, Store]]:
         # LIKE simple y portable (SQLite en tests, Postgres en prod). Cuando haga falta tolerar
         # errores de tipeo y sinónimos, esto se reemplaza por tsvector+pg_trgm o un motor dedicado
-        # (ver roadmap Fase 4) detrás de este mismo método, sin tocar el resto del módulo.
-        needle = f"%{query.strip().lower()}%"
+        # (ver roadmap Fase 4 original) detrás de este mismo método, sin tocar el resto del módulo.
+        query_lower = query.strip().lower()
+        needle = f"%{query_lower}%"
         stmt = (
             select(StoreProductModel, StoreModel)
             .join(StoreModel, StoreModel.id == StoreProductModel.store_id)
@@ -163,6 +179,9 @@ class SqlAlchemyProductRepository:
                 or_(
                     func.lower(StoreProductModel.name).like(needle),
                     func.lower(StoreProductModel.description).like(needle),
+                    # El nombre de la tienda también cuenta: quien busca "Pizzeria Napoli" debe
+                    # encontrar su catálogo aunque ningún producto se llame así.
+                    func.lower(StoreModel.name).like(needle),
                 ),
             )
         )
@@ -170,7 +189,14 @@ class SqlAlchemyProductRepository:
             stmt = stmt.where(StoreModel.category == category.value)
         if max_price_cop is not None:
             stmt = stmt.where(StoreProductModel.price_cop <= max_price_cop)
-        stmt = stmt.order_by(_SORTS.get(sort, _SORTS["relevance"])()).limit(limit)
+
+        if sort in _SORTS:
+            stmt = stmt.order_by(_SORTS[sort]())
+        else:
+            stmt = stmt.order_by(
+                desc(_relevance_score(query_lower, needle)), asc(StoreProductModel.name)
+            )
+        stmt = stmt.limit(limit)
 
         result = await self._session.execute(stmt)
         return [(_to_product(p), _to_store(s)) for p, s in result.all()]

@@ -18,6 +18,7 @@ from neirapp.modules.dispatch.application.deliveries import (
     ClaimDelivery,
     ConfirmDelivery,
     ConfirmPickup,
+    GetDeliveryCourierUserIdRaw,
     GetDeliveryForCustomer,
     GetMyActiveDelivery,
     ListAvailableDeliveries,
@@ -43,12 +44,29 @@ from neirapp.modules.identity.application.sessions import Login, Logout, Refresh
 from neirapp.modules.identity.domain.entities import TermsDocument
 from neirapp.modules.identity.infrastructure.security import Argon2PasswordHasher, JwtTokenService
 from neirapp.modules.identity.infrastructure.unit_of_work import SqlAlchemyUnitOfWork
+from neirapp.modules.incidents.application.app import IncidentsApp
+from neirapp.modules.incidents.application.incidents import (
+    ListIncidents,
+    ListMyIncidents,
+    ReportIncident,
+    ResolveIncident,
+)
+from neirapp.modules.incidents.infrastructure.dispatch_adapter import (
+    DispatchAdapter as IncidentsDispatchAdapter,
+)
+from neirapp.modules.incidents.infrastructure.ordering_adapter import (
+    OrderingAdapter as IncidentsOrderingAdapter,
+)
+from neirapp.modules.incidents.infrastructure.unit_of_work import (
+    SqlAlchemyUnitOfWork as IncidentsSqlAlchemyUnitOfWork,
+)
 from neirapp.modules.ordering.application.app import OrderingApp
 from neirapp.modules.ordering.application.orders import (
     AcceptStoreOrder,
     CreateOrder,
     GetOrder,
     GetOrderRaw,
+    GetStoreOrderViewRaw,
     ListClaimableOrders,
     ListMyOrders,
     ListStoreOrders,
@@ -64,6 +82,18 @@ from neirapp.modules.ordering.infrastructure.unit_of_work import (
     SqlAlchemyUnitOfWork as OrderingSqlAlchemyUnitOfWork,
 )
 from neirapp.modules.ordering.presentation.ws_manager import ConnectionManager
+from neirapp.modules.reviews.application.app import ReviewsApp
+from neirapp.modules.reviews.application.reviews import (
+    CreateReview,
+    GetStoreRatingSummary,
+    ListStoreReviews,
+)
+from neirapp.modules.reviews.infrastructure.ordering_adapter import (
+    OrderingAdapter as ReviewsOrderingAdapter,
+)
+from neirapp.modules.reviews.infrastructure.unit_of_work import (
+    SqlAlchemyUnitOfWork as ReviewsSqlAlchemyUnitOfWork,
+)
 from neirapp.modules.stores.application.app import StoresApp
 from neirapp.modules.stores.application.products import (
     CreateProduct,
@@ -188,6 +218,7 @@ def build_ordering(
         get_order_raw=GetOrderRaw(uow_factory),
         list_claimable_orders=ListClaimableOrders(uow_factory),
         mark_store_order_handed_over_raw=MarkStoreOrderHandedOverRaw(uow_factory, clock),
+        get_store_order_view_raw=GetStoreOrderViewRaw(uow_factory),
     )
 
 
@@ -234,4 +265,44 @@ def build_dispatch(
         confirm_delivery=ConfirmDelivery(uow_factory, wallet_port, clock),
         cancel_delivery=CancelDelivery(uow_factory, clock),
         get_delivery_for_customer=GetDeliveryForCustomer(uow_factory, ordering_port),
+        get_delivery_courier_user_id_raw=GetDeliveryCourierUserIdRaw(uow_factory),
+    )
+
+
+def build_reviews(
+    session_factory: async_sessionmaker[Any], ordering: OrderingApp, clock: Clock | None = None
+) -> ReviewsApp:
+    clock = clock or SystemClock()
+
+    def uow_factory() -> ReviewsSqlAlchemyUnitOfWork:
+        return ReviewsSqlAlchemyUnitOfWork(session_factory)
+
+    ordering_port = ReviewsOrderingAdapter(ordering)
+
+    return ReviewsApp(
+        create_review=CreateReview(uow_factory, ordering_port, clock),
+        list_store_reviews=ListStoreReviews(uow_factory),
+        get_store_rating_summary=GetStoreRatingSummary(uow_factory),
+    )
+
+
+def build_incidents(
+    session_factory: async_sessionmaker[Any],
+    ordering: OrderingApp,
+    dispatch: DispatchApp,
+    clock: Clock | None = None,
+) -> IncidentsApp:
+    clock = clock or SystemClock()
+
+    def uow_factory() -> IncidentsSqlAlchemyUnitOfWork:
+        return IncidentsSqlAlchemyUnitOfWork(session_factory)
+
+    ordering_port = IncidentsOrderingAdapter(ordering)
+    dispatch_port = IncidentsDispatchAdapter(dispatch)
+
+    return IncidentsApp(
+        report_incident=ReportIncident(uow_factory, ordering_port, dispatch_port, clock),
+        list_my_incidents=ListMyIncidents(uow_factory),
+        list_incidents=ListIncidents(uow_factory),
+        resolve_incident=ResolveIncident(uow_factory, clock),
     )

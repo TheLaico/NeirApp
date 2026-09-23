@@ -3,6 +3,9 @@ import { Link, useParams } from "react-router";
 import { useStoreProducts } from "../catalog/api";
 import { ProductCard } from "../catalog/ProductCard";
 import { Navbar } from "../../shared/ui/Navbar";
+import { useStoreRatingSummary } from "../reviews/api";
+import { StarRating } from "../reviews/StarRating";
+import { StoreReviewsSection } from "../reviews/StoreReviewsSection";
 import { useStore } from "./api";
 import { CATEGORY_LABELS, StoreBadge } from "./StoreIcon";
 
@@ -10,6 +13,7 @@ export function StorePage() {
   const { storeId } = useParams<{ storeId: string }>();
   const store = useStore(storeId);
   const products = useStoreProducts(storeId, true);
+  const ratingSummary = useStoreRatingSummary(storeId);
 
   return (
     <div className="min-h-dvh">
@@ -32,12 +36,20 @@ export function StorePage() {
               <StoreBadge category={store.data.category} size={56} />
               <div>
                 <h1 className="text-xl">{store.data.name}</h1>
-                <p className="mt-0.5 text-sm text-muted">
-                  {CATEGORY_LABELS[store.data.category]} ·{" "}
-                  {store.data.is_open ? (
-                    <span className="text-brand">Abierta ahora</span>
-                  ) : (
-                    <span className="text-terracotta">Cerrada</span>
+                <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-sm text-muted">
+                  <span>
+                    {CATEGORY_LABELS[store.data.category]} ·{" "}
+                    {store.data.is_open ? (
+                      <span className="text-brand">Abierta ahora</span>
+                    ) : (
+                      <span className="text-terracotta">Cerrada</span>
+                    )}
+                  </span>
+                  {!!ratingSummary.data?.count && (
+                    <span className="flex items-center gap-1">
+                      <StarRating value={Math.round(ratingSummary.data.average)} size={14} />
+                      {ratingSummary.data.average.toFixed(1)} ({ratingSummary.data.count})
+                    </span>
                   )}
                 </p>
                 {store.data.description && (
@@ -63,6 +75,8 @@ export function StorePage() {
                 ))}
               </div>
             </section>
+
+            <StoreReviewsSection storeId={store.data.id} />
           </>
         )}
       </main>

@@ -1,8 +1,9 @@
-import { ArrowLeft, Bike } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Bike } from "lucide-react";
 import { Link, useParams } from "react-router";
 import { formatCop } from "../../lib/money";
 import { Navbar } from "../../shared/ui/Navbar";
 import { useDeliveryForOrder } from "../dispatch/api";
+import { ReviewStoreOrderForm } from "../reviews/ReviewStoreOrderForm";
 import { useOrder } from "./api";
 import { StoreOrderStatusBadge } from "./StoreOrderStatusBadge";
 
@@ -94,6 +95,11 @@ export function OrderDetailPage() {
                     <span>Subtotal</span>
                     <span>{formatCop(storeOrder.subtotal_cop)}</span>
                   </div>
+                  {storeOrder.status === "handed_over" && (
+                    <div className="mt-3">
+                      <ReviewStoreOrderForm storeOrderId={storeOrder.id} />
+                    </div>
+                  )}
                 </section>
               ))}
             </div>
@@ -102,6 +108,14 @@ export function OrderDetailPage() {
               <span>Total</span>
               <span>{formatCop(order.data.total_cop)}</span>
             </div>
+
+            <Link
+              to={`/pedidos/${order.data.id}/reportar`}
+              className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-terracotta hover:underline"
+            >
+              <AlertTriangle size={16} aria-hidden="true" />
+              Reportar un problema con este pedido
+            </Link>
           </>
         )}
       </main>

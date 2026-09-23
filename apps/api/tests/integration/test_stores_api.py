@@ -403,6 +403,43 @@ class TestSearch:
         response = await client.get(f"{API}/products/search", params={"q": "pan"})
         assert response.json()[0]["store"]["name"] == "Panadería Central"
 
+    async def test_busca_tambien_por_nombre_de_tienda(
+        self, client: httpx.AsyncClient, app: FastAPI
+    ) -> None:
+        """ "Napoli" no aparece en ningún producto, solo en el nombre de la tienda."""
+        await self._seed(client, app)
+        response = await client.get(f"{API}/products/search", params={"q": "napoli"})
+        names = {r["product"]["name"] for r in response.json()}
+        assert names == {"Pizza margarita", "Pizza hawaiana"}
+
+    async def test_relevancia_prioriza_coincidencia_de_nombre_sobre_descripcion(
+        self, client: httpx.AsyncClient, app: FastAPI
+    ) -> None:
+        tokens = await _register(client)
+        store = await _create_approved_store(client, app, tokens, name="Postres Ana")
+        # Solo la descripción menciona "pizza"; el nombre no.
+        mentioned_in_description = await client.post(
+            f"{API}/stores/{store['id']}/products",
+            json={
+                "name": "Torta de chocolate",
+                "description": "Mejor que una pizza",
+                "price_cop": 20_000,
+            },
+            headers=_bearer(tokens),
+        )
+        # El nombre coincide exactamente.
+        exact_name = await client.post(
+            f"{API}/stores/{store['id']}/products",
+            json={"name": "Pizza", "description": "", "price_cop": 15_000},
+            headers=_bearer(tokens),
+        )
+        assert mentioned_in_description.status_code == 201
+        assert exact_name.status_code == 201
+
+        response = await client.get(f"{API}/products/search", params={"q": "pizza"})
+        names = [r["product"]["name"] for r in response.json()]
+        assert names == ["Pizza", "Torta de chocolate"]
+
 
 class TestApproval:
     async def test_admin_ve_las_tiendas_pendientes(

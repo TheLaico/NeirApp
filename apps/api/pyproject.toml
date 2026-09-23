@@ -108,6 +108,24 @@ layers = [
   "neirapp.modules.wallet.domain",
 ]
 
+[[tool.importlinter.contracts]]
+name = "reviews: capas"
+type = "layers"
+layers = [
+  "neirapp.modules.reviews.presentation | neirapp.modules.reviews.infrastructure",
+  "neirapp.modules.reviews.application",
+  "neirapp.modules.reviews.domain",
+]
+
+[[tool.importlinter.contracts]]
+name = "incidents: capas"
+type = "layers"
+layers = [
+  "neirapp.modules.incidents.presentation | neirapp.modules.incidents.infrastructure",
+  "neirapp.modules.incidents.application",
+  "neirapp.modules.incidents.domain",
+]
+
 # El dominio es Python puro: nada de frameworks ni de infraestructura.
 [[tool.importlinter.contracts]]
 name = "el dominio no depende de frameworks"
@@ -118,6 +136,8 @@ source_modules = [
   "neirapp.modules.ordering.domain",
   "neirapp.modules.dispatch.domain",
   "neirapp.modules.wallet.domain",
+  "neirapp.modules.reviews.domain",
+  "neirapp.modules.incidents.domain",
   "neirapp.shared.domain",
 ]
 forbidden_modules = ["fastapi", "sqlalchemy", "pydantic", "jwt", "argon2", "starlette"]
@@ -132,6 +152,8 @@ source_modules = [
   "neirapp.modules.ordering.application",
   "neirapp.modules.dispatch.application",
   "neirapp.modules.wallet.application",
+  "neirapp.modules.reviews.application",
+  "neirapp.modules.incidents.application",
   "neirapp.shared.application",
 ]
 forbidden_modules = ["fastapi", "sqlalchemy", "starlette"]
@@ -216,3 +238,54 @@ name = "stores y ordering no dependen de dispatch"
 type = "forbidden"
 source_modules = ["neirapp.modules.stores", "neirapp.modules.ordering"]
 forbidden_modules = ["neirapp.modules.dispatch"]
+
+# domain/application de `reviews` no importan `ordering` directamente: solo a través de su propio
+# `OrderingPort`. El adaptador que sí lo conoce vive en `infrastructure/ordering_adapter.py`.
+[[tool.importlinter.contracts]]
+name = "el dominio/aplicación de reviews no depende de otros módulos"
+type = "forbidden"
+source_modules = [
+  "neirapp.modules.reviews.domain",
+  "neirapp.modules.reviews.application",
+]
+forbidden_modules = [
+  "neirapp.modules.identity",
+  "neirapp.modules.stores",
+  "neirapp.modules.ordering",
+  "neirapp.modules.dispatch",
+  "neirapp.modules.wallet",
+  "neirapp.modules.incidents",
+]
+
+# domain/application de `incidents` no importan `ordering` ni `dispatch` directamente: solo a
+# través de sus propios puertos (`OrderingPort`, `DispatchPort`). Los adaptadores que sí los
+# conocen viven en `infrastructure/*_adapter.py`.
+[[tool.importlinter.contracts]]
+name = "el dominio/aplicación de incidents no depende de otros módulos"
+type = "forbidden"
+source_modules = [
+  "neirapp.modules.incidents.domain",
+  "neirapp.modules.incidents.application",
+]
+forbidden_modules = [
+  "neirapp.modules.identity",
+  "neirapp.modules.stores",
+  "neirapp.modules.ordering",
+  "neirapp.modules.dispatch",
+  "neirapp.modules.wallet",
+  "neirapp.modules.reviews",
+]
+
+# Ningún otro módulo debe enterarse de que `reviews` o `incidents` existen: la relación es de un
+# solo sentido, ellos dependen de los demás (vía puertos), nunca al revés.
+[[tool.importlinter.contracts]]
+name = "otros módulos no dependen de reviews ni incidents"
+type = "forbidden"
+source_modules = [
+  "neirapp.modules.identity",
+  "neirapp.modules.stores",
+  "neirapp.modules.ordering",
+  "neirapp.modules.dispatch",
+  "neirapp.modules.wallet",
+]
+forbidden_modules = ["neirapp.modules.reviews", "neirapp.modules.incidents"]

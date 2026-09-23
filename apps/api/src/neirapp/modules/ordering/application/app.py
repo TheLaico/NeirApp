@@ -5,6 +5,7 @@ from neirapp.modules.ordering.application.orders import (
     CreateOrder,
     GetOrder,
     GetOrderRaw,
+    GetStoreOrderViewRaw,
     ListClaimableOrders,
     ListMyOrders,
     ListStoreOrders,
@@ -35,3 +36,4 @@ class OrderingApp:
     get_order_raw: GetOrderRaw
     list_claimable_orders: ListClaimableOrders
     mark_store_order_handed_over_raw: MarkStoreOrderHandedOverRaw
+    get_store_order_view_raw: GetStoreOrderViewRaw

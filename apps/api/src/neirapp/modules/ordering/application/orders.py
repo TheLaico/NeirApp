@@ -134,6 +134,19 @@ class GetOrderRaw:
             return await uow.orders.get(order_id)
 
 
+class GetStoreOrderViewRaw:
+    """Lectura interna de un `StoreOrder` con su `order_id`/`customer_id`, para el `OrderingPort`
+    de `reviews` (necesita saber quién puede calificarlo y si ya se completó). Nunca se expone
+    por HTTP directamente — `reviews` decide qué autorizar con este dato."""
+
+    def __init__(self, uow_factory: UnitOfWorkFactory) -> None:
+        self._uow_factory = uow_factory
+
+    async def __call__(self, store_order_id: UUID) -> StoreOrderView | None:
+        async with self._uow_factory() as uow:
+            return await uow.orders.get_store_order(store_order_id)
+
+
 class ListClaimableOrders:
     """Pedidos que un repartidor podría ofrecerse a llevar (ver `OrderRepository.list_claimable`).
     Interna, para `dispatch` — la decisión de si ya tienen repartidor asignado no la sabe

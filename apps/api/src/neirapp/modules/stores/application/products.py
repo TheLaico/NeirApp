@@ -142,9 +142,10 @@ class SearchProductsQuery:
 
 
 class SearchProducts:
-    """Búsqueda simple (LIKE, portable entre SQLite y Postgres).
-
-    Etapas futuras (Fase 4 del roadmap): tsvector + unaccent + pg_trgm, luego un motor dedicado.
+    """Búsqueda por LIKE (portable entre SQLite y Postgres), con relevancia real: nombre de
+    producto exacto/empieza-así pesa más que una coincidencia en la descripción, y el nombre de
+    la tienda también cuenta (ver `_relevance_score` en el repositorio). Etapa siguiente si hace
+    falta tolerar errores de tipeo y sinónimos: tsvector + unaccent + pg_trgm, o un motor dedicado.
     """
 
     def __init__(self, uow_factory: UnitOfWorkFactory) -> None:

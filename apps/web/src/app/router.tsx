@@ -10,6 +10,9 @@ import { AvailableDeliveriesPage } from "../features/dispatch/AvailableDeliverie
 import { CourierOnboardingPage } from "../features/dispatch/CourierOnboardingPage";
 import { DeliveryHistoryPage } from "../features/dispatch/DeliveryHistoryPage";
 import { HomePage } from "../features/home/HomePage";
+import { AdminIncidentsPage } from "../features/incidents/AdminIncidentsPage";
+import { MyIncidentsPage } from "../features/incidents/MyIncidentsPage";
+import { ReportIncidentPage } from "../features/incidents/ReportIncidentPage";
 import { CheckoutPage } from "../features/orders/CheckoutPage";
 import { OrderDetailPage } from "../features/orders/OrderDetailPage";
 import { OrdersPage } from "../features/orders/OrdersPage";
@@ -34,6 +37,8 @@ export const router = createBrowserRouter([
       { path: "/checkout", element: <CheckoutPage /> },
       { path: "/pedidos", element: <OrdersPage /> },
       { path: "/pedidos/:orderId", element: <OrderDetailPage /> },
+      { path: "/pedidos/:orderId/reportar", element: <ReportIncidentPage /> },
+      { path: "/mis-reportes", element: <MyIncidentsPage /> },
       { path: "/billetera", element: <WalletPage /> },
       { path: "/repartidor", element: <CourierOnboardingPage /> },
       { path: "/repartidor/disponibles", element: <AvailableDeliveriesPage /> },
@@ -41,6 +46,7 @@ export const router = createBrowserRouter([
       { path: "/repartidor/historial", element: <DeliveryHistoryPage /> },
       { path: "/admin/tiendas", element: <AdminStoresPage /> },
       { path: "/admin/repartidores", element: <AdminCouriersPage /> },
+      { path: "/admin/incidencias", element: <AdminIncidentsPage /> },
     ],
   },
   { path: "*", element: <Navigate to="/" replace /> },

@@ -1,4 +1,4 @@
-import { ArrowLeft, CheckCircle2, Circle } from "lucide-react";
+import { AlertTriangle, ArrowLeft, CheckCircle2, Circle } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router";
 import { errorMessage } from "../../lib/errors";
@@ -129,7 +129,16 @@ export function ActiveDeliveryPage() {
               </p>
             )}
 
-            <CancelDeliveryButton deliveryId={active.data.id} />
+            <div className="flex items-center justify-between">
+              <CancelDeliveryButton deliveryId={active.data.id} />
+              <Link
+                to={`/pedidos/${active.data.order_id}/reportar`}
+                className="inline-flex items-center gap-1.5 text-sm font-medium text-terracotta hover:underline"
+              >
+                <AlertTriangle size={16} aria-hidden="true" />
+                Reportar un problema
+              </Link>
+            </div>
           </div>
         )}
       </main>

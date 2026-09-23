@@ -4,9 +4,11 @@ Marketplace local de Neira, Caldas: tiendas con catálogo en línea, clientes qu
 tiendas a la vez y repartidores que recogen y entregan. Este documento es la referencia de diseño.
 
 **Implementado:** Fase 0 (monorepo, módulo `identity`), Fase 1 (mapa de Neira, módulo `stores` con
-catálogo, carrito multi-tienda, búsqueda, panel del comercio) y Fase 2 (módulo `ordering`: pedidos
+catálogo, carrito multi-tienda, búsqueda, panel del comercio), Fase 2 (módulo `ordering`: pedidos
 multi-tienda, pago con pasarela intercambiable, notificaciones en vivo al comercio, backoffice de
-aprobación de tiendas). Pendiente: Fase 3 en adelante (despacho de repartidores, wallet real).
+aprobación de tiendas), Fase 3 (módulos `dispatch` y `wallet`: repartidores, entregas, billetera) y
+Fase 4 (búsqueda con relevancia real, módulos `reviews` e `incidents`). Pendiente: promociones
+(Fase 4, fuera de alcance a propósito) y Fase 5 (app móvil nativa).
 
 ## Decisiones
 
@@ -112,10 +114,14 @@ el resto del sistema — los repos ya son intercambiables detrás de sus puertos
   de `identity/presentation` para autenticar (composición al nivel de FastAPI, no de dominio). Dos
   contratos de `import-linter` (`identity no depende de stores`, `dominio/aplicación de stores no
   depende de identity`) verifican en CI que la dependencia es de un solo sentido.
-- **Búsqueda**: `LIKE` simple sobre nombre/descripción, con filtro por categoría y precio máximo, y
-  orden por precio o nombre — portable entre SQLite (tests) y Postgres (prod) sin extensiones. Es
-  la Etapa 1 descrita en el plan original; `tsvector`+`pg_trgm` y luego un motor dedicado quedan
-  para la Fase 4.
+- **Búsqueda inteligente (Fase 4)**: `LIKE` sobre nombre de producto, descripción **y nombre de la
+  tienda** (buscar "Pizzeria Napoli" encuentra su catálogo aunque ningún producto se llame así),
+  con filtro por categoría y precio máximo. La relevancia ya no es un orden alfabético disfrazado:
+  `_relevance_score` (`infrastructure/repositories.py`) arma un `CASE` de SQL que pondera nombre de
+  producto exacto > empieza así > nombre de tienda coincide > nombre de producto contiene > tienda
+  contiene > solo la descripción contiene, portable entre SQLite (tests) y Postgres (prod) sin
+  extensiones. Etapa siguiente si hace falta tolerar errores de tipeo y sinónimos: `tsvector` +
+  `pg_trgm`, o un motor dedicado (Meilisearch/Typesense) detrás del mismo `ProductRepository.search`.
 - **Dinero**: `price_cop` es un entero (el peso colombiano no usa decimales), validado en el dominio
   (`0 < price_cop <= 50_000_000`).
 - **Backoffice de aprobación** (Fase 2): una tienda nace con `is_approved=False` y solo aparece en
@@ -328,6 +334,65 @@ módulo que por casualidad también identifica al mismo usuario es una trampa.
 | GET | `/wallet/ledger` | Bearer | Historial de movimientos. |
 | POST | `/wallet/withdrawals` | Bearer | Retira saldo (al instante, sin pasarela real). |
 
+## Módulos `reviews` e `incidents` (implementados, Fase 4)
+
+Fase 4 del roadmap original ("Pulir") agrupaba búsqueda inteligente, calificaciones, promociones e
+incidencias; se implementaron las tres primeras salvo promociones (la más invasiva: tocaba el
+cálculo de precios de `ordering`), a elección explícita al arrancar la fase. La búsqueda inteligente
+quedó documentada en el módulo `stores` (arriba); esta sección cubre los dos módulos nuevos.
+
+### `reviews`
+
+- **Una calificación por `StoreOrder`, no por tienda "en general"**: `Review` referencia un
+  `store_order_id` puntual (restricción única en la tabla, mismo patrón atómico que
+  `dispatch_deliveries.order_id` en la Fase 3) — así no se puede calificar sin haber comprado, y a
+  lo sumo una vez por pedido. El promedio de la tienda (`compute_rating_summary`) nunca se guarda
+  editable: siempre se calcula sumando las calificaciones existentes.
+- **Simplificación deliberada — gatea en `handed_over`, no en la entrega real**: `CreateReview`
+  solo exige que el `StoreOrder` esté en `handed_over` (la tienda ya se lo entregó al repartidor),
+  no que el cliente ya lo tenga en mano. Verificar la entrega real requeriría que `reviews` conociera
+  a `dispatch`, y el estado "completado" que ya expone `ordering` (`handed_over`) es suficiente señal
+  para el MVP — documentado aquí para que quede explícito, no accidental.
+- **Capa anticorrupción hacia `ordering`**: `OrderingPort.get_store_order(store_order_id)`
+  (`application/ports.py`) es el único punto por el que `reviews` sabe que `ordering` existe;
+  reutiliza el `get_store_order` que ya existía en `OrderRepository` (`ordering`) exponiéndolo vía
+  un nuevo caso de uso interno, `GetStoreOrderViewRaw` — mismo patrón que `GetOrderRaw` de `dispatch`.
+- **`stores` no depende de `reviews`**: para evitar un ciclo (`reviews` ya depende de `ordering`,
+  que a su vez usa `stores`), la página de una tienda combina dos llamadas independientes
+  (`GET /stores/{id}` y `GET /reviews/stores/{id}/summary`) en el frontend, no en el backend. La
+  composición vive en el borde, igual que en `dispatch` con `stores`/`ordering`/`wallet`.
+
+### `incidents`
+
+- **El reportero puede ser el cliente o el repartidor del pedido — nunca lo declara el cliente**:
+  `ReportIncident._resolve_role` primero pregunta a `ordering` (¿sos el cliente de este pedido?) y
+  si no, a `dispatch` (¿sos el repartidor de esta entrega?); si ninguno responde que sí, rechaza con
+  `NotAuthorizedToReport`. El rol nunca llega en el body del request.
+- **Dos capas anticorrupción, una por cada módulo que consulta**: `OrderingPort.
+  get_order_customer_id` (idéntico en firma al de `dispatch`, pero declarado de nuevo aquí — cada
+  módulo consumidor es dueño de su propio puerto, incluso si coincide con el de otro) y
+  `DispatchPort.get_delivery_courier_user_id`, resuelto por un nuevo caso de uso interno en
+  `dispatch` (`GetDeliveryCourierUserIdRaw`) que expone `Delivery.courier_id` — que, desde la
+  corrección de la Fase 3, ya es el `user_id` de `identity` (ver más abajo), así que no hace falta
+  traducir nada más.
+- **Backoffice simple, sin SLA ni asignación**: un reporte nace `open` y un admin lo mueve a
+  `resolved` o `dismissed` con una nota opcional (`Incident.resolve`, misma tabla de transiciones
+  explícita que `StoreOrderStatus`/`DeliveryStatus`). No hay categorías de severidad, tiempos de
+  respuesta ni asignación a un agente — backoffice de una sola cola, suficiente mientras el volumen
+  de reportes sea bajo.
+
+### Endpoints (`/api/v1`)
+
+| Método | Ruta | Auth | Notas |
+|---|---|---|---|
+| POST | `/reviews` | Bearer, cliente dueño del pedido | Solo si el `StoreOrder` está `handed_over`. |
+| GET | `/reviews/stores/{store_id}` | — | Todas las calificaciones de una tienda. |
+| GET | `/reviews/stores/{store_id}/summary` | — | Promedio y cantidad. |
+| POST | `/incidents` | Bearer, cliente o repartidor del pedido | El rol se infiere, no se declara. |
+| GET | `/incidents/mine` | Bearer | Los reportes propios. |
+| GET | `/incidents` | Bearer, admin | Filtro opcional `status`. |
+| PATCH | `/incidents/{id}/resolve` | Bearer, admin | `resolved` o `dismissed` + nota opcional. |
+
 ## Frontend
 
 `apps/web` (Vite + React 19 + TypeScript). Estructura *feature-based*:
@@ -345,6 +410,8 @@ src/
     orders/   # checkout, mis pedidos, panel de pedidos del comercio, WS en vivo
     dispatch/ # onboarding de repartidor, pedidos disponibles, entrega activa/historial, admin
     wallet/   # saldo, movimientos, retiro
+    reviews/  # StarRating, calificar un StoreOrder, sección de reviews en la página de tienda
+    incidents/# reportar un problema, mis reportes, backoffice de resolución
     admin/    # backoffice: aprobar/rechazar tiendas pendientes
     home/     # mapa + filtros por categoría
   lib/        # cliente API, manejo de errores, env, formato de moneda
@@ -438,6 +505,38 @@ secuencial en una sola pestaña (cerrar sesión → iniciar sesión con el sigui
 paralelo entre pestañas del mismo navegador — no es un bug de la app, es cómo funciona
 `localStorage`, pero vale la pena dejarlo anotado para la próxima verificación manual.
 
+### Calificaciones e incidencias (Fase 4)
+
+`features/reviews/ReviewStoreOrderForm.tsx` se muestra en `OrderDetailPage.tsx` para cada
+`StoreOrder` en estado `handed_over`; el botón de enviar queda deshabilitado hasta elegir al menos
+una estrella. Si el envío falla con `review_already_exists` (409, el cliente ya calificó ese pedido
+— posible si recarga la página después de un envío exitoso previo con estado local perdido), el
+formulario lo trata como éxito silencioso en vez de mostrar un error confuso: mismo principio que
+"un usuario no debería ver un error por algo que ya logró". `StorePage.tsx` combina
+`GET /stores/{id}` y `GET /reviews/stores/{id}/summary` en dos hooks independientes (ver la nota de
+`stores` no depende de `reviews` arriba) para mostrar el promedio junto al nombre de la tienda, y
+`StoreReviewsSection.tsx` lista las calificaciones completas debajo del catálogo.
+
+`features/incidents/ReportIncidentPage.tsx` es una sola página reusada por cliente y repartidor
+(el backend infiere el rol, el frontend no necesita saberlo de antemano) — se enlaza desde
+`OrderDetailPage.tsx` (cliente) y `ActiveDeliveryPage.tsx` (repartidor), y su botón "Volver" usa
+`navigate(-1)` en vez de una ruta fija, porque el origen cambia según quién reporta.
+`MyIncidentsPage.tsx` (enlazada desde el menú de usuario en `Navbar`) y `AdminIncidentsPage.tsx`
+(pestañas por estado, con formulario de resolución inline) siguen el mismo patrón de lista+badge
+que el resto del backoffice.
+
+**Lección de esta fase — un `<div>` no puede vivir dentro de un `<p>`:** `StarRating.tsx` (usado
+para mostrar el promedio junto al nombre de la tienda) originalmente renderizaba un `<div>` como
+raíz. Anidado dentro del `<p>` de resumen de `StorePage.tsx`, el navegador cierra el `<p>` antes de
+tiempo al parsear el HTML — React lo detecta y lo reporta como error de hidratación en consola,
+aunque visualmente el layout seguía viéndose razonable (Flexbox no se queja de jerarquías DOM
+"raras"). ESLint/TypeScript no detectan esto porque JSX no valida el modelo de contenido de HTML —
+solo apareció al revisar la consola del navegador de verdad, no en los tests con jsdom (que no
+siempre falla con anidamientos inválidos). El arreglo: la raíz de `StarRating` es un `<span>`
+(contenido de fraseo, válido dentro de `<p>`/`<span>`/`<div>`), no un `<div>`. Regla general para
+componentes pequeños de UI que se insertan dentro de texto: preferir `<span>` a `<div>` como raíz
+salvo que el componente necesite ser un contenedor de bloque.
+
 ## Camino a la app móvil
 
 Los paquetes `design-tokens` y (más adelante) `shared`/`api-client` ya están separados de `apps/web`
@@ -517,6 +616,20 @@ para poder reusarse. Cuando llegue la Fase 5:
 - **Códigos de recogida/entrega en texto plano**: ver la nota del módulo `dispatch` sobre por qué el
   riesgo es distinto al de un refresh token filtrado. Igual conviene revisarlo si el modelo de
   autorización alrededor cambia (por ejemplo, si se permite confirmar sin sesión autenticada).
+- **Calificar solo exige `handed_over`, no la entrega real**: ver la nota del módulo `reviews`. Un
+  cliente puede calificar antes de que el repartidor le entregue el pedido en mano. Aceptable para
+  el MVP; si se vuelve un problema real, la solución es que `reviews` consulte a `dispatch` (nuevo
+  puerto) en vez de conformarse con el estado de `ordering`.
+- **Promociones no implementadas**: la Fase 4 del roadmap original incluía códigos de descuento
+  aplicables en el checkout; se dejó fuera a propósito por ser la pieza más invasiva (requiere tocar
+  el cálculo de precios inmutable de `ordering`, ver el patrón de *snapshot* en `OrderLine`). Sigue
+  pendiente si el negocio lo necesita.
+- **Backoffice de incidencias sin SLA**: ver la nota del módulo `incidents`. No hay plazos, prioridad
+  ni asignación a un agente — funciona mientras el volumen de reportes sea manejable por una sola
+  persona revisando una cola.
+- **`reviews` no valida contenido tóxico ni spam**: cualquier cliente que complete un pedido puede
+  dejar cualquier comentario (hasta 500 caracteres, sin moderación). Antes de producción, considerar
+  un filtro básico o revisión manual si el volumen lo justifica.
 
 ## Cómo conceder el rol admin en desarrollo
 
