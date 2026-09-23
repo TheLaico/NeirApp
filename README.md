@@ -45,6 +45,18 @@ Para probar el backoffice de aprobación de tiendas (`/admin/tiendas`) necesitas
 `admin`; no hay flujo de autoservicio para eso — ver
 ["Cómo conceder el rol admin en desarrollo"](docs/ARCHITECTURE.md#cómo-conceder-el-rol-admin-en-desarrollo).
 
+### Móvil (repartidor)
+
+```bash
+cd apps/mobile
+cp .env.example .env   # EXPO_PUBLIC_API_BASE_URL: IP de la LAN de la API, no localhost, si usas un teléfono
+npm run start           # QR para Expo Go / simulador
+npm run web              # verificación rápida en el navegador (ver limitaciones en ARCHITECTURE.md)
+```
+
+Ver ["Módulo `mobile`"](docs/ARCHITECTURE.md#módulo-mobile-implementado-fase-5) para el detalle de
+qué cubre esta app (solo repartidor por ahora) y cómo se verificó sin simulador ni dispositivo.
+
 ## Comandos útiles
 
 ```bash
@@ -56,10 +68,14 @@ cd apps/api
 ./.venv/Scripts/lint-imports           # valida las reglas de arquitectura (import-linter)
 ./.venv/Scripts/alembic revision --autogenerate -m "mensaje"
 
-# Web (desde la raíz)
+# Web y móvil (desde la raíz; --workspaces corre en ambos)
 npm run typecheck
 npm run lint
 npm run test
+
+# Solo móvil
+cd apps/mobile
+npx expo-doctor   # diagnóstico de dependencias/config específico de Expo
 ```
 
 ## Estructura
@@ -67,6 +83,7 @@ npm run test
 ```
 apps/api/           API (FastAPI, monolito modular)
 apps/web/            PWA (React + Vite)
+apps/mobile/         App de repartidor (Expo/React Native), Fase 5
 packages/api-client/ Cliente TS generado desde el OpenAPI de la API
 packages/design-tokens/  Identidad visual (colores, tipografía)
 infra/               docker-compose de servicios de apoyo

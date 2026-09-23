@@ -27,6 +27,17 @@
         "@neirapp/web"
       ],
       "port": 5173
+    },
+    {
+      "name": "mobile-web",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "web",
+        "-w",
+        "@neirapp/mobile"
+      ],
+      "port": 8081
     }
   ]
 }

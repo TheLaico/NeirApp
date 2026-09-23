@@ -7,8 +7,9 @@ tiendas a la vez y repartidores que recogen y entregan. Este documento es la ref
 catálogo, carrito multi-tienda, búsqueda, panel del comercio), Fase 2 (módulo `ordering`: pedidos
 multi-tienda, pago con pasarela intercambiable, notificaciones en vivo al comercio, backoffice de
 aprobación de tiendas), Fase 3 (módulos `dispatch` y `wallet`: repartidores, entregas, billetera) y
-Fase 4 (búsqueda con relevancia real, módulos `reviews` e `incidents`). Pendiente: promociones
-(Fase 4, fuera de alcance a propósito) y Fase 5 (app móvil nativa).
+Fase 4 (búsqueda con relevancia real, módulos `reviews` e `incidents`) y Fase 5 (app nativa de
+repartidor en Expo/React Native, `apps/mobile`). Pendiente: promociones (Fase 4, fuera de alcance a
+propósito) y empaquetar cliente/comercio como app instalable (Fase 5, ver "Camino a la app móvil").
 
 ## Decisiones
 
@@ -29,6 +30,7 @@ Fase 4 (búsqueda con relevancia real, módulos `reviews` e `incidents`). Pendie
 apps/
   api/            # FastAPI (ver detalle abajo)
   web/            # React PWA
+  mobile/         # Expo/React Native — app de repartidor (Fase 5, ver "Camino a la app móvil")
 packages/
   api-client/     # Cliente TS generado desde openapi.json (fuente: apps/api)
   design-tokens/  # Colores, tipografía, radios (identidad "Neira Store")
@@ -537,14 +539,111 @@ siempre falla con anidamientos inválidos). El arreglo: la raíz de `StarRating`
 componentes pequeños de UI que se insertan dentro de texto: preferir `<span>` a `<div>` como raíz
 salvo que el componente necesite ser un contenedor de bloque.
 
+## Módulo `mobile` (implementado, Fase 5)
+
+App nativa de repartidor: `apps/mobile`, Expo SDK 57 + React Native + TypeScript, dentro del mismo
+monorepo npm workspaces. Cubre el alcance que se decidió explícitamente al arrancar la fase
+(preguntado al usuario, ver el historial): solo la app de **repartidor**; empaquetar cliente/comercio
+(PWA + Capacitor, según el plan original) sigue pendiente.
+
+- **Por qué Expo y no envolver la web con Capacitor**: el repartidor es el único rol que
+  necesitaría GPS en segundo plano y notificaciones push confiables más adelante — cosas que una
+  PWA no garantiza bien en iOS. Esta fase **no implementa** ninguna de las dos todavía (no hay
+  tracking en vivo ni push); solo se sentaron las bases (Expo, no Capacitor) para cuando haga falta,
+  igual que la decisión original de arquitectura preveía.
+- **Reuso real, no aspiracional**: `@neirapp/api-client` y `@neirapp/design-tokens` ya estaban
+  diseñados para esto (`createApiClient` acepta cualquier `fetch` global, que React Native provee
+  igual que el navegador; `tokens.ts` es JS puro, sin CSS). La app móvil los consume tal cual —
+  cero cambios en esos paquetes. `fonts`/`shadows` del paquete sí son valores CSS (font-family con
+  fallbacks, box-shadow) que no aplican a `StyleSheet` de RN; se reemplazan por equivalentes nativos
+  en `apps/mobile/src/lib/theme.ts`, sin tocar el paquete compartido (que sigue siendo agnóstico de
+  plataforma).
+- **Expo Router con `src/app`**: rutas por archivo, con `Stack.Protected` (`guard: boolean`) para
+  separar el flujo autenticado (`(tabs)`, grupo de pestañas: Disponibles, Entrega actual, Historial,
+  Billetera, Perfil) del de login/registro — mismo patrón documentado en la guía oficial de
+  autenticación de Expo Router. Una `SplashScreenController` mantiene la splash screen nativa visible
+  hasta que `AsyncStorage` termine de rehidratar la sesión (evita el parpadeo de mostrar login y
+  saltar a la app un instante después).
+- **Sesión**: mismo modelo que la web (`useAuthStore` con Zustand+persist, mismo shape de datos),
+  pero con `AsyncStorage` en vez de `localStorage` y sin coordinación entre pestañas (`navigator.locks`)
+  porque una app móvil es una sola instancia — no hace falta. Cuando exista un paquete
+  `@neirapp/auth` compartido, `apps/web/.../auth/store.ts` y su par móvil deberían fusionarse ahí.
+- **Alcance de pantallas**: onboarding de repartidor (crear perfil, ver estado pendiente/verificado),
+  pedidos disponibles + reclamar, entrega activa (paradas en el orden sugerido, códigos de recogida,
+  confirmar entrega final), historial, billetera (saldo, movimientos, retiro) y reportar una
+  incidencia (reutilizado desde la entrega activa y el detalle de pedido — aunque el detalle de
+  pedido en sí es de la web, no de esta app). Deliberadamente fuera: recalificar tiendas (es del
+  cliente), y el flujo de re-aceptación de términos cuando cambia de versión (`TermsGate` en la web)
+  — la app solo manda `accepted_terms: true` al registrarse, sin manejar cambios de versión después.
+- **`RequireVerifiedCourier`**: componente compartido que traduce los errores del backend
+  (`courier_profile_not_found` 404, `courier_not_verified` 403) a una pantalla amigable en vez de
+  dejar que la petición falle — las pantallas de Disponibles/Entrega activa/Historial lo comparten
+  en vez de repetir el manejo tres veces.
+
+**Bug real encontrado en vivo (Expo web, ver "Cómo se verificó" abajo) — reusar `ScreenContainer`
+como encabezado parcial:** `index.tsx` (Disponibles) y `history.tsx` (Historial) envolvían el título
+en `<ScreenContainer>` (pensado como contenedor de **toda** la pantalla, con `flex: 1` en su
+`SafeAreaView`) para reusarlo como si fuera solo la fila del encabezado, con una `FlatList` aparte
+debajo. Como `ScreenContainer` fuerza `flex: 1`, ese "encabezado" se expandía para ocupar *todo* el
+alto disponible, empujando el mensaje de `RequireVerifiedCourier` (cuando no hay perfil/no está
+verificado) hasta pegarlo contra la tab bar, con una franja vacía enorme en el medio — invisible en
+un vistazo rápido porque el título seguía viéndose arriba, correcto. El arreglo: esas dos pantallas
+arman su propio `SafeAreaView` + `View` de encabezado (sin `flex: 1`) en vez de reusar
+`ScreenContainer`, que queda reservado para pantallas donde es el único contenedor de la pantalla
+completa (login, registro, entrega activa, billetera, perfil, reportar incidencia). Lección: un
+componente con `flex: 1` en su raíz no es seguro de reusar como pieza parcial de un layout compuesto.
+
+**Cómo se verificó (sin simulador ni dispositivo físico en este entorno):** `tsc --noEmit`,
+`expo lint` y `expo-doctor` limpios (integrados a `npm run typecheck`/`lint` de la raíz), y
+`expo start --web` corriendo de verdad en el navegador (Metro compila a `react-native-web`) — ahí se
+probó el flujo completo end-to-end: registro, onboarding de repartidor, verificación desde el
+backoffice web (en otro origen: `localhost:8081` vs `localhost:5173`, cada uno con su propia sesión
+en `localStorage`/`AsyncStorage`, sin el problema de "una sola sesión por navegador" que sí afectó
+las pruebas manuales de la Fase 3), reclamar un pedido y ver el código de recogida. Esto **no**
+reemplaza probar en un simulador/dispositivo real antes de publicar: `react-native-web` no ejercita
+código nativo (GPS, notificaciones push, cámara), y layouts que dependen de comportamientos táctiles
+específicos de iOS/Android pueden verse distintos.
+- **CORS solo es un problema en este modo de verificación**: `expo start --web` corre en el
+  navegador y por lo tanto sí sufre CORS, a diferencia de una app nativa compilada (que no manda
+  `Origin` y nunca choca con `CORSMiddleware`). Hubo que agregar `http://localhost:8081` a
+  `NEIRAPP_CORS_ORIGINS` en `.env` para poder probar — no hace falta para la app real en un teléfono,
+  documentado acá para no repetir la confusión.
+- **Duplicado de React en el monorepo (aviso conocido de `expo-doctor`)**: `apps/web` usa
+  `react@^19.3.0` y `apps/mobile` fija `react@19.2.3` (la versión exacta que Expo SDK 57 probó con
+  `react-native@0.86.3` — forzar la misma versión que la web podría romper renderizado nativo). Como
+  los rangos son incompatibles, npm no las deduplica: cada app termina con su propia copia anidada.
+  `expo-doctor` lo marca como "dependencias duplicadas", pero es inofensivo — la resolución de
+  módulos de Node siempre encuentra primero el `node_modules` más cercano, así que cada app usa su
+  propia copia sin cruzarse. No se intentó alinear las versiones a propósito, para no arriesgar la
+  compatibilidad ya verificada de cualquiera de las dos apps.
+- **`shadow*` deprecado en `react-native-web`**: la advertencia de consola ("`shadow*` style props
+  are deprecated. Use `boxShadow`") sale solo al correr en modo web (`Card`/`Button` usan
+  `shadowColor`/`shadowOffset`/etc., que sí son la API correcta y necesaria en nativo). No se resolvió
+  con un `Platform.select` porque no afecta la app real (nativa) y el modo web es solo una
+  herramienta de verificación en este entorno, no el producto final.
+
+### Cómo correr la app móvil en desarrollo
+
+```bash
+cd apps/mobile
+npx expo start          # QR para Expo Go / dispositivo o simulador
+npx expo start --web    # Verificación rápida en el navegador (ver limitaciones arriba)
+```
+
+Necesita `EXPO_PUBLIC_API_BASE_URL` en un `.env` de `apps/mobile` apuntando a la IP de la LAN de la
+API (no `localhost`, que en un dispositivo físico apunta al propio teléfono) — ver
+`apps/mobile/src/lib/env.ts`.
+
 ## Camino a la app móvil
 
-Los paquetes `design-tokens` y (más adelante) `shared`/`api-client` ya están separados de `apps/web`
-para poder reusarse. Cuando llegue la Fase 5:
-- Clientes y comercios: la PWA cubre casi todo; se puede envolver con Capacitor si se necesita
-  presencia en las tiendas de apps.
-- Repartidores: probablemente necesiten Expo (React Native) desde el principio, por el GPS en
-  segundo plano y las notificaciones confiables que una PWA no garantiza bien.
+Repartidor: hecho (ver arriba). Pendiente de la fase original:
+- **Clientes y comercios**: la PWA (`apps/web`) cubre casi todo; envolverla con Capacitor para que
+  aparezca en las tiendas de apps sigue siendo la ruta más simple — no necesitan GPS en segundo plano
+  ni notificaciones push tan críticas como el repartidor.
+- **Repartidor, siguiente iteración**: rastreo GPS en vivo (`expo-location`, con permiso de segundo
+  plano) para reemplazar la heurística de `suggest_route` con una ruta real, y notificaciones push
+  (`expo-notifications`) para avisar pedidos nuevos sin depender de que el repartidor tenga la app
+  abierta con `refetchInterval` sondeando.
 
 ## Riesgos abiertos / deuda técnica conocida
 
@@ -630,6 +729,18 @@ para poder reusarse. Cuando llegue la Fase 5:
 - **`reviews` no valida contenido tóxico ni spam**: cualquier cliente que complete un pedido puede
   dejar cualquier comentario (hasta 500 caracteres, sin moderación). Antes de producción, considerar
   un filtro básico o revisión manual si el volumen lo justifica.
+- **App móvil sin probar en simulador/dispositivo real**: ver "Cómo se verificó" en el módulo
+  `mobile`. Todo lo verificado en este entorno fue vía `expo start --web`; falta la pasada final en
+  un simulador iOS/Android o Expo Go antes de considerarla lista para repartidores reales.
+- **App móvil sin tests automatizados**: a diferencia de `apps/api` y `apps/web`, `apps/mobile` no
+  tiene suite de tests (ni unitarios de dominio ni de componentes) — se apoya solo en `tsc`,
+  `expo lint` y la verificación manual en el navegador. Si la app crece, vale la pena agregar Jest +
+  `@testing-library/react-native` para la lógica de negocio (por ejemplo, `orderedStops` en la
+  pantalla de entrega activa).
+- **App móvil sin GPS en segundo plano ni notificaciones push**: la razón original para elegir Expo
+  sobre Capacitor (ver el módulo `mobile`) todavía no se implementó — la app solo sondea la API
+  (`refetchInterval`) igual que la web. Es la siguiente iteración natural, no un requisito de este
+  MVP.
 
 ## Cómo conceder el rol admin en desarrollo
 

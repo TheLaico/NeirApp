@@ -5,11 +5,13 @@
   "description": "NeirApp: marketplace local de Neira, Caldas.",
   "workspaces": [
     "apps/web",
+    "apps/mobile",
     "packages/*"
   ],
   "scripts": {
     "dev:web": "npm run dev -w @neirapp/web",
     "build:web": "npm run build -w @neirapp/web",
+    "dev:mobile": "npm run start -w @neirapp/mobile",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
