@@ -1,0 +1,79 @@
+import { Bell, BellOff, Check, Heart, Sparkles, Store, X } from 'lucide-react';
+import PageShell from '../../components/layout/PageShell.jsx';
+import { useNotifications } from '../../features/notifications/NotificationsContext.jsx';
+import { timeAgo } from '../../lib/time.js';
+import './notifications-page.css';
+
+const ICONS = { welcome: Sparkles, favorite: Heart, store: Store };
+
+/** Página "Notificaciones". */
+export default function NotificationsPage({ user, onLogout }) {
+  const { items, unreadCount, markRead, markAllRead, remove, clear } = useNotifications();
+
+  return (
+    <PageShell
+      user={user}
+      onLogout={onLogout}
+      title="Notificaciones"
+      subtitle={unreadCount > 0 ? `Tienes ${unreadCount} sin leer.` : 'Estás al día.'}
+    >
+      <div className="page-narrow">
+        {items.length > 0 && (
+          <div className="notif-actions">
+            <button type="button" className="btn-ghost" disabled={unreadCount === 0} onClick={markAllRead}>
+              <Check size={16} aria-hidden="true" />
+              Marcar todas como leídas
+            </button>
+            <button type="button" className="btn-ghost btn-danger" onClick={clear}>
+              Borrar todas
+            </button>
+          </div>
+        )}
+
+        {items.length === 0 ? (
+          <section className="page-card">
+            <div className="empty-state">
+              <BellOff size={46} aria-hidden="true" />
+              <p>No tienes notificaciones.</p>
+              <small>Aquí verás los avisos de tus pedidos y las novedades de NeirAPP.</small>
+            </div>
+          </section>
+        ) : (
+          <ul className="notif-list">
+            {items.map((n) => {
+              const Icon = ICONS[n.kind] ?? Bell;
+              return (
+                <li key={n.id} className={`notif${n.read ? '' : ' unread'}`}>
+                  <button
+                    type="button"
+                    className="notif-main"
+                    aria-label={`${n.title}${n.read ? '' : ' (sin leer)'}. Marcar como leída`}
+                    onClick={() => markRead(n.id)}
+                  >
+                    <span className="notif-icon">
+                      <Icon size={22} aria-hidden="true" />
+                    </span>
+                    <span className="notif-text">
+                      <strong>{n.title}</strong>
+                      <span>{n.body}</span>
+                      <time dateTime={n.createdAt}>{timeAgo(n.createdAt)}</time>
+                    </span>
+                    {!n.read && <span className="notif-dot" aria-hidden="true" />}
+                  </button>
+                  <button
+                    type="button"
+                    className="notif-remove"
+                    aria-label={`Borrar notificación: ${n.title}`}
+                    onClick={() => remove(n.id)}
+                  >
+                    <X size={18} aria-hidden="true" />
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
+    </PageShell>
+  );
+}
