@@ -1,7 +1,8 @@
-import { usePersistentState } from '../../lib/usePersistentState.js';
+import { useCallback, useEffect, useState } from 'react';
+import { professionalsApi } from './api.js';
 
-// Perfil que arma el propio profesional desde "Mi perfil". Todavía no hay backend de perfiles, así que se
-// guarda en este navegador (una clave por usuario); la foto sí se sube a la API de imágenes.
+// Perfil que arma el propio profesional desde "Mi perfil". Se guarda en la API (`PUT /professionals/me`)
+// y se publica en el directorio de /profesionales mientras la cuenta tenga acceso de profesional.
 
 export const TITLES = ['', 'Dr.', 'Dra.', 'Ing.', 'Abg.', 'Arq.', 'Lic.', 'Psic.', 'Cont.'];
 
@@ -31,8 +32,85 @@ export const emptyProfile = (user) => ({
   available: true,
 });
 
+/** De la respuesta de la API al borrador del formulario. */
+export const fromApi = (p) => ({
+  photo: p.photo_url,
+  title: p.title,
+  fullName: p.full_name,
+  headline: p.headline,
+  categoryId: p.category_id,
+  subcategoryId: p.subcategory_id,
+  experienceYears: p.experience_years ?? '',
+  description: p.description,
+  phone: p.phone,
+  whatsapp: p.whatsapp,
+  email: p.email,
+  address: p.address,
+  schedule: p.schedule,
+  modalities: { ...p.modalities },
+  available: p.is_available,
+});
+
+export const toApi = (d) => ({
+  photo_url: d.photo,
+  title: d.title,
+  full_name: d.fullName.trim(),
+  headline: d.headline,
+  category_id: d.categoryId,
+  subcategory_id: d.subcategoryId,
+  experience_years: d.experienceYears === '' ? null : Number(d.experienceYears),
+  description: d.description,
+  phone: d.phone,
+  whatsapp: d.whatsapp,
+  email: d.email.trim(),
+  address: d.address,
+  schedule: d.schedule,
+  modalities: d.modalities,
+  is_available: d.available,
+});
+
+// Errores de la API → campo del formulario donde se muestran.
+const ERROR_FIELDS = {
+  invalid_full_name: 'fullName',
+  invalid_title: 'title',
+  invalid_category: 'categoryId',
+  invalid_experience: 'experienceYears',
+  invalid_phone: 'phone',
+  invalid_contact_email: 'email',
+  no_modality: 'modalities',
+  invalid_photo_url: 'photo',
+};
+export const fieldForError = (code) => ERROR_FIELDS[code];
+
+/**
+ * Perfil del profesional desde la API. Si todavía no lo ha creado (404), arranca con su nombre, celular y correo
+ * de la cuenta; `exists` indica si ya está publicado. `save(draft)` lo guarda y devuelve el perfil actualizado.
+ */
 export function useProfessionalProfile(user) {
-  return usePersistentState(`neirapp.frontend.professional.profile.${user?.id ?? 'anon'}`, () => emptyProfile(user));
+  const [state, setState] = useState({ profile: null, exists: false, loading: true, error: '' });
+
+  const load = useCallback(async () => {
+    setState((s) => ({ ...s, loading: true, error: '' }));
+    try {
+      setState({ profile: fromApi(await professionalsApi.mine()), exists: true, loading: false, error: '' });
+    } catch (err) {
+      if (err.status === 404) setState({ profile: emptyProfile(user), exists: false, loading: false, error: '' });
+      else setState((s) => ({ ...s, loading: false, error: err.message }));
+    }
+    // Depende solo del id: no hace falta recargar si cambian otros datos de la cuenta.
+  }, [user?.id]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const save = useCallback(async (draft) => {
+    const profile = fromApi(await professionalsApi.saveMine(toApi(draft)));
+    setState({ profile, exists: true, loading: false, error: '' });
+    return profile;
+  }, []);
+
+  return { ...state, reload: load, save };
 }
 
 /** Nombre como lo ven los clientes: "Dr. Andrés Patiño". */

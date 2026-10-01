@@ -121,6 +121,15 @@ layers = [
 ]
 
 [[tool.importlinter.contracts]]
+name = "professionals: capas"
+type = "layers"
+layers = [
+  "neirapp.modules.professionals.presentation | neirapp.modules.professionals.infrastructure",
+  "neirapp.modules.professionals.application",
+  "neirapp.modules.professionals.domain",
+]
+
+[[tool.importlinter.contracts]]
 name = "wallet: capas"
 type = "layers"
 layers = [
@@ -160,6 +169,7 @@ source_modules = [
   "neirapp.modules.pricing.domain",
   "neirapp.modules.reviews.domain",
   "neirapp.modules.incidents.domain",
+  "neirapp.modules.professionals.domain",
   "neirapp.shared.domain",
 ]
 forbidden_modules = ["fastapi", "sqlalchemy", "pydantic", "jwt", "argon2", "starlette"]
@@ -177,6 +187,7 @@ source_modules = [
   "neirapp.modules.pricing.application",
   "neirapp.modules.reviews.application",
   "neirapp.modules.incidents.application",
+  "neirapp.modules.professionals.application",
   "neirapp.shared.application",
 ]
 forbidden_modules = ["fastapi", "sqlalchemy", "starlette"]
@@ -316,3 +327,41 @@ source_modules = [
   "neirapp.modules.wallet",
 ]
 forbidden_modules = ["neirapp.modules.reviews", "neirapp.modules.incidents"]
+
+# domain/application de `professionals` no importan otros módulos: quién sigue autorizado lo
+# pregunta por su `AccessPort`, que implementa `infrastructure/identity_adapter.py`. Y ningún otro
+# módulo depende de `professionals`.
+[[tool.importlinter.contracts]]
+name = "el dominio/aplicación de professionals no depende de otros módulos"
+type = "forbidden"
+source_modules = [
+  "neirapp.modules.professionals.domain",
+  "neirapp.modules.professionals.application",
+]
+forbidden_modules = [
+  "neirapp.modules.identity",
+  "neirapp.modules.stores",
+  "neirapp.modules.ordering",
+  "neirapp.modules.dispatch",
+  "neirapp.modules.wallet",
+  "neirapp.modules.reviews",
+  "neirapp.modules.incidents",
+  "neirapp.modules.leads",
+  "neirapp.modules.pricing",
+]
+
+[[tool.importlinter.contracts]]
+name = "otros módulos no dependen de professionals"
+type = "forbidden"
+source_modules = [
+  "neirapp.modules.identity",
+  "neirapp.modules.stores",
+  "neirapp.modules.ordering",
+  "neirapp.modules.dispatch",
+  "neirapp.modules.wallet",
+  "neirapp.modules.reviews",
+  "neirapp.modules.incidents",
+  "neirapp.modules.leads",
+  "neirapp.modules.pricing",
+]
+forbidden_modules = ["neirapp.modules.professionals"]

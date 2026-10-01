@@ -81,3 +81,14 @@ class FindUserByEmail:
         email = normalize_email(email)
         async with self._uow_factory() as uow:
             return await uow.users.get_by_email(email)
+
+
+class ListUserIdsWithRole:
+    """Cuentas activas con un rol. Otros módulos la usan para saber quién sigue autorizado."""
+
+    def __init__(self, uow_factory: UnitOfWorkFactory) -> None:
+        self._uow_factory = uow_factory
+
+    async def __call__(self, role: Role) -> set[UUID]:
+        async with self._uow_factory() as uow:
+            return await uow.users.ids_with_role(role)

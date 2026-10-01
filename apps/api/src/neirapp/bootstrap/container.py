@@ -52,6 +52,7 @@ from neirapp.modules.identity.application.role_grants import (
     FindUserByEmail,
     GrantRoleByEmail,
     ListRoleGrants,
+    ListUserIdsWithRole,
     RevokeRoleGrant,
 )
 from neirapp.modules.identity.application.session_issuer import SessionIssuer
@@ -104,6 +105,16 @@ from neirapp.modules.ordering.presentation.ws_manager import ConnectionManager
 from neirapp.modules.pricing.application.app import PricingApp
 from neirapp.modules.pricing.application.pricing import GetDeliveryPricing, UpdateDeliveryPricing
 from neirapp.modules.pricing.infrastructure.store import SqlAlchemyPricingStore
+from neirapp.modules.professionals.application.app import ProfessionalsApp
+from neirapp.modules.professionals.application.profiles import (
+    GetMyProfile,
+    GetPublicProfile,
+    ListDirectory,
+    SaveMyProfile,
+    SetFeatured,
+)
+from neirapp.modules.professionals.infrastructure.identity_adapter import IdentityAccessAdapter
+from neirapp.modules.professionals.infrastructure.repositories import SqlAlchemyProfileRepository
 from neirapp.modules.reviews.application.app import ReviewsApp
 from neirapp.modules.reviews.application.reviews import (
     CreateReview,
@@ -198,6 +209,7 @@ def build_identity(
         revoke_role=RevokeRoleGrant(uow_factory),
         list_role_grants=ListRoleGrants(uow_factory),
         find_user_by_email=FindUserByEmail(uow_factory),
+        list_user_ids_with_role=ListUserIdsWithRole(uow_factory),
     )
 
 
@@ -263,6 +275,20 @@ def build_ordering(
         list_claimable_orders=ListClaimableOrders(uow_factory),
         mark_store_order_handed_over_raw=MarkStoreOrderHandedOverRaw(uow_factory, clock),
         get_store_order_view_raw=GetStoreOrderViewRaw(uow_factory),
+    )
+
+
+def build_professionals(
+    session_factory: async_sessionmaker[Any], identity: IdentityApp, clock: Clock | None = None
+) -> ProfessionalsApp:
+    repo = SqlAlchemyProfileRepository(session_factory)
+    access = IdentityAccessAdapter(identity)
+    return ProfessionalsApp(
+        get_my_profile=GetMyProfile(repo),
+        save_my_profile=SaveMyProfile(repo, clock or SystemClock()),
+        list_directory=ListDirectory(repo, access),
+        get_public_profile=GetPublicProfile(repo, access),
+        set_featured=SetFeatured(repo),
     )
 
 

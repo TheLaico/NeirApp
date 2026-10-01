@@ -395,6 +395,25 @@ quedó documentada en el módulo `stores` (arriba); esta sección cubre los dos 
 | GET | `/incidents` | Bearer, admin | Filtro opcional `status`. |
 | PATCH | `/incidents/{id}/resolve` | Bearer, admin | `resolved` o `dismissed` + nota opcional. |
 
+## Módulo `professionals` (implementado)
+
+Directorio de profesionales de Neira (médicos, abogados, ingenieros…). El administrador autoriza un
+correo con el rol `professional` (desde "Gestión de profesionales"); la persona arma su propio perfil
+en `/profesional` → "Mi perfil" y queda publicado en `/profesionales`.
+
+- **Perfil** (`professionals_profile`, una fila por cuenta): título, nombre, frase de presentación,
+  área y especialidad (ids de las categorías que gestiona el admin), años de experiencia, descripción,
+  celular/WhatsApp (se guardan como 10 dígitos, sin +57), correo, dirección, horario, formas de
+  atención (consultorio, domicilio, virtual), disponibilidad y foto (solo subida a la app).
+- **Directorio público**: `GET /professionals?category_id=&subcategory_id=`. Solo salen cuentas que
+  **siguen** teniendo el rol: si el admin lo quita, el perfil deja de verse (se pregunta a `identity`
+  por su fachada a través de `AccessPort`). Orden: destacados, luego disponibles, luego los
+  actualizados más recientemente.
+- **Endpoints**: `GET/PUT /professionals/me` (profesional o admin), `GET /professionals`,
+  `GET /professionals/{user_id}` (públicos), `PUT /professionals/{user_id}/featured` (admin).
+- Pendiente: las categorías y subcategorías siguen en `localStorage` del navegador del admin (el
+  perfil guarda sus ids, pero la API no valida que existan); calificaciones de profesionales.
+
 ## Frontend
 
 `apps/web` (Vite + React 19 + TypeScript). Estructura *feature-based*:

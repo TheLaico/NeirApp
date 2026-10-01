@@ -1,18 +1,21 @@
-import { BadgeCheck, CheckCircle2, ChevronRight, MapPin, MessageCircle, Phone, Sparkles, User } from 'lucide-react';
+import { BadgeCheck, CheckCircle2, ChevronRight, Globe, Loader2, MapPin, MessageCircle, Phone, Sparkles, User } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import ImagePicker from '../../components/mobile/ImagePicker.jsx';
 import { useProfessionalCategories } from '../../features/professionals/categories.js';
-import { DESCRIPTION_MAX, MODALITIES, TITLES, displayName, missingItems, validateProfile } from '../../features/professionals/profile.js';
+import { DESCRIPTION_MAX, MODALITIES, TITLES, displayName, fieldForError, missingItems, validateProfile } from '../../features/professionals/profile.js';
 
 /**
  * "Mi perfil": el profesional llena sus datos (foto, presentación, área, descripción, contacto y horario) y a la derecha
- * ve cómo quedará su tarjeta en el directorio de /profesionales. Los cambios se aplican al tocar "Guardar cambios".
+ * ve cómo quedará su tarjeta en el directorio de /profesionales. Al tocar "Guardar cambios" se guarda en la API y
+ * queda publicado. `published` dice si ya lo estaba antes de esta edición.
  */
-export default function ProfileView({ profile, onSave }) {
+export default function ProfileView({ profile, published, onSave }) {
   const [categories] = useProfessionalCategories();
   const [draft, setDraft] = useState(profile);
   const [errors, setErrors] = useState({});
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [serverError, setServerError] = useState('');
 
   const dirty = JSON.stringify(draft) !== JSON.stringify(profile);
   const category = categories.find((c) => c.id === draft.categoryId);
@@ -21,6 +24,7 @@ export default function ProfileView({ profile, onSave }) {
 
   const update = (patch) => {
     setSaved(false);
+    setServerError('');
     setDraft((d) => ({ ...d, ...patch }));
     // Al corregir un campo se borra su error; el resto se revisa al guardar.
     setErrors((e) => {
@@ -31,17 +35,30 @@ export default function ProfileView({ profile, onSave }) {
   };
   const field = (key) => ({ id: `pf-${key}`, value: draft[key], onChange: (e) => update({ [key]: e.target.value }), 'aria-invalid': Boolean(errors[key]) });
 
-  const submit = (e) => {
+  const focusField = (key) => document.getElementById(`pf-${key}`)?.focus();
+
+  const submit = async (e) => {
     e.preventDefault();
     const found = validateProfile(draft);
     setErrors(found);
     const first = Object.keys(found)[0];
-    if (first) {
-      document.getElementById(`pf-${first}`)?.focus();
-      return;
+    if (first) return focusField(first);
+    setSaving(true);
+    setServerError('');
+    try {
+      setDraft(await onSave(draft)); // el servidor devuelve los datos normalizados (ej. el celular sin espacios)
+      setSaved(true);
+    } catch (err) {
+      const key = fieldForError(err.code);
+      if (key) {
+        setErrors({ [key]: err.message });
+        focusField(key);
+      } else {
+        setServerError(err.message);
+      }
+    } finally {
+      setSaving(false);
     }
-    onSave({ ...draft, fullName: draft.fullName.trim(), email: draft.email.trim() });
-    setSaved(true);
   };
 
   const goTo = (key) => {
@@ -55,6 +72,10 @@ export default function ProfileView({ profile, onSave }) {
       <div className="pf-head">
         <h1>Mi perfil</h1>
         <p>Esta es la información que verán las personas de Neira cuando busquen un profesional como tú.</p>
+        <span className={`pf-published${published ? ' on' : ''}`}>
+          <Globe size={15} aria-hidden="true" />
+          {published ? 'Publicado en el directorio de profesionales' : 'Aún no publicado: guarda tu perfil para aparecer en el directorio'}
+        </span>
       </div>
 
       <div className="pf-layout">
@@ -227,16 +248,20 @@ export default function ProfileView({ profile, onSave }) {
         </aside>
       </div>
 
-      <div className={`pf-bar${dirty ? ' dirty' : ''}`}>
-        {saved && !dirty ? (
+      <div className={`pf-bar${dirty || !published ? ' dirty' : ''}`}>
+        {serverError ? (
+          <p className="pf-error" role="alert">
+            {serverError}
+          </p>
+        ) : saved && !dirty ? (
           <p className="pf-saved" role="status">
             <CheckCircle2 size={18} aria-hidden="true" /> Cambios guardados
           </p>
         ) : (
-          <p className="pf-hint">{dirty ? 'Tienes cambios sin guardar.' : 'Todo está guardado.'}</p>
+          <p className="pf-hint">{dirty ? 'Tienes cambios sin guardar.' : published ? 'Todo está guardado.' : 'Aún no has publicado tu perfil.'}</p>
         )}
         <div className="pf-bar-actions">
-          {dirty && (
+          {dirty && !saving && (
             <button
               type="button"
               className="cr-btn ghost"
@@ -248,8 +273,9 @@ export default function ProfileView({ profile, onSave }) {
               Descartar
             </button>
           )}
-          <button type="submit" className="cr-btn primary" disabled={!dirty}>
-            Guardar cambios
+          <button type="submit" className="cr-btn primary" disabled={saving || (!dirty && published)}>
+            {saving && <Loader2 size={18} className="cr-spin" aria-hidden="true" />}
+            {published ? 'Guardar cambios' : 'Publicar mi perfil'}
           </button>
         </div>
       </div>

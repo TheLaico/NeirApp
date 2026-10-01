@@ -12,6 +12,7 @@ from neirapp.modules.identity.application.role_grants import (
     FindUserByEmail,
     GrantRoleByEmail,
     ListRoleGrants,
+    ListUserIdsWithRole,
     RevokeRoleGrant,
 )
 from neirapp.modules.identity.application.sessions import Login, Logout, RefreshSession
@@ -34,3 +35,4 @@ class IdentityApp:
     revoke_role: RevokeRoleGrant
     list_role_grants: ListRoleGrants
     find_user_by_email: FindUserByEmail
+    list_user_ids_with_role: ListUserIdsWithRole

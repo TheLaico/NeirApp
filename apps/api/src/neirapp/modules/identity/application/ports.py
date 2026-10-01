@@ -26,6 +26,10 @@ class UserRepository(Protocol):
 
     async def update(self, user: User) -> None: ...
 
+    async def ids_with_role(self, role: Role) -> set[UUID]:
+        """Ids de las cuentas activas que tienen ese rol."""
+        ...
+
 
 class TermsRepository(Protocol):
     async def add(self, acceptance: TermsAcceptance) -> None: ...

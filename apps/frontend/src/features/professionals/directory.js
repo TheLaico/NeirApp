@@ -1,31 +1,45 @@
-import { usePersistentState } from '../../lib/usePersistentState.js';
+import { useCallback, useEffect, useState } from 'react';
+import { professionalsApi } from './api.js';
 
-const STORAGE_KEY = 'neirapp.frontend.professionals.directory';
-
-// Directorio de ejemplo: todavía no hay perfiles reales de profesionales (llegan cuando exista el
-// registro/perfil de profesional), así que por ahora estos mismos 3 aparecen en cualquier subcategoría.
-// `featured` lo marca el admin desde "Gestión de profesionales" para que ese profesional aparezca
-// primero en la lista sin importar su calificación.
-const DEFAULT_PROFESSIONALS = [
-  { id: 'p1', name: 'Ana Ramírez', available: true, info: '5 años de experiencia · Neira, Caldas', rating: 4.8, reviews: 12, featured: false },
-  { id: 'p2', name: 'Carlos Gómez', available: false, info: '3 años de experiencia · Neira, Caldas', rating: 4.5, reviews: 8, featured: false },
-  { id: 'p3', name: 'Laura Torres', available: true, info: '8 años de experiencia · Neira, Caldas', rating: 5.0, reviews: 20, featured: false },
-];
+/** Un perfil de la API, con los nombres que usan las tarjetas del directorio. */
+export const toCard = (p) => ({
+  id: p.user_id,
+  name: p.display_name,
+  photo: p.photo_url,
+  available: p.is_available,
+  featured: p.is_featured,
+  headline: p.headline,
+  categoryId: p.category_id,
+  subcategoryId: p.subcategory_id,
+  experienceYears: p.experience_years,
+  phone: p.phone,
+  whatsapp: p.whatsapp || p.phone,
+});
 
 /**
- * Directorio de profesionales de ejemplo. Se marca como destacado desde el admin y esta misma lista la
- * lee /profesionales — no hay backend para esto todavía, así que se guarda en localStorage (como las
- * categorías).
+ * Directorio de profesionales desde la API (destacados primero, luego los disponibles: el orden lo da el
+ * servidor). Solo aparecen los que tienen acceso de profesional y ya llenaron su perfil.
  */
-export function useProfessionalDirectory() {
-  return usePersistentState(STORAGE_KEY, DEFAULT_PROFESSIONALS);
+export function useProfessionalDirectory({ categoryId, subcategoryId } = {}) {
+  const [state, setState] = useState({ list: [], loading: true, error: '' });
+
+  const reload = useCallback(async () => {
+    setState((s) => ({ ...s, loading: true, error: '' }));
+    try {
+      const data = await professionalsApi.list({ categoryId, subcategoryId });
+      setState({ list: data.map(toCard), loading: false, error: '' });
+    } catch (err) {
+      setState({ list: [], loading: false, error: err.message });
+    }
+  }, [categoryId, subcategoryId]);
+
+  useEffect(() => {
+    reload();
+  }, [reload]);
+
+  return { ...state, reload, setList: (list) => setState((s) => ({ ...s, list })) };
 }
 
-// Destacados primero (sin importar su calificación); dentro de cada grupo, mejor calificado primero y,
-// si empatan, el que tenga más reseñas respalda mejor ese puntaje.
-export function sortProfessionals(list) {
-  return [...list].sort((a, b) => {
-    if (a.featured !== b.featured) return a.featured ? -1 : 1;
-    return b.rating - a.rating || b.reviews - a.reviews;
-  });
-}
+/** Enlaces para contactar: llamada y chat de WhatsApp (los celulares se guardan sin el +57). */
+export const telLink = (phone) => `tel:+57${phone}`;
+export const whatsappLink = (phone, text = 'Hola, te encontré en NeirAPP.') => `https://wa.me/57${phone}?text=${encodeURIComponent(text)}`;

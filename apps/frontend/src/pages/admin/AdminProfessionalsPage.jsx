@@ -1,6 +1,7 @@
 import { Loader2, Plus, Trash2, UserPlus } from 'lucide-react';
 import { useState } from 'react';
 import { CATEGORY_ICONS, DEFAULT_SUBCATEGORY_COLOR, ICON_NAMES, slugify, useProfessionalCategories } from '../../features/professionals/categories.js';
+import { professionalsApi } from '../../features/professionals/api.js';
 import { useProfessionalDirectory } from '../../features/professionals/directory.js';
 import { useRoleGrants } from '../../features/roles/api.js';
 import AdminLayout from './AdminLayout.jsx';
@@ -13,9 +14,15 @@ function uniqueId(base, taken) {
   return `${base}-${n}`;
 }
 
+// "Medicina · Pediatría" con los nombres de las categorías (en el perfil solo se guardan sus ids).
+function categoryLabel(categories, pro) {
+  const cat = categories.find((c) => c.id === pro.categoryId);
+  const sub = cat?.subcategories.find((s) => s.id === pro.subcategoryId);
+  return [cat?.label ?? pro.categoryId, sub?.label].filter(Boolean).join(' · ');
+}
+
 // El rol se autoriza por correo (igual que repartidor/comerciante en "Roles"), pero se gestiona acá
-// porque es específico de profesionales. La persona arma su propio perfil al entrar; esa vista todavía
-// no existe.
+// porque es específico de profesionales. La persona arma su propio perfil al entrar a /profesional.
 const PROFESSIONAL_ROLE = 'professional';
 
 /**
@@ -62,10 +69,17 @@ export default function AdminProfessionalsPage({ user, onLogout }) {
     }
   };
 
-  const [directory, setDirectory] = useProfessionalDirectory();
+  const directory = useProfessionalDirectory();
+  const [featuredError, setFeaturedError] = useState('');
 
-  const toggleFeatured = (id) => {
-    setDirectory(directory.map((p) => (p.id === id ? { ...p, featured: !p.featured } : p)));
+  const toggleFeatured = async (pro) => {
+    setFeaturedError('');
+    try {
+      await professionalsApi.setFeatured(pro.id, !pro.featured);
+      await directory.reload(); // el orden del directorio cambia
+    } catch (err) {
+      setFeaturedError(err.message);
+    }
   };
 
   const [categories, setCategories] = useProfessionalCategories();
@@ -210,16 +224,28 @@ export default function AdminProfessionalsPage({ user, onLogout }) {
       <section className="a-card">
         <h2>Destacados</h2>
         <p className="a-card-hint">
-          El profesional destacado aparece primero en su especialidad en /profesionales, sin importar su calificación.
+          El profesional destacado aparece primero en su especialidad en /profesionales. Aquí salen quienes ya publicaron su perfil.
         </p>
+        {featuredError && (
+          <p className="a-err" role="alert">
+            {featuredError}
+          </p>
+        )}
+        {directory.loading ? (
+          <p className="a-empty">Cargando…</p>
+        ) : directory.error ? (
+          <p className="a-err" role="alert">
+            {directory.error}
+          </p>
+        ) : directory.list.length === 0 ? (
+          <p className="a-empty">Todavía ningún profesional ha publicado su perfil.</p>
+        ) : (
         <ul className="a-store-list">
-          {directory.map((pro) => (
+          {directory.list.map((pro) => (
             <li key={pro.id} className="a-store-row">
               <div className="a-store-info">
                 <strong>{pro.name}</strong>
-                <span>
-                  ★ {pro.rating.toFixed(1)} ({pro.reviews} reseñas)
-                </span>
+                <span>{categoryLabel(categories, pro)}</span>
               </div>
               <span className={`a-badge ${pro.featured ? 'server' : 'local'}`}>{pro.featured ? 'Destacado' : 'Normal'}</span>
               <button
@@ -228,13 +254,14 @@ export default function AdminProfessionalsPage({ user, onLogout }) {
                 aria-checked={pro.featured}
                 aria-label={`${pro.name}: ${pro.featured ? 'destacado' : 'no destacado'}`}
                 className={`a-switch${pro.featured ? ' on' : ''}`}
-                onClick={() => toggleFeatured(pro.id)}
+                onClick={() => toggleFeatured(pro)}
               >
                 <span />
               </button>
             </li>
           ))}
         </ul>
+        )}
       </section>
 
       <form className="a-card a-form" onSubmit={onAddCategory} noValidate>

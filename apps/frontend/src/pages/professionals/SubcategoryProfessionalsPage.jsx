@@ -1,8 +1,8 @@
-import { ArrowLeft, Check, ChevronDown, MessageCircle, Phone, Search, Star, User } from 'lucide-react';
+import { ArrowLeft, Check, ChevronDown, MessageCircle, Phone, Search, User } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import PageShell from '../../components/layout/PageShell.jsx';
 import { CATEGORY_ICONS, CATEGORY_IMAGE_KEYS, DEFAULT_SUBCATEGORY_COLOR, useProfessionalCategories } from '../../features/professionals/categories.js';
-import { sortProfessionals, useProfessionalDirectory } from '../../features/professionals/directory.js';
+import { telLink, useProfessionalDirectory, whatsappLink } from '../../features/professionals/directory.js';
 import { useNavigate } from '../../lib/router.jsx';
 import './subcategory-page.css';
 
@@ -16,13 +16,11 @@ const CATEGORY_IMAGES = Object.fromEntries(
 );
 
 /**
- * Página de una subcategoría (ej. "Ingeniería Civil"): listado de profesionales de esa especialidad.
- * Todavía no hay directorio real detrás — por ahora son 3 perfiles de ejemplo sin foto, listos para
- * cuando exista el registro/perfil de profesional.
+ * Página de una subcategoría (ej. "Ingeniería Civil"): profesionales de esa especialidad que ya publicaron su perfil
+ * desde su panel. El orden lo da la API: destacados primero, luego los disponibles.
  */
 export default function SubcategoryProfessionalsPage({ user, onLogout }) {
   const [categories] = useProfessionalCategories();
-  const [directory] = useProfessionalDirectory();
   const navigate = useNavigate();
   // La ruta es fija (/profesionales/categoria) y el destino real va en la query (?cat=&sub=), como el
   // `?tienda=` del mapa. El router de esta app solo reacciona a cambios de *pathname*, así que estos IDs
@@ -31,6 +29,7 @@ export default function SubcategoryProfessionalsPage({ user, onLogout }) {
   const [subId, setSubId] = useState(() => new URLSearchParams(window.location.search).get('sub'));
   const category = categories.find((c) => c.id === catId);
   const sub = category?.subcategories.find((s) => s.id === subId);
+  const directory = useProfessionalDirectory({ categoryId: catId, subcategoryId: subId });
 
   const goToSubcategory = (nextCatId, nextSubId) => {
     setCatId(nextCatId);
@@ -41,13 +40,10 @@ export default function SubcategoryProfessionalsPage({ user, onLogout }) {
   const [navQuery, setNavQuery] = useState('');
   const [search, setSearch] = useState('');
 
-  // Destacados primero (lo decide el admin, sin importar la calificación); dentro de cada grupo, mejor
-  // calificados primero.
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    const list = q ? directory.filter((p) => p.name.toLowerCase().includes(q)) : directory;
-    return sortProfessionals(list);
-  }, [directory, search]);
+    return q ? directory.list.filter((p) => `${p.name} ${p.headline}`.toLowerCase().includes(q)) : directory.list;
+  }, [directory.list, search]);
 
   if (!category || !sub) {
     return (
@@ -111,15 +107,23 @@ export default function SubcategoryProfessionalsPage({ user, onLogout }) {
           )}
         </div>
 
-        {filtered.length === 0 ? (
-          <p className="a-empty">No encontramos profesionales con ese nombre.</p>
+        {directory.loading ? (
+          <p className="a-empty">Cargando profesionales…</p>
+        ) : directory.error ? (
+          <p className="a-empty" role="alert">
+            {directory.error}
+          </p>
+        ) : filtered.length === 0 ? (
+          <p className="a-empty">
+            {search.trim() ? 'No encontramos profesionales con ese nombre.' : `Todavía no hay profesionales de ${sub.label.toLowerCase()} en NeirAPP.`}
+          </p>
         ) : (
           <div className="subcat-grid">
             {filtered.map((pro) => (
               <article key={pro.id} className={`subcat-card${pro.featured ? ' is-featured' : ''}`}>
                 {pro.featured && <span className="subcat-featured">Destacado</span>}
                 <div className="subcat-avatar" aria-hidden="true">
-                  <User size={30} />
+                  {pro.photo ? <img src={pro.photo} alt="" /> : <User size={30} />}
                 </div>
                 <h3>{pro.name}</h3>
                 <span className={`subcat-status${pro.available ? ' on' : ''}`}>
@@ -127,21 +131,20 @@ export default function SubcategoryProfessionalsPage({ user, onLogout }) {
                   {pro.available ? 'Disponible' : 'No disponible'}
                 </span>
                 <p className="subcat-specialty">{sub.label}</p>
-                <p className="subcat-info">{pro.info}</p>
-                <div className="subcat-rating">
-                  <Star size={15} fill="currentColor" aria-hidden="true" />
-                  {pro.rating.toFixed(1)}
-                  <span>({pro.reviews})</span>
-                </div>
+                <p className="subcat-info">
+                  {[pro.headline, pro.experienceYears != null && `${pro.experienceYears} ${pro.experienceYears === 1 ? 'año' : 'años'} de experiencia`, 'Neira, Caldas']
+                    .filter(Boolean)
+                    .join(' · ')}
+                </p>
                 <div className="subcat-actions">
-                  <button type="button" className="subcat-btn" title="Próximamente">
+                  <a className="subcat-btn" href={telLink(pro.phone)}>
                     <Phone size={15} aria-hidden="true" />
                     Llamar
-                  </button>
-                  <button type="button" className="subcat-btn whatsapp" title="Próximamente">
+                  </a>
+                  <a className="subcat-btn whatsapp" href={whatsappLink(pro.whatsapp)} target="_blank" rel="noreferrer">
                     <MessageCircle size={15} aria-hidden="true" />
                     WhatsApp
-                  </button>
+                  </a>
                   <button type="button" className="subcat-btn ghost" title="Próximamente">
                     Ver perfil
                   </button>

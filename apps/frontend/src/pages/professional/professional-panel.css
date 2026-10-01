@@ -178,3 +178,5 @@
   .pf-bar p { text-align: center; }
   .pf-bar-actions .cr-btn { flex: 1; min-width: 0; }
 }
+.pf-published { display: inline-flex; align-items: center; gap: 6px; margin-top: 10px; padding: 5px 12px; border-radius: 999px; background: #fbeec8; color: #8a6510; font-size: 13px; font-weight: 700; }
+.pf-published.on { background: #e1eedf; color: var(--g); }

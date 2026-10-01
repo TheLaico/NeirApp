@@ -82,6 +82,14 @@ class SqlAlchemyUserRepository:
         model.roles.extend(UserRoleModel(user_id=user.id, role=r) for r in sorted(wanted - current))
         await self._session.flush()
 
+    async def ids_with_role(self, role: Role) -> set[UUID]:
+        result = await self._session.execute(
+            select(UserRoleModel.user_id)
+            .join(UserModel, UserModel.id == UserRoleModel.user_id)
+            .where(UserRoleModel.role == role.value, UserModel.is_active.is_(True))
+        )
+        return set(result.scalars())
+
 
 class SqlAlchemyTermsRepository:
     def __init__(self, session: AsyncSession) -> None:

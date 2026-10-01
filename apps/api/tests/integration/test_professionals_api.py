@@ -1,0 +1,185 @@
+from typing import Any
+
+import httpx
+from fastapi import FastAPI
+
+from tests.integration.test_leads_api import API, _admin, _bearer, _register
+
+PROFILE = {
+    "title": "Dra.",
+    "full_name": "Laura Torres",
+    "headline": "Pediatra con 8 años de experiencia",
+    "category_id": "medicina",
+    "subcategory_id": "pediatria",
+    "experience_years": 8,
+    "description": "Atiendo niños y adolescentes.",
+    "phone": "310 123 4567",
+    "whatsapp": "310 123 4567",
+    "email": "laura@correo.com",
+    "address": "Calle 10 # 8-25, Neira",
+    "schedule": "Lunes a viernes de 8 a 5",
+    "modalities": {"office": True, "home": True, "online": False},
+    "is_available": True,
+}
+
+
+async def _grant(client: httpx.AsyncClient, admin: dict[str, Any], email: str) -> None:
+    response = await client.post(
+        f"{API}/identity/admin/role-grants",
+        json={"email": email, "role": "professional"},
+        headers=_bearer(admin),
+    )
+    assert response.status_code in (200, 201), response.text
+
+
+async def _professional(
+    client: httpx.AsyncClient, admin: dict[str, Any], email: str
+) -> dict[str, Any]:
+    await _grant(client, admin, email)
+    tokens = await _register(client, email)  # el rol llega al registrarse con el correo autorizado
+    return tokens
+
+
+class TestMiPerfil:
+    async def test_crea_consulta_y_actualiza_su_perfil(
+        self, client: httpx.AsyncClient, app: FastAPI
+    ) -> None:
+        admin = await _admin(client, app)
+        pro = await _professional(client, admin, "laura@correo.com")
+
+        missing = await client.get(f"{API}/professionals/me", headers=_bearer(pro))
+        assert missing.status_code == 404
+        assert missing.json()["code"] == "professional_profile_not_found"
+
+        created = await client.put(f"{API}/professionals/me", json=PROFILE, headers=_bearer(pro))
+        assert created.status_code == 200, created.text
+        body = created.json()
+        assert body["display_name"] == "Dra. Laura Torres"
+        assert body["phone"] == "3101234567"
+        assert body["modalities"] == {"office": True, "home": True, "online": False}
+
+        updated = await client.put(
+            f"{API}/professionals/me",
+            json={**PROFILE, "is_available": False},
+            headers=_bearer(pro),
+        )
+        assert updated.json()["is_available"] is False
+        mine = await client.get(f"{API}/professionals/me", headers=_bearer(pro))
+        assert mine.json()["is_available"] is False
+
+    async def test_valida_los_datos(self, client: httpx.AsyncClient, app: FastAPI) -> None:
+        admin = await _admin(client, app)
+        pro = await _professional(client, admin, "laura@correo.com")
+
+        response = await client.put(
+            f"{API}/professionals/me", json={**PROFILE, "phone": "123"}, headers=_bearer(pro)
+        )
+
+        assert response.status_code == 422
+        assert response.json()["code"] == "invalid_phone"
+
+    async def test_solo_profesionales_autorizados(
+        self, client: httpx.AsyncClient, app: FastAPI
+    ) -> None:
+        customer = await _register(client, "cliente@correo.com")
+
+        response = await client.put(
+            f"{API}/professionals/me", json=PROFILE, headers=_bearer(customer)
+        )
+
+        assert response.status_code == 403
+        assert (await client.put(f"{API}/professionals/me", json=PROFILE)).status_code == 401
+
+
+class TestDirectorio:
+    async def test_lista_y_filtra_por_especialidad(
+        self, client: httpx.AsyncClient, app: FastAPI
+    ) -> None:
+        admin = await _admin(client, app)
+        laura = await _professional(client, admin, "laura@correo.com")
+        carlos = await _professional(client, admin, "carlos@correo.com")
+        await client.put(f"{API}/professionals/me", json=PROFILE, headers=_bearer(laura))
+        await client.put(
+            f"{API}/professionals/me",
+            json={
+                **PROFILE,
+                "title": "Abg.",
+                "full_name": "Carlos Gómez",
+                "category_id": "derecho",
+                "subcategory_id": "derecho-civil",
+            },
+            headers=_bearer(carlos),
+        )
+
+        everyone = (await client.get(f"{API}/professionals")).json()
+        pediatras = (
+            await client.get(f"{API}/professionals", params={"subcategory_id": "pediatria"})
+        ).json()
+        derecho = (
+            await client.get(f"{API}/professionals", params={"category_id": "derecho"})
+        ).json()
+
+        assert {p["full_name"] for p in everyone} == {"Laura Torres", "Carlos Gómez"}
+        assert [p["full_name"] for p in pediatras] == ["Laura Torres"]
+        assert [p["full_name"] for p in derecho] == ["Carlos Gómez"]
+
+    async def test_destacados_primero_y_luego_los_disponibles(
+        self, client: httpx.AsyncClient, app: FastAPI
+    ) -> None:
+        admin = await _admin(client, app)
+        names = ["Ana Ramírez", "Beto Ruiz", "Ceci Mora"]
+        ids = []
+        for i, name in enumerate(names):
+            tokens = await _professional(client, admin, f"pro{i}@correo.com")
+            saved = await client.put(
+                f"{API}/professionals/me",
+                json={**PROFILE, "full_name": name, "is_available": name != "Beto Ruiz"},
+                headers=_bearer(tokens),
+            )
+            ids.append(saved.json()["user_id"])
+
+        featured = await client.put(
+            f"{API}/professionals/{ids[1]}/featured",
+            json={"is_featured": True},
+            headers=_bearer(admin),
+        )
+        assert featured.status_code == 200, featured.text
+
+        order = [p["full_name"] for p in (await client.get(f"{API}/professionals")).json()]
+        assert order[0] == "Beto Ruiz"  # destacado, aunque no esté disponible
+        assert set(order[1:]) == {"Ana Ramírez", "Ceci Mora"}
+
+    async def test_solo_el_admin_destaca(self, client: httpx.AsyncClient, app: FastAPI) -> None:
+        admin = await _admin(client, app)
+        pro = await _professional(client, admin, "laura@correo.com")
+        user_id = (
+            await client.put(f"{API}/professionals/me", json=PROFILE, headers=_bearer(pro))
+        ).json()["user_id"]
+
+        response = await client.put(
+            f"{API}/professionals/{user_id}/featured",
+            json={"is_featured": True},
+            headers=_bearer(pro),
+        )
+
+        assert response.status_code == 403
+
+    async def test_si_le_quitan_el_acceso_desaparece_del_directorio(
+        self, client: httpx.AsyncClient, app: FastAPI
+    ) -> None:
+        admin = await _admin(client, app)
+        pro = await _professional(client, admin, "laura@correo.com")
+        user_id = (
+            await client.put(f"{API}/professionals/me", json=PROFILE, headers=_bearer(pro))
+        ).json()["user_id"]
+        assert (await client.get(f"{API}/professionals/{user_id}")).status_code == 200
+
+        revoked = await client.delete(
+            f"{API}/identity/admin/role-grants",
+            params={"email": "laura@correo.com", "role": "professional"},
+            headers=_bearer(admin),
+        )
+        assert revoked.status_code == 204, revoked.text
+
+        assert (await client.get(f"{API}/professionals")).json() == []
+        assert (await client.get(f"{API}/professionals/{user_id}")).status_code == 404

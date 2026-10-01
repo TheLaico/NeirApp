@@ -24,9 +24,10 @@ export default function ProfessionalPage({ user, onLogout }) {
   const desktop = useMediaQuery(DESKTOP);
   const [view, setView] = useState('home');
   const allowed = canAccessAdmin(user) || user.roles?.includes('professional');
-  const [profile, setProfile] = useProfessionalProfile(user);
-  const name = displayName(profile) || user.name;
-  const activity = { ...SAMPLE_ACTIVITY, hasDescription: profile.description.trim().length >= 80 };
+  const mine = useProfessionalProfile(user);
+  const profile = mine.profile;
+  const name = (profile && displayName(profile)) || user.name;
+  const activity = { ...SAMPLE_ACTIVITY, hasDescription: (profile?.description.trim().length ?? 0) >= 80 };
 
   let content;
   if (!allowed) {
@@ -40,10 +41,23 @@ export default function ProfessionalPage({ user, onLogout }) {
         </button>
       </div>
     );
+  } else if (mine.loading && !profile) {
+    content = <p className="cr-empty">Cargando…</p>;
+  } else if (mine.error && !profile) {
+    content = (
+      <div className="cr-state">
+        <p className="cr-error" role="alert">
+          {mine.error}
+        </p>
+        <button type="button" className="cr-btn ghost" onClick={mine.reload}>
+          Reintentar
+        </button>
+      </div>
+    );
   } else if (view === 'home') {
     content = <HomeView name={name} activity={activity} onGo={setView} onPlans={() => navigate('/profesional/planes')} />;
   } else if (view === 'profile') {
-    content = <ProfileView profile={profile} onSave={setProfile} />;
+    content = <ProfileView profile={profile} published={mine.exists} onSave={mine.save} />;
   } else {
     const section = NAV.find((n) => n.key === view);
     content = (
@@ -60,7 +74,7 @@ export default function ProfessionalPage({ user, onLogout }) {
 
   const shell = {
     user,
-    profile: { name, image: profile.photo, Icon: UserRound, roleLabel: 'Profesional' },
+    profile: { name, image: profile?.photo, Icon: UserRound, roleLabel: 'Profesional' },
     nav: NAV,
     badges: { requests: activity.newRequests },
     view,
