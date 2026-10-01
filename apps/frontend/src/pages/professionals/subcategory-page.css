@@ -1,0 +1,133 @@
+/* Página de una subcategoría de /profesionales: listado de profesionales de esa especialidad. */
+
+.subcat-page { padding: 4px 32px 32px 12px; }
+
+.subcat-back {
+  display: inline-flex; align-items: center; gap: 8px; margin-bottom: 18px; padding: 0; border: 0;
+  background: none; font: inherit; font-size: 14px; font-weight: 700; color: var(--g); cursor: pointer;
+}
+.subcat-back:hover { text-decoration: underline; }
+
+/* ---------- Encabezado ---------- */
+/* Card tipo "portada", igual composición que la de /profesionales: fondo con degradado siempre (para
+   que se vea prolijo aunque a esta categoría todavía no le hayan subido ilustración) y, cuando sí existe
+   (ver CATEGORY_IMAGE_KEYS), se recorta contra el borde derecho igual que el fondo de esa otra página. */
+.subcat-head {
+  position: relative; overflow: hidden; margin-bottom: 22px; padding: 22px 26px; border-radius: 22px;
+  background: linear-gradient(100deg, #eef2df 45%, #dce8d0 100%);
+}
+.subcat-head-art {
+  position: absolute; right: -10px; bottom: -30px; top: auto; height: 145%; width: 34%;
+  object-fit: contain; object-position: right bottom; pointer-events: none;
+}
+.subcat-head-content { position: relative; z-index: 1; display: flex; align-items: center; gap: 16px; }
+.subcat-head.has-image .subcat-head-content { max-width: 68%; }
+.subcat-head-ico { flex: none; width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center; }
+.subcat-head h1 { font-family: 'Montserrat', sans-serif; font-size: 26px; font-weight: 700; color: var(--g); }
+.subcat-head p { margin-top: 4px; font-size: 14.5px; color: var(--muted); }
+
+/* ---------- Filtros ---------- */
+.subcat-filters { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 22px; }
+.subcat-search {
+  flex: 1 1 320px; display: flex; align-items: center; gap: 10px; height: 48px; max-width: 440px;
+  padding: 0 8px 0 18px; border-radius: 999px; background: #fff; color: var(--g); border: 1px solid var(--line);
+}
+.subcat-search:focus-within { border-color: var(--g); box-shadow: 0 0 0 3px rgba(15, 82, 56, .12); }
+.subcat-search input {
+  flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; font: inherit; font-size: 14.5px; color: var(--ink);
+}
+.subcat-search input::placeholder { color: var(--muted); }
+.subcat-search button {
+  flex: none; width: 38px; height: 38px; display: grid; place-items: center; border: 0; border-radius: 50%;
+  background: var(--g); color: #fff; cursor: pointer; transition: filter .15s;
+}
+.subcat-search button:hover { filter: brightness(1.1); }
+/* Selector de especialidad: reemplaza el <select> nativo (su lista de opciones no se puede vestir con
+   el estilo de la app) por un botón + menú propio, como el del usuario en el navbar. */
+.subcat-select { position: relative; }
+.subcat-select-btn {
+  display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 16px; border-radius: 999px;
+  border: 1px solid var(--line); background: #fff; font: inherit; font-size: 14px; font-weight: 700;
+  color: var(--ink); cursor: pointer; outline: 0; white-space: nowrap;
+}
+.subcat-select-btn:hover { background: #f7f8f0; }
+.subcat-select-btn[aria-expanded="true"] { border-color: var(--g); box-shadow: 0 0 0 3px rgba(15, 82, 56, .12); }
+.subcat-select-btn svg:last-child { color: var(--muted); }
+.subcat-select-panel {
+  position: absolute; z-index: 20; top: calc(100% + 8px); right: 0; min-width: 220px; list-style: none;
+  margin: 0; padding: 6px; border: 1px solid var(--line); border-radius: 16px; background: #fff;
+  box-shadow: 0 12px 32px rgba(32, 39, 36, .14);
+}
+.subcat-select-panel button {
+  width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 10px 12px; border: 0; border-radius: 12px; background: none; font: inherit; font-size: 14px;
+  font-weight: 600; color: var(--ink); text-align: left; cursor: pointer;
+}
+.subcat-select-panel button:hover { background: #e6efdc; }
+.subcat-select-panel button.on { color: var(--g); font-weight: 700; }
+.subcat-select-panel button.on svg { color: var(--g); }
+
+/* ---------- Rejilla de profesionales ---------- */
+.subcat-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+.subcat-card {
+  position: relative; display: flex; flex-direction: column; align-items: center; text-align: center;
+  padding: 24px 20px; border: 1px solid var(--line); border-radius: 20px; background: #fff;
+  box-shadow: 0 1px 2px rgba(35, 52, 43, .04);
+}
+.subcat-card.is-featured { border-color: #e8b93c; box-shadow: 0 4px 16px rgba(232, 169, 44, .18); }
+.subcat-featured {
+  position: absolute; top: 14px; right: 14px; display: flex; align-items: center; gap: 4px;
+  padding: 4px 10px; border-radius: 999px; background: #fbe8b8; color: #8a5a00; font-size: 11.5px; font-weight: 800;
+  text-transform: uppercase; letter-spacing: .3px;
+}
+.subcat-avatar {
+  width: 72px; height: 72px; margin-bottom: 12px; border-radius: 50%; display: grid; place-items: center;
+  background: #e9eddc; color: #9fb090;
+}
+.subcat-card h3 { font-family: 'Montserrat', sans-serif; font-size: 16.5px; font-weight: 700; color: var(--ink); }
+.subcat-status {
+  display: inline-flex; align-items: center; gap: 6px; margin-top: 6px; font-size: 12.5px; font-weight: 700; color: var(--muted);
+}
+.subcat-status i { width: 8px; height: 8px; border-radius: 50%; background: #b9c9b3; }
+.subcat-status.on { color: var(--g); }
+.subcat-status.on i { background: #2d9a5c; }
+.subcat-specialty { margin-top: 8px; font-size: 14px; font-weight: 700; color: var(--g); }
+.subcat-info { margin-top: 2px; font-size: 12.5px; color: var(--muted); }
+.subcat-rating {
+  display: flex; align-items: center; gap: 5px; margin-top: 10px; font-size: 13.5px; font-weight: 700; color: #b8860b;
+}
+.subcat-rating span { font-weight: 500; color: var(--muted); }
+
+.subcat-actions { display: flex; flex-direction: column; gap: 8px; width: 100%; margin-top: 16px; }
+.subcat-btn {
+  display: flex; align-items: center; justify-content: center; gap: 8px; height: 40px; border: 0; border-radius: 999px;
+  font: inherit; font-size: 13.5px; font-weight: 700; color: #fff; background: var(--g); cursor: pointer; transition: filter .15s;
+}
+.subcat-btn:hover { filter: brightness(1.1); }
+.subcat-btn.whatsapp { background: #25a25a; }
+.subcat-btn.ghost { background: none; border: 1.5px solid #b9c9b3; color: var(--g); }
+.subcat-btn.ghost:hover { background: #e6efdc; filter: none; }
+
+/* ---------- Paginación ---------- */
+.subcat-pagination { display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 30px; }
+.subcat-pagination button {
+  min-width: 38px; height: 38px; padding: 0 10px; border: 1px solid var(--line); border-radius: 12px; background: #fff;
+  font: inherit; font-size: 14px; font-weight: 700; color: var(--ink); cursor: pointer;
+}
+.subcat-pagination button.on { background: var(--g); border-color: var(--g); color: #fff; }
+.subcat-pagination button:disabled { opacity: .4; cursor: default; }
+
+/* ---------- Tablet y móvil ---------- */
+@media (max-width: 1023px) {
+  .subcat-page { padding: 4px 14px 28px; }
+  .subcat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 640px) {
+  .subcat-head-art { display: none; }
+  .subcat-head.has-image .subcat-head-content { max-width: none; }
+  .subcat-grid { grid-template-columns: 1fr; }
+  .subcat-select, .subcat-select-btn { width: 100%; }
+  .subcat-select-btn { justify-content: space-between; }
+  .subcat-select-panel { left: 0; right: 0; min-width: 0; }
+}

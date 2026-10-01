@@ -6,6 +6,8 @@ const DEFAULTS = {
   orderNotifications: true,
   offersNotifications: false,
   mapHint: true,
+  // Apagado por defecto: el mapa siempre se ve de día a menos que el usuario prenda esto.
+  mapNightAuto: false,
 };
 
 const SettingsContext = createContext(null);

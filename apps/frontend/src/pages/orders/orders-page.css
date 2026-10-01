@@ -35,3 +35,23 @@
 .order-meta { display: flex; flex-direction: column; gap: 3px; font-size: 13px; color: var(--muted); min-width: 0; }
 .order-meta span { display: flex; align-items: center; gap: 4px; }
 .order-total { flex: none; font-family: 'Montserrat', sans-serif; font-size: 19px; font-weight: 800; color: var(--g); }
+
+/* Pedidos reales: una sección por tienda y el código que el cliente le da al repartidor */
+.order-store { padding: 10px 0; border-top: 1px solid #ebeedc; }
+.order-store-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 6px; }
+.order-reject { margin-top: 6px; padding: 8px 12px; border-radius: 10px; background: #f9e3dc; color: #7c3320; font-size: 14px; }
+.order-code { display: flex; align-items: center; gap: 14px; margin: 10px 0; padding: 12px 16px; border: 2px dashed #0f5238; border-radius: 14px; background: #f1f7ea; color: #0f5238; }
+.order-code div { display: flex; flex-direction: column; gap: 2px; }
+.order-code span { font-size: 13px; font-weight: 700; }
+.order-code strong { font-family: 'Montserrat', monospace; font-size: 30px; letter-spacing: .25em; }
+.order-code small { font-size: 13px; color: #3b4a42; }
+
+/* Calificar un pedido entregado y ver la respuesta de la tienda */
+.order-rate { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; padding: 12px 14px; border-radius: 12px; background: #f7f4e4; }
+.rate-stars { display: flex; gap: 4px; }
+.rate-stars button { padding: 2px; border: 0; background: none; cursor: pointer; }
+.order-rate input { height: 42px; padding: 0 12px; border: 1.5px solid #c3cdb8; border-radius: 10px; background: #fff; font: inherit; }
+.order-rated { margin-top: 10px; padding: 10px 14px; border-radius: 12px; background: #f1f7ea; font-size: 14px; }
+.order-rated span { font-weight: 700; color: #0f5238; }
+.order-rated p { margin-top: 4px; }
+.order-reply { padding: 8px 10px; border-radius: 10px; background: #e3eed6; }

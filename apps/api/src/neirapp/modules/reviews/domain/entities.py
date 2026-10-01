@@ -1,10 +1,12 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime
 from uuid import UUID, uuid4
 
-from neirapp.modules.reviews.domain.errors import InvalidRating
+from neirapp.modules.reviews.domain.errors import InvalidRating, InvalidReply
 
 MAX_COMMENT_LENGTH = 500
+MIN_REPLY_LENGTH = 2
+MAX_REPLY_LENGTH = 500
 
 
 @dataclass(frozen=True)
@@ -21,6 +23,9 @@ class Review:
     rating: int
     comment: str | None
     created_at: datetime
+    # Respuesta pública del comercio a esta reseña (una sola; responder de nuevo la reemplaza).
+    merchant_reply: str | None = None
+    replied_at: datetime | None = None
 
     @classmethod
     def create(
@@ -47,6 +52,12 @@ class Review:
             comment=normalized_comment or None,
             created_at=now,
         )
+
+    def with_reply(self, text: str, now: datetime) -> "Review":
+        reply = " ".join(text.split())
+        if not MIN_REPLY_LENGTH <= len(reply) <= MAX_REPLY_LENGTH:
+            raise InvalidReply()
+        return replace(self, merchant_reply=reply, replied_at=now)
 
 
 @dataclass(frozen=True)

@@ -1,3 +1,4 @@
+from datetime import datetime
 from uuid import UUID
 
 from pydantic import BaseModel, EmailStr, Field
@@ -7,6 +8,7 @@ from neirapp.modules.identity.application.dto import (
     ProfileView,
     TokenPair,
 )
+from neirapp.modules.identity.application.role_grants import RoleGrantView
 from neirapp.modules.identity.domain.entities import Role, TermsDocument
 
 
@@ -93,4 +95,27 @@ class AuthResponse(BaseModel):
         return cls(
             user=UserResponse.from_profile(session.profile),
             tokens=TokensResponse.from_pair(session.tokens),
+        )
+
+
+class RoleGrantRequest(BaseModel):
+    email: str
+    role: Role
+
+
+class RoleGrantResponse(BaseModel):
+    email: str
+    role: Role
+    created_at: datetime
+    has_account: bool
+    full_name: str | None
+
+    @classmethod
+    def from_view(cls, view: RoleGrantView) -> "RoleGrantResponse":
+        return cls(
+            email=view.grant.email,
+            role=view.grant.role,
+            created_at=view.grant.created_at,
+            has_account=view.full_name is not None,
+            full_name=view.full_name,
         )

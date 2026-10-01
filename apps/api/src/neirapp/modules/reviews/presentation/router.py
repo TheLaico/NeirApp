@@ -7,7 +7,9 @@ from neirapp.modules.reviews.presentation.dependencies import ReviewsDep
 from neirapp.modules.reviews.presentation.schemas import (
     CreateReviewRequest,
     RatingSummaryResponse,
+    ReplyRequest,
     ReviewResponse,
+    StoreRatingResponse,
 )
 
 router = APIRouter(prefix="/reviews", tags=["reviews"])
@@ -21,6 +23,25 @@ async def create_review(
         body.store_order_id, user.id, rating=body.rating, comment=body.comment
     )
     return ReviewResponse.from_domain(review)
+
+
+@router.post("/{review_id}/reply", response_model=ReviewResponse)
+async def reply_to_review(
+    review_id: UUID, body: ReplyRequest, user: CurrentUser, reviews: ReviewsDep
+) -> ReviewResponse:
+    """El dueño de la tienda responde una reseña (o edita su respuesta)."""
+    review = await reviews.reply_to_review(review_id, user.id, body.text)
+    return ReviewResponse.from_domain(review)
+
+
+@router.get("/summaries", response_model=list[StoreRatingResponse])
+async def list_rating_summaries(reviews: ReviewsDep) -> list[StoreRatingResponse]:
+    """Calificación promedio de cada tienda con reseñas (público: la lista de tiendas la usa)."""
+    summaries = await reviews.list_rating_summaries()
+    return [
+        StoreRatingResponse(store_id=sid, average=s.average, count=s.count)
+        for sid, s in summaries.items()
+    ]
 
 
 @router.get("/stores/{store_id}", response_model=list[ReviewResponse])

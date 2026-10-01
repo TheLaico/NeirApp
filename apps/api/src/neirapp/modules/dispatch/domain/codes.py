@@ -9,8 +9,9 @@ repartidor si cierra la app, sin inventar un mecanismo de "un solo vistazo".
 
 import secrets
 
-_ALPHABET = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ"  # sin 0/O/1/I/L: difícil de confundir al leerlo
+CODE_LENGTH = 6
 
 
-def generate_code(length: int = 6) -> str:
-    return "".join(secrets.choice(_ALPHABET) for _ in range(length))
+def generate_code(length: int = CODE_LENGTH) -> str:
+    """Código numérico de 6 dígitos (ej. 048213): fácil de dictar y de teclear."""
+    return "".join(secrets.choice("0123456789") for _ in range(length))

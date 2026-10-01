@@ -1,10 +1,10 @@
-import { Bell, BellOff, Check, Heart, Sparkles, Store, X } from 'lucide-react';
+import { Bell, BellOff, Bike, Check, CheckCircle2, Heart, Package, Sparkles, Store, X } from 'lucide-react';
 import PageShell from '../../components/layout/PageShell.jsx';
 import { useNotifications } from '../../features/notifications/NotificationsContext.jsx';
 import { timeAgo } from '../../lib/time.js';
 import './notifications-page.css';
 
-const ICONS = { welcome: Sparkles, favorite: Heart, store: Store };
+const ICONS = { welcome: Sparkles, favorite: Heart, store: Store, order: Package, delivery: Bike, done: CheckCircle2 };
 
 /** Página "Notificaciones". */
 export default function NotificationsPage({ user, onLogout }) {

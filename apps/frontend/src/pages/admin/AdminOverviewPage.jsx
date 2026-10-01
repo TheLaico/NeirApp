@@ -1,7 +1,5 @@
-import { Package, Plus, Receipt, Store } from 'lucide-react';
-import { useOrders } from '../../features/orders/OrdersContext.jsx';
+import { Plus, Store } from 'lucide-react';
 import { useStores } from '../../features/stores/api.js';
-import { useLocalCatalog } from '../../features/stores/localCatalog.js';
 import { useNavigate } from '../../lib/router.jsx';
 import AdminLayout from './AdminLayout.jsx';
 
@@ -9,14 +7,9 @@ import AdminLayout from './AdminLayout.jsx';
 export default function AdminOverviewPage({ user, onLogout }) {
   const navigate = useNavigate();
   const { stores } = useStores();
-  const local = useLocalCatalog();
-  const { orders } = useOrders();
 
-  const productCount = Object.values(local.products).reduce((sum, list) => sum + list.length, 0);
   const stats = [
-    { label: 'Tiendas en el mapa', value: stores.length, hint: `${stores.length - local.stores.length} del servidor · ${local.stores.length} locales`, Icon: Store },
-    { label: 'Productos locales', value: productCount, hint: 'Creados desde este panel', Icon: Package },
-    { label: 'Pedidos en este navegador', value: orders.length, hint: 'Hechos desde el checkout', Icon: Receipt },
+    { label: 'Tiendas en el mapa', value: stores.length, hint: 'Creadas en el servidor', Icon: Store },
   ];
 
   return (
@@ -48,11 +41,11 @@ export default function AdminOverviewPage({ user, onLogout }) {
       </div>
 
       <section className="a-card a-note">
-        <h2>Cómo funcionan las tiendas que creas aquí</h2>
+        <h2>Cómo funcionan las tiendas</h2>
         <p>
-          Por ahora las tiendas y productos que creas en este panel se guardan <strong>en este navegador</strong> y aparecen en
-          el mapa y en las listas de la app. Para publicarlas en el servidor hace falta la sesión real con el backend y la
-          aprobación de un administrador; cuando eso exista, este panel pasa a guardarlas allí sin cambiar de pantalla.
+          Las tiendas se crean aquí para un comerciante (por su correo, que antes debe tener el rol de comerciante en{' '}
+          <strong>Roles</strong>). Ya viven en el servidor: salen en el mapa y el comerciante administra sus productos y
+          recibe los pedidos desde su propio panel.
         </p>
       </section>
     </AdminLayout>

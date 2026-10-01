@@ -277,3 +277,20 @@ class TestStoreReviews:
     async def test_lista_vacia_para_tienda_sin_reviews(self, client: httpx.AsyncClient) -> None:
         response = await client.get(f"{API}/reviews/stores/{uuid4()}")
         assert response.json() == []
+
+
+class TestResumenDeTodasLasTiendas:
+    async def test_lista_el_promedio_de_cada_tienda_con_resenas(
+        self, client: httpx.AsyncClient, app: FastAPI
+    ) -> None:
+        assert (await client.get(f"{API}/reviews/summaries")).json() == []
+
+        store_order_id, customer, store_id = await _handed_over_store_order(client, app)
+        await client.post(
+            f"{API}/reviews",
+            json={"store_order_id": store_order_id, "rating": 4},
+            headers=_bearer(customer),
+        )
+
+        summaries = (await client.get(f"{API}/reviews/summaries")).json()
+        assert summaries == [{"store_id": store_id, "average": 4.0, "count": 1}]

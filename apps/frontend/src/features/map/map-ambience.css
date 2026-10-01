@@ -49,7 +49,7 @@
 .lm-church-wrap svg { display: block; }
 .lm-church { font-size: 12px; color: #174936; }
 
-.lm-town { font: 400 40px/1 'Kaushan Script', cursive; color: #174936; letter-spacing: .01em; white-space: nowrap; text-shadow: 0 0 6px #f7f3e4, 0 0 6px #f7f3e4, 0 0 10px #f7f3e4, 0 2px 0 rgba(255, 255, 255, .6); }
+.lm-town { font: 400 34px/1 'Kaushan Script', cursive; /* el tamaño real lo pone landmarks.jsx según el zoom */ color: #174936; letter-spacing: .01em; white-space: nowrap; text-shadow: 0 0 6px #f7f3e4, 0 0 6px #f7f3e4, 0 0 10px #f7f3e4, 0 2px 0 rgba(255, 255, 255, .6); }
 .lm-place { font: italic 600 12.5px/1.2 'Nunito', sans-serif; color: #236B4A; white-space: nowrap; letter-spacing: .03em; text-shadow: 0 0 4px #f8f5ed, 0 0 4px #f8f5ed, 0 0 4px #f8f5ed; }
 .lm-peak { display: flex; align-items: center; gap: 4px; font: 700 11.5px/1 'Nunito', sans-serif; color: #5B6B4F; white-space: nowrap; text-shadow: 0 0 4px #f8f5ed, 0 0 4px #f8f5ed, 0 0 4px #f8f5ed; }
 .lm-peak svg { color: #7A8A6A; }
@@ -62,3 +62,24 @@
   font: 700 10px/1.35 'Nunito', sans-serif; text-shadow: 0 0 3px rgba(255, 255, 255, .9), 0 0 3px rgba(255, 255, 255, .9); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none;
 }
 .store-labels .store-label { display: block; }
+
+/* Modo noche (ver NeiraMap `theme`): todas estas etiquetas son HTML, no capas de MapLibre, así que
+   `applyMapTheme` no las toca. El halo blanco de arriba se ve como un borrón sobre el mapa oscuro; aquí
+   se invierte (halo oscuro + texto claro), igual que en el resto del mapa. */
+.map-theme-night .amb-credits { color: rgba(215, 224, 209, .75); text-shadow: 0 0 4px #0a0f0b, 0 0 4px #0a0f0b; }
+.map-theme-night .lm-label,
+.map-theme-night .lm-church {
+  color: #F3ECDB;
+  text-shadow: 0 0 3px #0a0f0b, 0 0 3px #0a0f0b, 0 0 3px #0a0f0b, 0 0 6px #0a0f0b;
+}
+.map-theme-night .lm-town {
+  color: #F3ECDB;
+  text-shadow: 0 0 6px #0a0f0b, 0 0 6px #0a0f0b, 0 0 10px #0a0f0b, 0 2px 0 rgba(0, 0, 0, .5);
+}
+.map-theme-night .lm-place { color: #CFE8D4; text-shadow: 0 0 4px #0a0f0b, 0 0 4px #0a0f0b, 0 0 4px #0a0f0b; }
+.map-theme-night .lm-peak { color: #C9D6C2; text-shadow: 0 0 4px #0a0f0b, 0 0 4px #0a0f0b, 0 0 4px #0a0f0b; }
+.map-theme-night .lm-peak svg { color: #8FA285; }
+.map-theme-night .store-label {
+  background: rgba(10, 15, 11, .55); color: #F3ECDB; box-shadow: 0 1px 3px rgba(0, 0, 0, .4);
+  text-shadow: 0 0 3px rgba(0, 0, 0, .9), 0 0 3px rgba(0, 0, 0, .9);
+}

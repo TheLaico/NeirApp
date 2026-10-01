@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from uuid import UUID
 
 from neirapp.modules.stores.application.dto import ProductWithStore
+from neirapp.modules.stores.application.photos import ensure_can_add_photo
 from neirapp.modules.stores.application.ports import UnitOfWork, UnitOfWorkFactory
 from neirapp.modules.stores.domain.entities import Product, StoreCategory
 from neirapp.modules.stores.domain.errors import NotStoreOwner, ProductNotFound, StoreNotFound
@@ -34,6 +35,7 @@ class CreateProduct:
     ) -> Product:
         async with self._uow_factory() as uow:
             await _require_owned_store(uow, store_id, owner_user_id)
+            await ensure_can_add_photo(uow, store_id, new_url=cmd.image_url, current_url=None)
             product = Product.create(
                 store_id=store_id,
                 name=cmd.name,
@@ -99,6 +101,9 @@ class UpdateProduct:
     ) -> Product:
         async with self._uow_factory() as uow:
             product = await _load_owned_product(uow, store_id, product_id, owner_user_id)
+            await ensure_can_add_photo(
+                uow, store_id, new_url=image_url, current_url=product.image_url
+            )
             product.update(
                 name=name, description=description, price_cop=price_cop, image_url=image_url
             )

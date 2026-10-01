@@ -4,7 +4,7 @@ from typing import Protocol, Self
 from uuid import UUID
 
 from neirapp.modules.reviews.application.dto import ReviewableStoreOrderSnapshot
-from neirapp.modules.reviews.domain.entities import Review
+from neirapp.modules.reviews.domain.entities import RatingSummary, Review
 
 
 class OrderingPort(Protocol):
@@ -18,7 +18,13 @@ class OrderingPort(Protocol):
 class ReviewRepository(Protocol):
     async def add(self, review: Review) -> None: ...
 
+    async def get(self, review_id: UUID) -> Review | None: ...
+
+    async def update(self, review: Review) -> None: ...
+
     async def list_by_store(self, store_id: UUID) -> list[Review]: ...
+
+    async def summaries(self) -> dict[UUID, RatingSummary]: ...
 
 
 class UnitOfWork(Protocol):

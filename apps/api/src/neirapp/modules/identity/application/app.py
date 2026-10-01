@@ -8,6 +8,12 @@ from neirapp.modules.identity.application.profile import (
     UpdateProfile,
 )
 from neirapp.modules.identity.application.registration import RegisterUser
+from neirapp.modules.identity.application.role_grants import (
+    FindUserByEmail,
+    GrantRoleByEmail,
+    ListRoleGrants,
+    RevokeRoleGrant,
+)
 from neirapp.modules.identity.application.sessions import Login, Logout, RefreshSession
 
 
@@ -24,3 +30,7 @@ class IdentityApp:
     update_profile: UpdateProfile
     accept_terms: AcceptTerms
     terms_policy: TermsPolicy
+    grant_role: GrantRoleByEmail
+    revoke_role: RevokeRoleGrant
+    list_role_grants: ListRoleGrants
+    find_user_by_email: FindUserByEmail

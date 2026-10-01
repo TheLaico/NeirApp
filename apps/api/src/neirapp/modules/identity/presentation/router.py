@@ -1,10 +1,14 @@
-from fastapi import APIRouter, Response, status
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, Query, Response, status
 
 from neirapp.modules.identity.application.registration import RegisterUserCommand
+from neirapp.modules.identity.domain.entities import Role, User
 from neirapp.modules.identity.presentation.dependencies import (
     ClientIpDep,
     CurrentUser,
     IdentityDep,
+    require_roles,
 )
 from neirapp.modules.identity.presentation.schemas import (
     AcceptTermsRequest,
@@ -12,6 +16,8 @@ from neirapp.modules.identity.presentation.schemas import (
     LoginRequest,
     RefreshRequest,
     RegisterRequest,
+    RoleGrantRequest,
+    RoleGrantResponse,
     TermsDocumentVersion,
     TermsPolicyResponse,
     UpdateProfileRequest,
@@ -19,6 +25,8 @@ from neirapp.modules.identity.presentation.schemas import (
 )
 
 router = APIRouter(prefix="/identity", tags=["identity"])
+
+RequireAdmin = Annotated[User, Depends(require_roles(Role.ADMIN))]
 
 
 @router.post("/register", response_model=AuthResponse, status_code=status.HTTP_201_CREATED)
@@ -82,3 +90,32 @@ async def current_terms(identity: IdentityDep) -> TermsPolicyResponse:
             for doc, version in identity.terms_policy.versions.items()
         ]
     )
+
+
+@router.get("/admin/role-grants", response_model=list[RoleGrantResponse])
+async def list_role_grants(_: RequireAdmin, identity: IdentityDep) -> list[RoleGrantResponse]:
+    """Correos autorizados como repartidor o comerciante (solo admin)."""
+    return [RoleGrantResponse.from_view(v) for v in await identity.list_role_grants()]
+
+
+@router.post(
+    "/admin/role-grants", response_model=RoleGrantResponse, status_code=status.HTTP_201_CREATED
+)
+async def grant_role(
+    body: RoleGrantRequest, admin: RequireAdmin, identity: IdentityDep
+) -> RoleGrantResponse:
+    """Autoriza un correo para un rol; si ya tiene cuenta lo recibe al instante (solo admin)."""
+    view = await identity.grant_role(admin.id, body.email, body.role)
+    return RoleGrantResponse.from_view(view)
+
+
+@router.delete("/admin/role-grants", status_code=status.HTTP_204_NO_CONTENT)
+async def revoke_role(
+    _: RequireAdmin,
+    identity: IdentityDep,
+    email: Annotated[str, Query()],
+    role: Annotated[Role, Query()],
+) -> Response:
+    """Quita la autorización y el rol al usuario con ese correo (solo admin)."""
+    await identity.revoke_role(email, role)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

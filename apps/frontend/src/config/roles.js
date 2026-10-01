@@ -10,6 +10,9 @@ export const DEVELOPER_EMAILS = ['rbx5640@gmail.com'];
 export const ROLES = {
   developer: 'Desarrollador',
   customer: 'Cliente',
+  courier: 'Repartidor',
+  store_staff: 'Comerciante',
+  professional: 'Profesional',
 };
 
 export const roleOf = (email = '') => (DEVELOPER_EMAILS.includes(email.trim().toLowerCase()) ? 'developer' : 'customer');

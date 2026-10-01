@@ -1,11 +1,15 @@
+from datetime import datetime
 from uuid import UUID, uuid4
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from neirapp.modules.dispatch.application.dto import EarningsSummary
 from neirapp.modules.dispatch.domain.entities import (
+    CourierLocation,
     CourierProfile,
+    CourierRating,
     Delivery,
     DeliveryStatus,
     DeliveryStop,
@@ -13,9 +17,12 @@ from neirapp.modules.dispatch.domain.entities import (
 )
 from neirapp.modules.dispatch.domain.errors import OrderAlreadyClaimed
 from neirapp.modules.dispatch.infrastructure.models import (
+    CourierLocationModel,
     CourierProfileModel,
+    CourierRatingModel,
     DeliveryModel,
     DeliveryStopModel,
+    VehicleSettingModel,
 )
 
 
@@ -57,6 +64,8 @@ def _to_delivery(model: DeliveryModel) -> Delivery:
         created_at=model.created_at,
         updated_at=model.updated_at,
         delivered_at=model.delivered_at,
+        courier_earnings_cop=model.courier_earnings_cop,
+        platform_earnings_cop=model.platform_earnings_cop,
     )
 
 
@@ -136,6 +145,8 @@ class SqlAlchemyDeliveryRepository:
                 created_at=delivery.created_at,
                 updated_at=delivery.updated_at,
                 delivered_at=delivery.delivered_at,
+                courier_earnings_cop=delivery.courier_earnings_cop,
+                platform_earnings_cop=delivery.platform_earnings_cop,
                 stops=[_stop_model(s) for s in delivery.stops],
             )
         )
@@ -149,8 +160,12 @@ class SqlAlchemyDeliveryRepository:
         return _to_delivery(model) if model else None
 
     async def get_by_order(self, order_id: UUID) -> Delivery | None:
+        # La entrega viva del pedido (asignada o entregada); las canceladas son solo historial.
         result = await self._session.execute(
-            select(DeliveryModel).where(DeliveryModel.order_id == order_id)
+            select(DeliveryModel).where(
+                DeliveryModel.order_id == order_id,
+                DeliveryModel.status != DeliveryStatus.CANCELLED.value,
+            )
         )
         model = result.scalar_one_or_none()
         return _to_delivery(model) if model else None
@@ -159,7 +174,10 @@ class SqlAlchemyDeliveryRepository:
         result = await self._session.execute(
             select(DeliveryModel)
             .join(DeliveryStopModel, DeliveryStopModel.delivery_id == DeliveryModel.id)
-            .where(DeliveryStopModel.store_order_id == store_order_id)
+            .where(
+                DeliveryStopModel.store_order_id == store_order_id,
+                DeliveryModel.status != DeliveryStatus.CANCELLED.value,
+            )
         )
         model = result.scalar_one_or_none()
         return _to_delivery(model) if model else None
@@ -182,6 +200,17 @@ class SqlAlchemyDeliveryRepository:
         )
         return [_to_delivery(m) for m in result.scalars()]
 
+    async def earnings_summary(self) -> EarningsSummary:
+        result = await self._session.execute(
+            select(
+                func.count(DeliveryModel.id),
+                func.coalesce(func.sum(DeliveryModel.courier_earnings_cop), 0),
+                func.coalesce(func.sum(DeliveryModel.platform_earnings_cop), 0),
+            ).where(DeliveryModel.status == DeliveryStatus.DELIVERED.value)
+        )
+        deliveries, courier, platform = result.one()
+        return EarningsSummary(deliveries=deliveries, courier_cop=courier, platform_cop=platform)
+
     async def update(self, delivery: Delivery) -> None:
         model = await self._session.get(DeliveryModel, delivery.id)
         if model is None:
@@ -194,3 +223,107 @@ class SqlAlchemyDeliveryRepository:
             stop_model = stops_by_store_order[stop.store_order_id]
             stop_model.picked_up_at = stop.picked_up_at
         await self._session.flush()
+
+
+class SqlAlchemyVehicleSettingsRepository:
+    def __init__(self, session: AsyncSession) -> None:
+        self._session = session
+
+    async def list_all(self) -> dict[VehicleType, bool]:
+        result = await self._session.execute(select(VehicleSettingModel))
+        return {VehicleType(m.vehicle_type): m.is_enabled for m in result.scalars()}
+
+    async def set_enabled(self, vehicle_type: VehicleType, is_enabled: bool) -> None:
+        model = await self._session.get(VehicleSettingModel, vehicle_type.value)
+        if model is None:
+            self._session.add(
+                VehicleSettingModel(vehicle_type=vehicle_type.value, is_enabled=is_enabled)
+            )
+        else:
+            model.is_enabled = is_enabled
+        await self._session.flush()
+
+
+def _to_rating(model: CourierRatingModel) -> CourierRating:
+    return CourierRating(
+        id=model.id,
+        delivery_id=model.delivery_id,
+        order_id=model.order_id,
+        courier_id=model.courier_id,
+        customer_id=model.customer_id,
+        rating=model.rating,
+        comment=model.comment,
+        created_at=model.created_at,
+    )
+
+
+class SqlAlchemyCourierRatingRepository:
+    def __init__(self, session: AsyncSession) -> None:
+        self._session = session
+
+    async def add(self, rating: CourierRating) -> None:
+        self._session.add(
+            CourierRatingModel(
+                id=rating.id,
+                delivery_id=rating.delivery_id,
+                order_id=rating.order_id,
+                courier_id=rating.courier_id,
+                customer_id=rating.customer_id,
+                rating=rating.rating,
+                comment=rating.comment,
+                created_at=rating.created_at,
+            )
+        )
+        await self._session.flush()
+
+    async def get_by_delivery(self, delivery_id: UUID) -> CourierRating | None:
+        result = await self._session.execute(
+            select(CourierRatingModel).where(CourierRatingModel.delivery_id == delivery_id)
+        )
+        model = result.scalar_one_or_none()
+        return _to_rating(model) if model else None
+
+    async def list_all(self) -> list[CourierRating]:
+        result = await self._session.execute(
+            select(CourierRatingModel).order_by(CourierRatingModel.created_at.desc())
+        )
+        return [_to_rating(m) for m in result.scalars()]
+
+
+class SqlAlchemyCourierLocationRepository:
+    def __init__(self, session: AsyncSession) -> None:
+        self._session = session
+
+    async def upsert(self, location: CourierLocation) -> None:
+        model = await self._session.get(CourierLocationModel, location.courier_id)
+        if model is None:
+            self._session.add(
+                CourierLocationModel(
+                    courier_id=location.courier_id,
+                    lat=location.lat,
+                    lng=location.lng,
+                    heading=location.heading,
+                    updated_at=location.updated_at,
+                )
+            )
+        else:
+            model.lat = location.lat
+            model.lng = location.lng
+            model.heading = location.heading
+            model.updated_at = location.updated_at
+        await self._session.flush()
+
+    async def list_since(self, since: datetime) -> list[CourierLocation]:
+        result = await self._session.execute(
+            select(CourierLocationModel).where(CourierLocationModel.updated_at >= since)
+        )
+        return [
+            CourierLocation(
+                courier_id=m.courier_id,
+                lat=m.lat,
+                lng=m.lng,
+                heading=m.heading,
+                updated_at=m.updated_at,
+            )
+            for m in result.scalars()
+        ]

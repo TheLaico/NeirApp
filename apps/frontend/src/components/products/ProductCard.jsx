@@ -10,6 +10,8 @@ export default function ProductCard({ product, store, selected = false, onOpen }
   const { quantityOf, add, setQuantity } = useCart();
   const { isFavorite, toggle } = useFavorites();
   const soldOut = product.is_available === false;
+  // Con la tienda cerrada no se puede agregar nada nuevo al carrito.
+  const closed = store.is_open === false;
   const quantity = quantityOf(store.id, product.id);
   const favorite = isFavorite(product.id);
 
@@ -38,7 +40,8 @@ export default function ProductCard({ product, store, selected = false, onOpen }
         </button>
 
         {soldOut && <span className="product-badge">Agotado</span>}
-        {!soldOut && (
+        {!soldOut && closed && <span className="product-badge">Tienda cerrada</span>}
+        {!soldOut && !closed && (
           <div className="product-add">
             {quantity === 0 ? (
               <button

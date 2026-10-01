@@ -37,6 +37,10 @@ class OrderLineResponse(BaseModel):
         )
 
 
+class RejectStoreOrderRequest(BaseModel):
+    reason: str = Field(min_length=3, max_length=300, description="Justificación para el cliente.")
+
+
 class StoreOrderResponse(BaseModel):
     id: UUID
     order_id: UUID
@@ -45,6 +49,7 @@ class StoreOrderResponse(BaseModel):
     status: StoreOrderStatus
     lines: list[OrderLineResponse]
     subtotal_cop: int
+    rejection_reason: str | None
     created_at: datetime
     updated_at: datetime
 
@@ -58,6 +63,7 @@ class StoreOrderResponse(BaseModel):
             status=store_order.status,
             lines=[OrderLineResponse.from_domain(line) for line in store_order.lines],
             subtotal_cop=store_order.subtotal_cop,
+            rejection_reason=store_order.rejection_reason,
             created_at=store_order.created_at,
             updated_at=store_order.updated_at,
         )
@@ -69,6 +75,8 @@ class OrderResponse(BaseModel):
     delivery_lat: float
     delivery_lng: float
     delivery_notes: str
+    products_cop: int
+    delivery_fee_cop: int
     total_cop: int
     created_at: datetime
     store_orders: list[StoreOrderResponse]
@@ -81,6 +89,8 @@ class OrderResponse(BaseModel):
             delivery_lat=order.delivery_lat,
             delivery_lng=order.delivery_lng,
             delivery_notes=order.delivery_notes,
+            products_cop=order.products_cop,
+            delivery_fee_cop=order.delivery_fee_cop,
             total_cop=order.total_cop,
             created_at=order.created_at,
             store_orders=[StoreOrderResponse.from_domain(so) for so in order.store_orders],

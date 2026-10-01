@@ -32,6 +32,7 @@ def _to_store_order(model: StoreOrderModel) -> StoreOrder:
         lines=[_to_line(m) for m in model.lines],
         created_at=model.created_at,
         updated_at=model.updated_at,
+        rejection_reason=model.rejection_reason,
     )
 
 
@@ -43,6 +44,8 @@ def _to_order(model: OrderModel) -> Order:
         delivery_lng=model.delivery_lng,
         delivery_notes=model.delivery_notes,
         created_at=model.created_at,
+        delivery_fee_cop=model.delivery_fee_cop,
+        courier_earnings_cop=model.courier_earnings_cop,
         store_orders=[_to_store_order(m) for m in model.store_orders],
     )
 
@@ -81,6 +84,8 @@ class SqlAlchemyOrderRepository:
                 delivery_lat=order.delivery_lat,
                 delivery_lng=order.delivery_lng,
                 delivery_notes=order.delivery_notes,
+                delivery_fee_cop=order.delivery_fee_cop,
+                courier_earnings_cop=order.courier_earnings_cop,
                 created_at=order.created_at,
                 store_orders=[_store_order_model(so) for so in order.store_orders],
             )
@@ -154,5 +159,6 @@ class SqlAlchemyOrderRepository:
         if model is None:
             raise LookupError(f"StoreOrder {store_order.id} no existe")
         model.status = store_order.status.value
+        model.rejection_reason = store_order.rejection_reason
         model.updated_at = store_order.updated_at
         await self._session.flush()

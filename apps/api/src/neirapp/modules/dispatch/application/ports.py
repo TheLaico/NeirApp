@@ -1,10 +1,21 @@
 from collections.abc import Callable
+from datetime import datetime
 from types import TracebackType
 from typing import Protocol, Self
 from uuid import UUID
 
-from neirapp.modules.dispatch.application.dto import ClaimableOrderSnapshot, StoreLocationSnapshot
-from neirapp.modules.dispatch.domain.entities import CourierProfile, Delivery
+from neirapp.modules.dispatch.application.dto import (
+    ClaimableOrderSnapshot,
+    EarningsSummary,
+    StoreLocationSnapshot,
+)
+from neirapp.modules.dispatch.domain.entities import (
+    CourierLocation,
+    CourierProfile,
+    CourierRating,
+    Delivery,
+    VehicleType,
+)
 
 
 class StoresPort(Protocol):
@@ -19,6 +30,14 @@ class OrderingPort(Protocol):
     async def get_claimable_order(self, order_id: UUID) -> ClaimableOrderSnapshot | None: ...
 
     async def list_claimable_orders(self) -> list[ClaimableOrderSnapshot]: ...
+
+    async def is_store_order_ready(self, order_id: UUID, store_order_id: UUID) -> bool:
+        """¿La tienda ya marcó ese pedido como listo? Solo entonces se lo entrega al repartidor."""
+        ...
+
+    async def ready_store_order_ids(self, order_id: UUID) -> set[UUID]:
+        """Ids de los `StoreOrder` del pedido que la tienda ya marcó como listos."""
+        ...
 
     async def mark_store_order_handed_over(self, store_order_id: UUID) -> None: ...
 
@@ -49,6 +68,14 @@ class CourierRepository(Protocol):
     async def update(self, profile: CourierProfile) -> None: ...
 
 
+class VehicleSettingsRepository(Protocol):
+    async def list_all(self) -> dict[VehicleType, bool]:
+        """Solo los tipos que un admin configuró explícitamente."""
+        ...
+
+    async def set_enabled(self, vehicle_type: VehicleType, is_enabled: bool) -> None: ...
+
+
 class DeliveryRepository(Protocol):
     async def add(self, delivery: Delivery) -> None: ...
 
@@ -62,7 +89,23 @@ class DeliveryRepository(Protocol):
 
     async def list_by_courier(self, courier_id: UUID) -> list[Delivery]: ...
 
+    async def earnings_summary(self) -> EarningsSummary: ...
+
     async def update(self, delivery: Delivery) -> None: ...
+
+
+class CourierLocationRepository(Protocol):
+    async def upsert(self, location: CourierLocation) -> None: ...
+
+    async def list_since(self, since: datetime) -> list[CourierLocation]: ...
+
+
+class CourierRatingRepository(Protocol):
+    async def add(self, rating: CourierRating) -> None: ...
+
+    async def get_by_delivery(self, delivery_id: UUID) -> CourierRating | None: ...
+
+    async def list_all(self) -> list[CourierRating]: ...
 
 
 class UnitOfWork(Protocol):
@@ -71,6 +114,15 @@ class UnitOfWork(Protocol):
 
     @property
     def deliveries(self) -> DeliveryRepository: ...
+
+    @property
+    def vehicle_settings(self) -> VehicleSettingsRepository: ...
+
+    @property
+    def courier_ratings(self) -> CourierRatingRepository: ...
+
+    @property
+    def courier_locations(self) -> CourierLocationRepository: ...
 
     async def __aenter__(self) -> Self: ...
 

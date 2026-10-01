@@ -5,7 +5,63 @@ from sqlalchemy import ColumnElement, asc, case, delete, desc, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from neirapp.modules.stores.domain.entities import Product, Store, StoreCategory
-from neirapp.modules.stores.infrastructure.models import StoreModel, StoreProductModel
+from neirapp.modules.stores.domain.schedule import ClosedDate, DayHours, StoreSchedule
+from neirapp.modules.stores.infrastructure.models import (
+    StoreClosedDateModel,
+    StoreHoursModel,
+    StoreModel,
+    StoreProductModel,
+)
+
+
+def _to_schedule(model: StoreModel) -> StoreSchedule:
+    return StoreSchedule(
+        days=sorted(
+            (DayHours(h.weekday, h.is_open, h.opens, h.closes, h.all_day) for h in model.hours),
+            key=lambda d: d.weekday,
+        ),
+        closed_dates=sorted(
+            (ClosedDate(c.day, c.reason) for c in model.closed_dates), key=lambda c: c.day
+        ),
+    )
+
+
+def _sync_schedule(model: StoreModel, schedule: StoreSchedule) -> None:
+    """Iguala las filas de horario y de cierres a las de la entidad, sin borrar y reinsertar
+    la misma clave en un solo `flush`."""
+    hours = {h.weekday: h for h in model.hours}
+    wanted = {d.weekday: d for d in schedule.days}
+    model.hours = [h for h in model.hours if h.weekday in wanted]
+    for weekday, day in wanted.items():
+        if weekday in hours:
+            row = hours[weekday]
+            row.is_open, row.opens, row.closes, row.all_day = (
+                day.is_open,
+                day.opens,
+                day.closes,
+                day.all_day,
+            )
+        else:
+            model.hours.append(
+                StoreHoursModel(
+                    store_id=model.id,
+                    weekday=weekday,
+                    is_open=day.is_open,
+                    opens=day.opens,
+                    closes=day.closes,
+                    all_day=day.all_day,
+                )
+            )
+    dates = {c.day: c for c in model.closed_dates}
+    wanted_dates = {c.day: c for c in schedule.closed_dates}
+    model.closed_dates = [c for c in model.closed_dates if c.day in wanted_dates]
+    for date_, closed in wanted_dates.items():
+        if date_ in dates:
+            dates[date_].reason = closed.reason
+        else:
+            model.closed_dates.append(
+                StoreClosedDateModel(store_id=model.id, day=date_, reason=closed.reason)
+            )
 
 
 def _to_store(model: StoreModel) -> Store:
@@ -21,6 +77,10 @@ def _to_store(model: StoreModel) -> Store:
         is_approved=model.is_approved,
         is_rejected=model.is_rejected,
         created_at=model.created_at,
+        image_url=model.image_url,
+        recommended_position=model.recommended_position,
+        is_listed=model.is_listed,
+        schedule=_to_schedule(model),
     )
 
 
@@ -54,6 +114,7 @@ class SqlAlchemyStoreRepository:
                 is_open=store.is_open,
                 is_approved=store.is_approved,
                 is_rejected=store.is_rejected,
+                image_url=store.image_url,
                 created_at=store.created_at,
             )
         )
@@ -71,9 +132,15 @@ class SqlAlchemyStoreRepository:
         return _to_store(model) if model else None
 
     async def list_all(
-        self, *, category: StoreCategory | None = None, is_approved: bool | None = None
+        self,
+        *,
+        category: StoreCategory | None = None,
+        is_approved: bool | None = None,
+        is_listed: bool | None = None,
     ) -> list[Store]:
         stmt = select(StoreModel).order_by(StoreModel.created_at.desc())
+        if is_listed is not None:
+            stmt = stmt.where(StoreModel.is_listed == is_listed)
         if category is not None:
             stmt = stmt.where(StoreModel.category == category.value)
         if is_approved is not None:
@@ -97,6 +164,13 @@ class SqlAlchemyStoreRepository:
         model.is_open = store.is_open
         model.is_approved = store.is_approved
         model.is_rejected = store.is_rejected
+        model.image_url = store.image_url
+        model.recommended_position = store.recommended_position
+        model.is_listed = store.is_listed
+        model.owner_user_id = store.owner_user_id
+        model.lat = store.lat
+        model.lng = store.lng
+        _sync_schedule(model, store.schedule)
         await self._session.flush()
 
 
@@ -176,6 +250,7 @@ class SqlAlchemyProductRepository:
             .where(
                 StoreProductModel.is_available,
                 StoreModel.is_approved,
+                StoreModel.is_listed,
                 or_(
                     func.lower(StoreProductModel.name).like(needle),
                     func.lower(StoreProductModel.description).like(needle),

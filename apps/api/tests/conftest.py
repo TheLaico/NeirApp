@@ -35,11 +35,12 @@ def db_url(tmp_path: Path) -> str:
 
 
 @pytest.fixture
-def make_settings(db_url: str) -> Callable[..., Settings]:
+def make_settings(db_url: str, tmp_path: Path) -> Callable[..., Settings]:
     def factory(**overrides: object) -> Settings:
         return Settings(
             environment="test",
             database_url=db_url,
+            uploads_dir=str(tmp_path / "uploads"),
             cors_origins=[],
             **overrides,  # type: ignore[arg-type]
         )

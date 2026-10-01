@@ -29,6 +29,8 @@ def _to_snapshot(order: Order) -> ClaimableOrderSnapshot | None:
         delivery_lng=order.delivery_lng,
         delivery_notes=order.delivery_notes,
         stops=stops,
+        delivery_fee_cop=order.delivery_fee_cop,
+        courier_earnings_cop=order.courier_earnings_cop,
     )
 
 
@@ -48,6 +50,21 @@ class OrderingAdapter:
         orders = await self._ordering.list_claimable_orders()
         snapshots = (_to_snapshot(o) for o in orders)
         return [s for s in snapshots if s is not None]
+
+    async def is_store_order_ready(self, order_id: UUID, store_order_id: UUID) -> bool:
+        order = await self._ordering.get_order_raw(order_id)
+        if order is None:
+            return False
+        return any(
+            so.id == store_order_id and so.status == StoreOrderStatus.READY
+            for so in order.store_orders
+        )
+
+    async def ready_store_order_ids(self, order_id: UUID) -> set[UUID]:
+        order = await self._ordering.get_order_raw(order_id)
+        if order is None:
+            return set()
+        return {so.id for so in order.store_orders if so.status == StoreOrderStatus.READY}
 
     async def mark_store_order_handed_over(self, store_order_id: UUID) -> None:
         await self._ordering.mark_store_order_handed_over_raw(store_order_id)

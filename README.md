@@ -30,16 +30,16 @@ cp .env.example .env                       # ajusta NEIRAPP_DATABASE_URL si no u
 
 La API queda en `http://localhost:8000` (`/docs` para Swagger UI en desarrollo).
 
-### Web
+### Frontend
 
 ```bash
-npm install         # en la raíz del monorepo (workspaces)
-npm run gen:api-client   # requiere la API corriendo: exporta OpenAPI y genera el cliente TS
-npm run dev:web
+cd apps/frontend
+npm install
+npm run dev -- --port 5174
 ```
 
-La web queda en `http://localhost:5173`, con `/api` proxeado a la API en `:8000` (ver
-`apps/web/vite.config.ts`; el proxy reenvía HTTP y WebSocket).
+El frontend queda en `http://localhost:5174`, con `/api` proxeado a la API en `:8000` (ver
+`apps/frontend/vite.config.js`; el proxy reenvía HTTP y WebSocket).
 
 Para probar el backoffice de aprobación de tiendas (`/admin/tiendas`) necesitas un usuario con rol
 `admin`; no hay flujo de autoservicio para eso — ver
@@ -82,7 +82,7 @@ npx expo-doctor   # diagnóstico de dependencias/config específico de Expo
 
 ```
 apps/api/           API (FastAPI, monolito modular)
-apps/web/            PWA (React + Vite)
+apps/frontend/       Frontend web (React + Vite, JSX)
 apps/mobile/         App de repartidor (Expo/React Native), Fase 5
 packages/api-client/ Cliente TS generado desde el OpenAPI de la API
 packages/design-tokens/  Identidad visual (colores, tipografía)

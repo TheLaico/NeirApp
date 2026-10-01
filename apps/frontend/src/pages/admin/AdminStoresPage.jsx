@@ -1,25 +1,24 @@
-import { MapPin, Package, Plus, Trash2 } from 'lucide-react';
+import { EyeOff, MapPin, Plus, Settings2 } from 'lucide-react';
 import { useState } from 'react';
-import { useStores } from '../../features/stores/api.js';
-import { localCatalog, useLocalCatalog } from '../../features/stores/localCatalog.js';
+import { useAdminStores } from '../../features/stores/api.js';
 import { usePath } from '../../lib/router.jsx';
 import AdminLayout from './AdminLayout.jsx';
-import ProductManager from './ProductManager.jsx';
+import RecommendedStores from './RecommendedStores.jsx';
+import StoreAdminEditor from './StoreAdminEditor.jsx';
 import StoreForm from './StoreForm.jsx';
 
-/** Panel de administrador: crear y administrar tiendas. */
+/** Panel de administrador: crear tiendas para los comerciantes. Todas viven en el servidor y salen en el mapa. */
 export default function AdminStoresPage({ user, onLogout }) {
   usePath(); // se vuelve a dibujar al navegar
-  const { stores } = useStores();
-  const local = useLocalCatalog();
+  const { stores, status, refresh } = useAdminStores();
+  const [editing, setEditing] = useState(null); // id de la tienda que se está administrando
   const [creating, setCreating] = useState(() => new URLSearchParams(window.location.search).has('nueva'));
-  const [managing, setManaging] = useState(null); // id de la tienda con el gestor de productos abierto
   const [justCreated, setJustCreated] = useState(null);
 
   const onCreated = (store) => {
     setCreating(false);
     setJustCreated(store.name);
-    setManaging(store.id); // se abre el gestor para cargar sus productos
+    refresh();
     window.history.replaceState(null, '', '/admin/tiendas');
   };
 
@@ -28,7 +27,7 @@ export default function AdminStoresPage({ user, onLogout }) {
       user={user}
       onLogout={onLogout}
       title="Tiendas"
-      subtitle="Crea tiendas y carga sus productos. Aparecen en el mapa de la app."
+      subtitle="Crea la tienda de un comerciante. Aparece en el mapa y él administra sus productos y pedidos."
       actions={
         !creating && (
           <button type="button" className="a-btn primary" onClick={() => setCreating(true)}>
@@ -40,73 +39,49 @@ export default function AdminStoresPage({ user, onLogout }) {
     >
       {justCreated && (
         <p className="a-success" role="status">
-          ✓ La tienda “{justCreated}” quedó creada y ya aparece en el mapa. Agrega sus productos abajo.
+          ✓ La tienda “{justCreated}” quedó creada y ya aparece en el mapa. El comerciante puede cargar sus productos desde su panel.
         </p>
       )}
 
-      {creating && (
-        <StoreForm ownerId={user.id} otherStores={stores} onCreated={onCreated} onCancel={() => setCreating(false)} />
+      {creating && <StoreForm otherStores={stores.filter((s) => s.is_listed)} onCreated={onCreated} onCancel={() => setCreating(false)} />}
+
+      {status === 'error' && (
+        <p className="a-err" role="alert">
+          No se pudieron cargar las tiendas.
+        </p>
       )}
 
+      {status === 'ok' && stores.length > 0 && <RecommendedStores stores={stores.filter((s) => s.is_approved && s.is_listed)} onChanged={refresh} />}
+
       <ul className="a-store-list">
-        {stores.length === 0 && <li className="a-empty">Todavía no hay tiendas.</li>}
-        {stores.map((store) => {
-          const isLocal = Boolean(store.isLocal);
-          const count = isLocal ? (local.products[store.id] ?? []).length : null;
-          return (
-            <li key={store.id} className="a-card a-store">
-              <div className="a-store-row">
-                <span className="a-store-icon" style={{ background: store.color }}>
-                  <store.Icon size={22} color="#fff" aria-hidden="true" />
+        {status === 'ok' && stores.length === 0 && <li className="a-empty">Todavía no hay tiendas.</li>}
+        {stores.map((store) => (
+          <li key={store.id} className="a-card a-store">
+            <div className="a-store-row">
+              <span className="a-store-icon" style={{ background: store.color }}>
+                <store.Icon size={22} color="#fff" aria-hidden="true" />
+              </span>
+              <div className="a-store-info">
+                <strong>{store.name}</strong>
+                <span>
+                  {store.label} · <MapPin size={12} aria-hidden="true" /> {store.lat.toFixed(4)}, {store.lng.toFixed(4)}
                 </span>
-                <div className="a-store-info">
-                  <strong>{store.name}</strong>
-                  <span>
-                    {store.label} · <MapPin size={12} aria-hidden="true" /> {store.lat.toFixed(4)}, {store.lng.toFixed(4)}
-                  </span>
-                </div>
-                <span className={`a-badge ${isLocal ? 'local' : 'server'}`}>{isLocal ? 'Local' : 'Servidor'}</span>
-
-                {isLocal ? (
-                  <>
-                    <button
-                      type="button"
-                      role="switch"
-                      aria-checked={store.is_open}
-                      aria-label={`${store.name}: ${store.is_open ? 'abierta' : 'cerrada'}`}
-                      className={`a-switch${store.is_open ? ' on' : ''}`}
-                      onClick={() => localCatalog.updateStore(store.id, { is_open: !store.is_open })}
-                    >
-                      <span />
-                    </button>
-                    <small className="a-avail">{store.is_open ? 'Abierta' : 'Cerrada'}</small>
-                    <button type="button" className="a-btn ghost" aria-expanded={managing === store.id} onClick={() => setManaging(managing === store.id ? null : store.id)}>
-                      <Package size={16} aria-hidden="true" />
-                      Productos ({count})
-                    </button>
-                    <button
-                      type="button"
-                      className="a-icon-btn danger"
-                      aria-label={`Eliminar ${store.name}`}
-                      onClick={() => {
-                        if (window.confirm(`¿Eliminar la tienda “${store.name}” y sus productos?`)) {
-                          localCatalog.removeStore(store.id);
-                          if (managing === store.id) setManaging(null);
-                        }
-                      }}
-                    >
-                      <Trash2 size={17} aria-hidden="true" />
-                    </button>
-                  </>
-                ) : (
-                  <small className="a-avail muted">Solo lectura</small>
-                )}
+                <span>Dueño: {store.owner_email || 'sin dueño'}</span>
               </div>
-
-              {isLocal && managing === store.id && <ProductManager store={store} />}
-            </li>
-          );
-        })}
+              {!store.is_listed && (
+                <span className="a-badge local">
+                  <EyeOff size={12} aria-hidden="true" /> Oculta
+                </span>
+              )}
+              <span className={`a-badge ${store.is_open ? 'server' : 'local'}`}>{store.is_open ? 'Abierta' : 'Cerrada'}</span>
+              <button type="button" className="a-btn ghost" aria-expanded={editing === store.id} onClick={() => setEditing(editing === store.id ? null : store.id)}>
+                <Settings2 size={16} aria-hidden="true" />
+                {editing === store.id ? 'Cerrar' : 'Administrar'}
+              </button>
+            </div>
+            {editing === store.id && <StoreAdminEditor key={store.id} store={store} onChanged={refresh} />}
+          </li>
+        ))}
       </ul>
     </AdminLayout>
   );

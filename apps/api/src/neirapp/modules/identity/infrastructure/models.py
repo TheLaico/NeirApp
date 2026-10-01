@@ -59,3 +59,12 @@ class RefreshTokenModel(Base):
     created_at: Mapped[datetime] = mapped_column(UTCDateTime)
     expires_at: Mapped[datetime] = mapped_column(UTCDateTime)
     revoked_at: Mapped[datetime | None] = mapped_column(UTCDateTime)
+
+
+class RoleGrantModel(Base):
+    __tablename__ = "identity_role_grants"
+
+    email: Mapped[str] = mapped_column(String(320), primary_key=True)
+    role: Mapped[str] = mapped_column(String(32), primary_key=True)
+    granted_by: Mapped[UUID] = mapped_column(Uuid)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime)

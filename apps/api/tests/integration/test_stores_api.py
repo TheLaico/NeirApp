@@ -591,3 +591,73 @@ class TestRejection:
 
         public = await client.get(f"{API}/stores/{created['id']}")
         assert public.status_code == 200
+
+
+class TestTiendasRecomendadas:
+    async def _approved(
+        self, client: httpx.AsyncClient, admin: dict[str, Any], email: str, name: str
+    ) -> dict[str, Any]:
+        owner = await _register(client, email)
+        store = await _create_store(client, owner, name=name)
+        approved = await client.patch(
+            f"{API}/stores/{store['id']}/approval",
+            json={"is_approved": True},
+            headers=_bearer(admin),
+        )
+        assert approved.status_code == 200, approved.text
+        return approved.json()  # type: ignore[no-any-return]
+
+    async def test_el_admin_elige_y_ordena_las_recomendadas(
+        self, client: httpx.AsyncClient, app: FastAPI
+    ) -> None:
+        admin = await _admin_tokens(client, app)
+        a = await self._approved(client, admin, "a@correo.com", "Tienda A")
+        b = await self._approved(client, admin, "b@correo.com", "Tienda B")
+        c = await self._approved(client, admin, "c@correo.com", "Tienda C")
+        assert a["recommended_position"] is None
+
+        ordered = await client.put(
+            f"{API}/stores/recommended",
+            json={"store_ids": [c["id"], a["id"]]},
+            headers=_bearer(admin),
+        )
+        assert ordered.status_code == 200, ordered.text
+        assert [(s["name"], s["recommended_position"]) for s in ordered.json()] == [
+            ("Tienda C", 1),
+            ("Tienda A", 2),
+        ]
+
+        listing = {
+            s["name"]: s["recommended_position"] for s in (await client.get(f"{API}/stores")).json()
+        }
+        assert listing == {"Tienda A": 2, "Tienda B": None, "Tienda C": 1}
+
+        # Cambiar la lista quita a las que ya no están y reordena.
+        await client.put(
+            f"{API}/stores/recommended",
+            json={"store_ids": [b["id"], c["id"]]},
+            headers=_bearer(admin),
+        )
+        listing = {
+            s["name"]: s["recommended_position"] for s in (await client.get(f"{API}/stores")).json()
+        }
+        assert listing == {"Tienda A": None, "Tienda B": 1, "Tienda C": 2}
+
+    async def test_solo_el_admin_y_solo_tiendas_aprobadas(
+        self, client: httpx.AsyncClient, app: FastAPI
+    ) -> None:
+        admin = await _admin_tokens(client, app)
+        owner = await _register(client, "duena@correo.com")
+        pending = await _create_store(client, owner)
+
+        forbidden = await client.put(
+            f"{API}/stores/recommended", json={"store_ids": []}, headers=_bearer(owner)
+        )
+        assert forbidden.status_code == 403
+
+        not_approved = await client.put(
+            f"{API}/stores/recommended",
+            json={"store_ids": [pending["id"]]},
+            headers=_bearer(admin),
+        )
+        assert not_approved.status_code == 404

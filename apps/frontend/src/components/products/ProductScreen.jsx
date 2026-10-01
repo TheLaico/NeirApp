@@ -4,12 +4,14 @@ import { MAX_QUANTITY, useCart } from '../../features/cart/CartContext.jsx';
 import { useFavorites } from '../../features/favorites/FavoritesContext.jsx';
 import { useStoreReviews } from '../../features/reviews/api.js';
 import { formatCop } from '../../lib/money.js';
+import CompactModal, { isCompactScreen } from './CompactModal.jsx';
 import Stars from './Stars.jsx';
 
 const dateFormat = new Intl.DateTimeFormat('es-CO', { day: 'numeric', month: 'short', year: 'numeric' });
 
 export default function ProductScreen({ product, store, onClose }) {
   const { Icon } = store;
+  const compact = isCompactScreen();
   const { quantityOf, add, setQuantity } = useCart();
   const { summary, reviews, status } = useStoreReviews(store.id);
   const { isFavorite, toggle } = useFavorites();
@@ -17,6 +19,7 @@ export default function ProductScreen({ product, store, onClose }) {
   const inCart = quantityOf(store.id, product.id);
   const [quantity, setQty] = useState(1);
   const soldOut = product.is_available === false;
+  const closed = store.is_open === false; // con la tienda cerrada no se agrega al carrito
 
   // Cada producto nuevo arranca con cantidad 1.
   useEffect(() => setQty(1), [product.id]);
@@ -37,8 +40,8 @@ export default function ProductScreen({ product, store, onClose }) {
     setQty(1);
   };
 
-  return (
-    <section className="product-screen" aria-label={`Detalle de ${product.name}`}>
+  const screen = (
+    <section className={`product-screen${compact ? ' as-modal' : ''}`} aria-label={`Detalle de ${product.name}`}>
       <div className="ps-scroll">
         <div className="ps-art" style={{ '--tint': store.color }}>
           {product.image_url ? (
@@ -123,25 +126,32 @@ export default function ProductScreen({ product, store, onClose }) {
 
       <footer className="ps-foot">
         <div className="stepper" role="group" aria-label="Cantidad">
-          <button type="button" aria-label="Quitar uno" disabled={quantity <= 1} onClick={() => setQty(quantity - 1)}>
+          <button type="button" aria-label="Quitar uno" disabled={closed || quantity <= 1} onClick={() => setQty(quantity - 1)}>
             −
           </button>
           <span aria-live="polite">{quantity}</span>
           <button
             type="button"
             aria-label="Agregar uno"
-            disabled={quantity + inCart >= MAX_QUANTITY}
+            disabled={closed || quantity + inCart >= MAX_QUANTITY}
             onClick={() => setQty(quantity + 1)}
           >
             +
           </button>
         </div>
-        <button type="button" className="ps-add" disabled={soldOut} onClick={addToCart}>
+        <button type="button" className="ps-add" disabled={soldOut || closed} onClick={addToCart}>
           <ShoppingCart size={19} aria-hidden="true" />
-          {soldOut ? 'Agotado' : `Agregar · ${formatCop(product.price_cop * quantity)}`}
+          {soldOut ? 'Agotado' : closed ? 'Tienda cerrada por ahora' : `Agregar · ${formatCop(product.price_cop * quantity)}`}
         </button>
         {inCart > 0 && <span className="ps-incart">{inCart} en tu carrito</span>}
       </footer>
     </section>
   );
+
+  return (
+    <CompactModal compact={compact} onClose={onClose}>
+      {screen}
+    </CompactModal>
+  );
+
 }

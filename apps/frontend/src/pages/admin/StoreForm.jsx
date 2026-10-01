@@ -3,11 +3,13 @@ import { useState } from 'react';
 import { NEIRA_CENTER } from '../../features/map/constants.js';
 import { NeiraMap } from '../../features/map/NeiraMap.jsx';
 import { CATEGORY_LABEL } from '../../features/stores/categories.jsx';
-import { localCatalog } from '../../features/stores/localCatalog.js';
+import { storesApi } from '../../features/stores/api.js';
 import { getCurrentPosition, isInsideDeliveryArea } from '../../lib/geo.js';
 
 /** Formulario "Nueva tienda": datos básicos y ubicación (clic en el mapa, GPS o centro del pueblo). */
-export default function StoreForm({ ownerId, otherStores, onCreated, onCancel }) {
+export default function StoreForm({ otherStores, onCreated, onCancel }) {
+  const [ownerEmail, setOwnerEmail] = useState('');
+  const [saving, setSaving] = useState(false);
   const [name, setName] = useState('');
   const [category, setCategory] = useState('general');
   const [description, setDescription] = useState('');
@@ -36,15 +38,29 @@ export default function StoreForm({ ownerId, otherStores, onCreated, onCancel })
     }
   };
 
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault();
     const next = {};
+    if (!/^\S+@\S+\.\S+$/.test(ownerEmail.trim())) next.owner = 'Escribe el correo del comerciante dueño de la tienda.';
     if (name.trim().length < 2) next.name = 'Escribe el nombre de la tienda (mínimo 2 letras).';
     if (!location) next.location = 'Elige la ubicación de la tienda en el mapa.';
     setErrors(next);
     if (Object.keys(next).length) return;
-    const store = localCatalog.createStore({ name, category, description, ...location }, ownerId);
-    onCreated(store);
+    setSaving(true);
+    try {
+      const store = await storesApi.adminCreate({
+        name: name.trim(),
+        category,
+        description: description.trim(),
+        owner_email: ownerEmail.trim(),
+        ...location,
+      });
+      onCreated(store);
+    } catch (err) {
+      setErrors({ form: err.message });
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -67,6 +83,12 @@ export default function StoreForm({ ownerId, otherStores, onCreated, onCancel })
             ))}
           </select>
         </div>
+      </div>
+
+      <div className="a-field">
+        <label htmlFor="st-owner">Correo del comerciante (dueño)</label>
+        <input id="st-owner" type="email" autoComplete="off" value={ownerEmail} placeholder="comerciante@correo.com" onChange={(e) => setOwnerEmail(e.target.value)} aria-invalid={errors.owner ? 'true' : undefined} />
+        {errors.owner ? <small className="a-err">{errors.owner}</small> : <small>Debe tener cuenta y el rol de comerciante (sección Roles).</small>}
       </div>
 
       <div className="a-field">
@@ -94,8 +116,15 @@ export default function StoreForm({ ownerId, otherStores, onCreated, onCancel })
         {errors.location && <small className="a-err">{errors.location}</small>}
       </div>
 
+      {errors.form && (
+        <p className="a-err" role="alert">
+          {errors.form}
+        </p>
+      )}
+
       <div className="a-form-actions">
-        <button type="submit" className="a-btn primary">
+        <button type="submit" className="a-btn primary" disabled={saving}>
+          {saving && <Loader2 className="a-spin" size={16} aria-hidden="true" />}
           Crear tienda
         </button>
         <button type="button" className="a-btn ghost" onClick={onCancel}>

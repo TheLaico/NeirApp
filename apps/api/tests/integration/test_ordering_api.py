@@ -127,7 +127,9 @@ class TestCreateOrder:
         store_order = body["store_orders"][0]
         assert store_order["status"] == "pending_payment"
         assert store_order["subtotal_cop"] == 50_000
-        assert body["total_cop"] == 50_000
+        assert body["products_cop"] == 50_000
+        assert body["delivery_fee_cop"] == 5_000  # envío por defecto
+        assert body["total_cop"] == 55_000
         assert store_order["lines"][0]["name"] == "Pizza margarita"
 
     async def test_pedido_multi_tienda(self, client: httpx.AsyncClient, app: FastAPI) -> None:
@@ -161,7 +163,7 @@ class TestCreateOrder:
         assert response.status_code == 201, response.text
         body = response.json()
         assert len(body["store_orders"]) == 2
-        assert body["total_cop"] == 25_000 + 6_000
+        assert body["total_cop"] == 25_000 + 6_000 + 5_000
         assert {so["store_id"] for so in body["store_orders"]} == {store_a["id"], store_b["id"]}
 
     async def test_requiere_autenticacion(self, client: httpx.AsyncClient, app: FastAPI) -> None:
@@ -470,9 +472,23 @@ class TestStoreOrderActions:
     async def test_rechazar_un_pedido_pagado(self, client: httpx.AsyncClient, app: FastAPI) -> None:
         store_order, owner = await self._paid_store_order(client, app)
         response = await client.post(
-            f"{API}/store-orders/{store_order['id']}/reject", headers=_bearer(owner)
+            f"{API}/store-orders/{store_order['id']}/reject",
+            json={"reason": "  Se nos acabó el   producto "},
+            headers=_bearer(owner),
         )
         assert response.json()["status"] == "rejected"
+        assert response.json()["rejection_reason"] == "Se nos acabó el producto"
+
+    async def test_rechazar_exige_motivo(self, client: httpx.AsyncClient, app: FastAPI) -> None:
+        store_order, owner = await self._paid_store_order(client, app)
+        url = f"{API}/store-orders/{store_order['id']}/reject"
+
+        sin_cuerpo = await client.post(url, headers=_bearer(owner))
+        muy_corto = await client.post(url, json={"reason": "  ab "}, headers=_bearer(owner))
+
+        assert sin_cuerpo.status_code == 422
+        assert muy_corto.status_code == 422
+        assert muy_corto.json()["code"] == "invalid_rejection_reason"
 
     async def test_no_se_puede_aceptar_antes_de_pagar(
         self, client: httpx.AsyncClient, app: FastAPI

@@ -8,6 +8,7 @@ from uuid import UUID
 from neirapp.modules.identity.domain.entities import (
     RefreshToken,
     Role,
+    RoleGrant,
     TermsAcceptance,
     TermsDocument,
     User,
@@ -32,6 +33,20 @@ class TermsRepository(Protocol):
     async def has_accepted(self, user_id: UUID, document: TermsDocument, version: str) -> bool: ...
 
 
+class RoleGrantRepository(Protocol):
+    async def add(self, grant: RoleGrant) -> None:
+        """Guarda la autorización; si ya existía para ese correo y rol, no hace nada."""
+        ...
+
+    async def remove(self, email: str, role: Role) -> bool:
+        """Elimina la autorización. Devuelve False si no existía."""
+        ...
+
+    async def list_all(self) -> list[RoleGrant]: ...
+
+    async def list_for_email(self, email: str) -> list[RoleGrant]: ...
+
+
 class RefreshTokenRepository(Protocol):
     async def add(self, token: RefreshToken) -> None: ...
 
@@ -53,6 +68,9 @@ class UnitOfWork(Protocol):
 
     @property
     def refresh_tokens(self) -> RefreshTokenRepository: ...
+
+    @property
+    def role_grants(self) -> RoleGrantRepository: ...
 
     async def __aenter__(self) -> Self: ...
 

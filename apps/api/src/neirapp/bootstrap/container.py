@@ -11,6 +11,8 @@ from neirapp.modules.dispatch.application.couriers import (
     CreateCourierProfile,
     GetMyCourierProfile,
     ListPendingCouriers,
+    ListVehicleTypes,
+    SetVehicleTypeEnabled,
     VerifyCourier,
 )
 from neirapp.modules.dispatch.application.deliveries import (
@@ -19,11 +21,18 @@ from neirapp.modules.dispatch.application.deliveries import (
     ConfirmDelivery,
     ConfirmPickup,
     GetDeliveryCourierUserIdRaw,
+    GetDeliveryCustomerId,
     GetDeliveryForCustomer,
+    GetEarningsSummary,
     GetMyActiveDelivery,
+    GetMyCourierRating,
+    GetReadyStoreOrderIds,
     ListAvailableDeliveries,
+    ListCourierRatings,
     ListMyDeliveryHistory,
+    RateCourier,
 )
+from neirapp.modules.dispatch.application.tracking import ListLiveCouriers, UpdateMyLocation
 from neirapp.modules.dispatch.infrastructure.ordering_adapter import OrderingAdapter
 from neirapp.modules.dispatch.infrastructure.stores_adapter import StoresAdapter
 from neirapp.modules.dispatch.infrastructure.unit_of_work import (
@@ -39,6 +48,12 @@ from neirapp.modules.identity.application.profile import (
     UpdateProfile,
 )
 from neirapp.modules.identity.application.registration import RegisterUser
+from neirapp.modules.identity.application.role_grants import (
+    FindUserByEmail,
+    GrantRoleByEmail,
+    ListRoleGrants,
+    RevokeRoleGrant,
+)
 from neirapp.modules.identity.application.session_issuer import SessionIssuer
 from neirapp.modules.identity.application.sessions import Login, Logout, RefreshSession
 from neirapp.modules.identity.domain.entities import TermsDocument
@@ -60,6 +75,9 @@ from neirapp.modules.incidents.infrastructure.ordering_adapter import (
 from neirapp.modules.incidents.infrastructure.unit_of_work import (
     SqlAlchemyUnitOfWork as IncidentsSqlAlchemyUnitOfWork,
 )
+from neirapp.modules.leads.application.app import LeadsApp
+from neirapp.modules.leads.application.leads import ListLeads, SetLeadContacted, SubmitLead
+from neirapp.modules.leads.infrastructure.store import SqlAlchemyLeadStore
 from neirapp.modules.ordering.application.app import OrderingApp
 from neirapp.modules.ordering.application.orders import (
     AcceptStoreOrder,
@@ -78,15 +96,21 @@ from neirapp.modules.ordering.application.orders import (
 )
 from neirapp.modules.ordering.infrastructure.catalog_adapter import StoresCatalogAdapter
 from neirapp.modules.ordering.infrastructure.fake_payment_gateway import FakePaymentGateway
+from neirapp.modules.ordering.infrastructure.pricing_adapter import PricingFeeAdapter
 from neirapp.modules.ordering.infrastructure.unit_of_work import (
     SqlAlchemyUnitOfWork as OrderingSqlAlchemyUnitOfWork,
 )
 from neirapp.modules.ordering.presentation.ws_manager import ConnectionManager
+from neirapp.modules.pricing.application.app import PricingApp
+from neirapp.modules.pricing.application.pricing import GetDeliveryPricing, UpdateDeliveryPricing
+from neirapp.modules.pricing.infrastructure.store import SqlAlchemyPricingStore
 from neirapp.modules.reviews.application.app import ReviewsApp
 from neirapp.modules.reviews.application.reviews import (
     CreateReview,
     GetStoreRatingSummary,
+    ListRatingSummaries,
     ListStoreReviews,
+    ReplyToReview,
 )
 from neirapp.modules.reviews.infrastructure.ordering_adapter import (
     OrderingAdapter as ReviewsOrderingAdapter,
@@ -105,12 +129,19 @@ from neirapp.modules.stores.application.products import (
     UpdateProduct,
 )
 from neirapp.modules.stores.application.stores import (
+    AddClosedDate,
+    AdminCreateStore,
+    AdminUpdateStore,
+    ClearStoreHours,
     CreateStore,
     GetMyStore,
     GetStore,
     GetStoreRaw,
     ListStores,
+    RemoveClosedDate,
+    SetRecommendedStores,
     SetStoreApproval,
+    SetStoreHours,
     SetStoreOpen,
     UpdateStore,
 )
@@ -163,6 +194,10 @@ def build_identity(
         update_profile=UpdateProfile(uow_factory, policy),
         accept_terms=AcceptTerms(uow_factory, policy, clock),
         terms_policy=policy,
+        grant_role=GrantRoleByEmail(uow_factory, clock),
+        revoke_role=RevokeRoleGrant(uow_factory),
+        list_role_grants=ListRoleGrants(uow_factory),
+        find_user_by_email=FindUserByEmail(uow_factory),
     )
 
 
@@ -174,13 +209,21 @@ def build_stores(session_factory: async_sessionmaker[Any], clock: Clock | None =
 
     return StoresApp(
         create_store=CreateStore(uow_factory, clock),
+        admin_create_store=AdminCreateStore(uow_factory, clock),
         get_store=GetStore(uow_factory),
         list_stores=ListStores(uow_factory),
         update_store=UpdateStore(uow_factory),
         set_store_open=SetStoreOpen(uow_factory),
         set_store_approval=SetStoreApproval(uow_factory),
+        set_recommended_stores=SetRecommendedStores(uow_factory),
+        admin_update_store=AdminUpdateStore(uow_factory),
         get_my_store=GetMyStore(uow_factory),
         get_store_raw=GetStoreRaw(uow_factory),
+        set_store_hours=SetStoreHours(uow_factory, clock),
+        clear_store_hours=ClearStoreHours(uow_factory, clock),
+        add_closed_date=AddClosedDate(uow_factory, clock),
+        remove_closed_date=RemoveClosedDate(uow_factory, clock),
+        clock=clock,
         create_product=CreateProduct(uow_factory, clock),
         list_store_products=ListStoreProducts(uow_factory),
         update_product=UpdateProduct(uow_factory),
@@ -195,6 +238,7 @@ def build_ordering(
     session_factory: async_sessionmaker[Any],
     stores: StoresApp,
     notifier: ConnectionManager,
+    pricing: PricingApp,
     clock: Clock | None = None,
 ) -> OrderingApp:
     clock = clock or SystemClock()
@@ -206,7 +250,7 @@ def build_ordering(
     gateway = FakePaymentGateway()
 
     return OrderingApp(
-        create_order=CreateOrder(uow_factory, catalog, clock),
+        create_order=CreateOrder(uow_factory, catalog, PricingFeeAdapter(pricing), clock),
         get_order=GetOrder(uow_factory),
         list_my_orders=ListMyOrders(uow_factory),
         pay_order=PayOrder(uow_factory, gateway, notifier, clock),
@@ -219,6 +263,23 @@ def build_ordering(
         list_claimable_orders=ListClaimableOrders(uow_factory),
         mark_store_order_handed_over_raw=MarkStoreOrderHandedOverRaw(uow_factory, clock),
         get_store_order_view_raw=GetStoreOrderViewRaw(uow_factory),
+    )
+
+
+def build_leads(session_factory: async_sessionmaker[Any], clock: Clock | None = None) -> LeadsApp:
+    store = SqlAlchemyLeadStore(session_factory)
+    return LeadsApp(
+        submit_lead=SubmitLead(store, clock or SystemClock()),
+        list_leads=ListLeads(store),
+        set_lead_contacted=SetLeadContacted(store),
+    )
+
+
+def build_pricing(session_factory: async_sessionmaker[Any]) -> PricingApp:
+    store = SqlAlchemyPricingStore(session_factory)
+    return PricingApp(
+        get_delivery_pricing=GetDeliveryPricing(store),
+        update_delivery_pricing=UpdateDeliveryPricing(store),
     )
 
 
@@ -257,10 +318,20 @@ def build_dispatch(
         get_my_courier_profile=GetMyCourierProfile(uow_factory),
         list_pending_couriers=ListPendingCouriers(uow_factory),
         verify_courier=VerifyCourier(uow_factory),
+        list_vehicle_types=ListVehicleTypes(uow_factory),
+        set_vehicle_type_enabled=SetVehicleTypeEnabled(uow_factory),
         list_available_deliveries=ListAvailableDeliveries(uow_factory, ordering_port),
         claim_delivery=ClaimDelivery(uow_factory, ordering_port, stores_port, clock),
         get_my_active_delivery=GetMyActiveDelivery(uow_factory),
         list_my_delivery_history=ListMyDeliveryHistory(uow_factory),
+        get_ready_store_order_ids=GetReadyStoreOrderIds(ordering_port),
+        get_delivery_customer_id=GetDeliveryCustomerId(ordering_port),
+        get_earnings_summary=GetEarningsSummary(uow_factory),
+        rate_courier=RateCourier(uow_factory, ordering_port, clock),
+        get_my_courier_rating=GetMyCourierRating(uow_factory),
+        list_courier_ratings=ListCourierRatings(uow_factory),
+        update_my_location=UpdateMyLocation(uow_factory, clock),
+        list_live_couriers=ListLiveCouriers(uow_factory, clock),
         confirm_pickup=ConfirmPickup(uow_factory, ordering_port, clock),
         confirm_delivery=ConfirmDelivery(uow_factory, wallet_port, clock),
         cancel_delivery=CancelDelivery(uow_factory, clock),
@@ -283,6 +354,8 @@ def build_reviews(
         create_review=CreateReview(uow_factory, ordering_port, clock),
         list_store_reviews=ListStoreReviews(uow_factory),
         get_store_rating_summary=GetStoreRatingSummary(uow_factory),
+        list_rating_summaries=ListRatingSummaries(uow_factory),
+        reply_to_review=ReplyToReview(uow_factory, ordering_port, clock),
     )
 
 

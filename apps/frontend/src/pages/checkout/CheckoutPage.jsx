@@ -4,6 +4,10 @@ import PageShell from '../../components/layout/PageShell.jsx';
 import PaymentMethodPicker from '../../components/payments/PaymentMethodPicker.jsx';
 import SandboxNotice from '../../components/payments/SandboxNotice.jsx';
 import { useCart } from '../../features/cart/CartContext.jsx';
+import { NeiraMap } from '../../features/map/NeiraMap.jsx';
+import { ordersApi, shortId } from '../../features/orders/api.js';
+import { pricingApi } from '../../features/pricing/api.js';
+import { usePolled } from '../../features/courier/api.js';
 import { useOrders } from '../../features/orders/OrdersContext.jsx';
 import { gateway } from '../../features/payments/gateway.js';
 import { usePayments } from '../../features/payments/PaymentsContext.jsx';
@@ -22,6 +26,10 @@ export default function CheckoutPage({ user, onLogout }) {
   const { groups, totalCop, totalItems, clear } = useCart();
   const { defaultId, nequiPhone, setNequiPhone } = usePayments();
   const orders = useOrders();
+  // Lo que cuesta el envío hoy (lo fija el administrador); el servidor cobra el mismo valor al crear el pedido.
+  const pricing = usePolled(pricingApi.delivery);
+  const deliveryFee = pricing.data?.delivery_fee_cop ?? 0;
+  const grandTotal = totalCop + deliveryFee;
 
   const [provider, setProvider] = useState(defaultId);
   const [phone, setPhone] = useState(nequiPhone || user.phone || '');
@@ -54,10 +62,19 @@ export default function CheckoutPage({ user, onLogout }) {
     [groups],
   );
 
-  const finalize = (outcome, order, reason = '') => {
+  const finalize = async (outcome, order, reason = '') => {
     if (finished.current) return;
     finished.current = true;
     if (outcome === 'approved') {
+      try {
+        // El pago ya está aprobado: se le avisa al backend para que el pedido le llegue a las tiendas.
+        await ordersApi.pay(order.serverId);
+      } catch (err) {
+        orders.update(order.id, { status: 'payment_failed', payment: { status: 'rejected' } });
+        setFailReason(`El pago se aprobó, pero no pudimos confirmar tu pedido con las tiendas: ${err.message}`);
+        setStep('failed');
+        return;
+      }
       orders.update(order.id, {
         status: 'confirmed',
         payment: { status: order.payment.provider === 'cash' ? 'cash_on_delivery' : 'approved' },
@@ -99,6 +116,16 @@ export default function CheckoutPage({ user, onLogout }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step, attempt]);
 
+  const pickOnMap = (lat, lng) => {
+    if (!isInsideDeliveryArea({ lat, lng })) {
+      setGeo({ loading: false, error: 'Ese punto está fuera de la zona de entrega: solo entregamos en Neira, Caldas.' });
+      return;
+    }
+    setCoords({ lat, lng });
+    setGeo({ loading: false, error: '' });
+    setErrors((er) => ({ ...er, location: undefined }));
+  };
+
   const useMyLocation = async () => {
     setGeo({ loading: true, error: '' });
     try {
@@ -110,6 +137,7 @@ export default function CheckoutPage({ user, onLogout }) {
       }
       setCoords(position);
       setGeo({ loading: false, error: '' });
+      setErrors((er) => ({ ...er, location: undefined }));
     } catch (err) {
       setGeo({ loading: false, error: err.message });
     }
@@ -119,6 +147,7 @@ export default function CheckoutPage({ user, onLogout }) {
     e.preventDefault();
     const next = {};
     if (address.trim().length < 5) next.address = 'Escribe la dirección de entrega (calle, carrera y barrio).';
+    if (!coords) next.location = 'Marca en el mapa dónde entregar tu pedido (o usa tu ubicación actual).';
     if (provider === 'nequi' && !isValidNequiPhone(phone)) next.phone = 'Ingresa un celular válido de 10 dígitos que empiece por 3.';
     setErrors(next);
     setFormError('');
@@ -126,18 +155,39 @@ export default function CheckoutPage({ user, onLogout }) {
 
     setStep('starting');
     finished.current = false;
-    const order = orders.create({
-      items,
-      totalCop,
-      delivery: { address: address.trim(), notes: notes.trim(), location: coords ?? undefined },
-      payment: { provider, status: 'pending', phone: provider === 'nequi' ? phone.replace(/\D/g, '') : undefined },
-    });
+
+    // 1) Pedido real en el backend (aún sin pagar). Si falla —por ejemplo, un producto que ya no existe— no se cobra nada.
+    let serverOrder;
+    try {
+      serverOrder = await ordersApi.create({
+        delivery_lat: coords.lat,
+        delivery_lng: coords.lng,
+        delivery_notes: [address.trim(), notes.trim()].filter(Boolean).join('. ').slice(0, 500),
+        items: items.map((i) => ({ store_id: i.storeId, product_id: i.productId, quantity: i.quantity })),
+      });
+    } catch (err) {
+      setFormError(err.message || 'No pudimos crear tu pedido. Intenta de nuevo.');
+      setStep('form');
+      return;
+    }
+
+    // 2) Registro local del intento de pago (medio, referencia, estado). El monto a cobrar es el que fijó el servidor (productos + envío).
+    const payable = serverOrder.total_cop;
+    const order = {
+      ...orders.create({
+        items,
+        totalCop: payable,
+        delivery: { address: address.trim(), notes: notes.trim(), location: coords },
+        payment: { provider, status: 'pending', phone: provider === 'nequi' ? phone.replace(/\D/g, '') : undefined },
+      }),
+      serverId: serverOrder.id,
+    };
 
     try {
       if (provider === 'nequi') setNequiPhone(phone.replace(/\D/g, ''));
       const result = await gateway.start({
         provider,
-        amountCop: totalCop,
+        amountCop: payable,
         phone: provider === 'nequi' ? phone.replace(/\D/g, '') : undefined,
         description: `Pedido NeirAPP ${order.id}`,
         orderId: order.id,
@@ -177,7 +227,7 @@ export default function CheckoutPage({ user, onLogout }) {
             <CheckCircle2 size={56} aria-hidden="true" />
             <h2>Gracias por tu compra</h2>
             <p>
-              Tu pedido <strong>{order.id}</strong> por <strong>{formatCop(order.totalCop)}</strong> quedó registrado.
+              Tu pedido <strong>#{shortId(order.serverId)}</strong> por <strong>{formatCop(order.totalCop)}</strong> quedó registrado y ya le avisamos a la tienda.
               {order.payment.provider === 'cash' ? ' Pagarás en efectivo al recibirlo.' : ` Pago aprobado con ${PROVIDERS[order.payment.provider].label}.`}
             </p>
             <div className="result-actions">
@@ -303,15 +353,19 @@ export default function CheckoutPage({ user, onLogout }) {
             </div>
 
             <div className="geo-box">
+              <span className="geo-title">Dónde entregar</span>
+              <div className="co-map">
+                <NeiraMap stores={[]} showBuildings={false} onPick={pickOnMap} pin={coords ? { lat: coords.lat, lng: coords.lng } : null} />
+              </div>
               <button type="button" className="btn-ghost geo-btn" onClick={useMyLocation} disabled={geo.loading}>
                 {geo.loading ? <Loader2 className="spin" size={17} aria-hidden="true" /> : <LocateFixed size={17} aria-hidden="true" />}
-                {geo.loading ? 'Buscando tu ubicación…' : coords ? 'Actualizar mi ubicación' : 'Usar mi ubicación actual'}
+                {geo.loading ? 'Buscando tu ubicación…' : 'Usar mi ubicación actual'}
               </button>
-              {coords && (
+              {coords ? (
                 <p className="geo-ok" role="status">
                   <MapPin size={16} aria-hidden="true" />
                   <span>
-                    Ubicación guardada (precisión de unos {coords.accuracy} m). El repartidor la verá en el mapa.{' '}
+                    Ubicación marcada{coords.accuracy ? ` (precisión de unos ${coords.accuracy} m)` : ''}. El repartidor la verá en el mapa.{' '}
                     <a href={mapLink(coords)} target="_blank" rel="noreferrer">
                       Ver en el mapa
                     </a>{' '}
@@ -321,15 +375,15 @@ export default function CheckoutPage({ user, onLogout }) {
                     </button>
                   </span>
                 </p>
+              ) : (
+                <small className="geo-hint">Toca el mapa para marcar el punto exacto de entrega.</small>
               )}
               {geo.error && (
                 <p className="geo-err" role="alert">
                   {geo.error}
                 </p>
               )}
-              {!coords && !geo.error && (
-                <small className="geo-hint">Opcional: comparte tu ubicación exacta para que el repartidor te encuentre más fácil.</small>
-              )}
+              {errors.location && <small className="err">{errors.location}</small>}
             </div>
             <div className="form-field" style={{ marginTop: 14 }}>
               <label htmlFor="co-notes">Indicaciones para el repartidor (opcional)</label>
@@ -369,16 +423,24 @@ export default function CheckoutPage({ user, onLogout }) {
               </ul>
             </div>
           ))}
+          <div className="sum-line">
+            <span>Productos</span>
+            <span>{formatCop(totalCop)}</span>
+          </div>
+          <div className="sum-line">
+            <span>Envío</span>
+            <span>{pricing.data ? formatCop(deliveryFee) : '…'}</span>
+          </div>
           <div className="sum-total">
             <span>Total</span>
-            <strong>{formatCop(totalCop)}</strong>
+            <strong>{formatCop(grandTotal)}</strong>
           </div>
           {formError && (
             <p className="form-error" role="alert">
               {formError}
             </p>
           )}
-          <button type="submit" className="btn-solid pay-now" disabled={busy}>
+          <button type="submit" className="btn-solid pay-now" disabled={busy || !pricing.data}>
             {busy ? (
               <>
                 <Loader2 className="spin" size={18} aria-hidden="true" /> Procesando…
@@ -386,7 +448,7 @@ export default function CheckoutPage({ user, onLogout }) {
             ) : provider === 'cash' ? (
               'Confirmar pedido'
             ) : (
-              `Pagar ${formatCop(totalCop)}`
+              `Pagar ${formatCop(grandTotal)}`
             )}
           </button>
           <p className="sum-note">Al pagar aceptas los Términos y Condiciones de NeirAPP.</p>

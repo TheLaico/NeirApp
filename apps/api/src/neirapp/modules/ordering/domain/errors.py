@@ -73,6 +73,14 @@ class InvalidStoreOrderTransition(ValidationError):
         return "Ese cambio de estado no es válido desde el estado actual del pedido."
 
 
+class InvalidRejectionReason(ValidationError):
+    code = "invalid_rejection_reason"
+
+    @classmethod
+    def default_message(cls) -> str:
+        return "Escribe el motivo por el que rechazas el pedido (entre 3 y 300 caracteres)."
+
+
 class OutsideServiceArea(ValidationError):
     code = "outside_service_area"
 

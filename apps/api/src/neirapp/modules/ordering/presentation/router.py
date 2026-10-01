@@ -10,6 +10,7 @@ from neirapp.modules.ordering.presentation.dependencies import OrderingDep
 from neirapp.modules.ordering.presentation.schemas import (
     CreateOrderRequest,
     OrderResponse,
+    RejectStoreOrderRequest,
     StoreOrderResponse,
 )
 from neirapp.modules.ordering.presentation.ws_manager import ConnectionManager
@@ -82,9 +83,9 @@ async def accept_store_order(
 
 @router.post("/store-orders/{store_order_id}/reject", response_model=StoreOrderResponse)
 async def reject_store_order(
-    store_order_id: UUID, user: CurrentUser, ordering: OrderingDep
+    store_order_id: UUID, body: RejectStoreOrderRequest, user: CurrentUser, ordering: OrderingDep
 ) -> StoreOrderResponse:
-    store_order = await ordering.reject_store_order(store_order_id, user.id)
+    store_order = await ordering.reject_store_order(store_order_id, user.id, body.reason)
     return StoreOrderResponse.from_domain(store_order)
 
 

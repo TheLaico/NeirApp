@@ -23,6 +23,9 @@ class Settings(BaseSettings):
     terms_version: str = "2026-09-01"
     privacy_version: str = "2026-09-01"
 
+    # Carpeta (relativa a donde corre la API) donde se guardan las fotos subidas.
+    uploads_dir: str = "uploads"
+
     cors_origins: list[str] = ["http://localhost:5173"]
 
     @model_validator(mode="after")

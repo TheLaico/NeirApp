@@ -3,8 +3,10 @@ from uuid import UUID
 from neirapp.modules.reviews.application.ports import OrderingPort, UnitOfWorkFactory
 from neirapp.modules.reviews.domain.entities import RatingSummary, Review, compute_rating_summary
 from neirapp.modules.reviews.domain.errors import (
+    NotReviewedStoreOwner,
     NotStoreOrderCustomer,
     ReviewableStoreOrderNotFound,
+    ReviewNotFound,
     StoreOrderNotCompleted,
 )
 from neirapp.shared.application.ports import Clock
@@ -51,6 +53,30 @@ class CreateReview:
         return review
 
 
+class ReplyToReview:
+    """El dueño de la tienda responde una reseña. La respuesta es pública y se puede editar."""
+
+    def __init__(
+        self, uow_factory: UnitOfWorkFactory, ordering: OrderingPort, clock: Clock
+    ) -> None:
+        self._uow_factory = uow_factory
+        self._ordering = ordering
+        self._clock = clock
+
+    async def __call__(self, review_id: UUID, user_id: UUID, text: str) -> Review:
+        async with self._uow_factory() as uow:
+            review = await uow.reviews.get(review_id)
+            if review is None:
+                raise ReviewNotFound()
+            snapshot = await self._ordering.get_store_order(review.store_order_id)
+            if snapshot is None or snapshot.store_owner_user_id != user_id:
+                raise NotReviewedStoreOwner()
+            replied = review.with_reply(text, self._clock.now())
+            await uow.reviews.update(replied)
+            await uow.commit()
+        return replied
+
+
 class ListStoreReviews:
     def __init__(self, uow_factory: UnitOfWorkFactory) -> None:
         self._uow_factory = uow_factory
@@ -68,3 +94,14 @@ class GetStoreRatingSummary:
         async with self._uow_factory() as uow:
             reviews = await uow.reviews.list_by_store(store_id)
         return compute_rating_summary(reviews)
+
+
+class ListRatingSummaries:
+    """La calificación promedio de todas las tiendas que tienen reseñas, en una sola consulta."""
+
+    def __init__(self, uow_factory: UnitOfWorkFactory) -> None:
+        self._uow_factory = uow_factory
+
+    async def __call__(self) -> dict[UUID, RatingSummary]:
+        async with self._uow_factory() as uow:
+            return await uow.reviews.summaries()

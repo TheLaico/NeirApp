@@ -19,6 +19,8 @@ class OrderModel(Base):
     delivery_lat: Mapped[float] = mapped_column(Float)
     delivery_lng: Mapped[float] = mapped_column(Float)
     delivery_notes: Mapped[str] = mapped_column(String(500))
+    delivery_fee_cop: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+    courier_earnings_cop: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
     created_at: Mapped[datetime] = mapped_column(UTCDateTime)
 
     store_orders: Mapped[list["StoreOrderModel"]] = relationship(
@@ -36,6 +38,7 @@ class StoreOrderModel(Base):
     store_name: Mapped[str] = mapped_column(String(120))
     store_owner_user_id: Mapped[UUID] = mapped_column(Uuid, index=True)
     status: Mapped[str] = mapped_column(String(32))
+    rejection_reason: Mapped[str | None] = mapped_column(String(300))
     created_at: Mapped[datetime] = mapped_column(UTCDateTime)
     updated_at: Mapped[datetime] = mapped_column(UTCDateTime)
 

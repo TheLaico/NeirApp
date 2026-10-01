@@ -32,6 +32,7 @@
 
 .a-card { border: 1px solid var(--line); border-radius: 18px; background: var(--card); padding: 20px 22px; box-shadow: 0 1px 2px rgba(35, 52, 43, .04); }
 .a-card h2 { font-family: 'Montserrat', sans-serif; font-size: 17px; font-weight: 700; color: var(--g); margin-bottom: 12px; }
+.a-card-hint { margin: -6px 0 14px; font-size: 13px; color: var(--muted); }
 
 .a-btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 42px; padding: 0 18px; border-radius: 999px;
@@ -110,6 +111,11 @@
 .a-product-list strong { font-size: 14.5px; }
 .a-product-list li > div span { font-size: 12.5px; color: var(--muted); }
 .a-price { font-weight: 800; color: var(--g); }
+.a-field-color input[type="color"] { width: 100%; max-width: 70px; padding: 3px; }
+.a-sub-color {
+  flex: none; width: 26px; height: 26px; padding: 2px; border: 1.5px solid var(--line); border-radius: 8px;
+  background: none; cursor: pointer;
+}
 
 /* Sin permiso */
 .admin-denied { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; text-align: center; padding: 24px; grid-template-columns: none; }
@@ -133,3 +139,13 @@
   .a-product-form .wide, .a-product-form .a-btn { grid-column: auto; grid-row: auto; }
 }
 @media (prefers-reduced-motion: reduce) { .a-switch, .a-switch span, .a-spin { transition: none; animation: none; } }
+
+/* ---------- Roles (correos autorizados) ---------- */
+.a-grant { padding: 12px 0; border-top: 1px solid var(--line); }
+.a-grant:first-child { border-top: 0; }
+
+/* Administración de una tienda existente (dueño, posición y visibilidad) */
+.a-editor { display: flex; flex-direction: column; gap: 14px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
+.a-editor-block { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 14px; border: 1.5px solid var(--line); border-radius: 14px; background: #fbfaef; }
+.a-editor-block.col { flex-direction: column; align-items: stretch; }
+.a-editor-block small { display: block; margin-top: 2px; font-size: 12.5px; color: var(--muted); }

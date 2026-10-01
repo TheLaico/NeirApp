@@ -1,24 +1,26 @@
 from uuid import UUID
 
-from neirapp.modules.dispatch.application.dto import ClaimableOrderSnapshot
+from neirapp.modules.dispatch.application.dto import ClaimableOrderSnapshot, EarningsSummary
 from neirapp.modules.dispatch.application.ports import (
     OrderingPort,
     StoresPort,
     UnitOfWorkFactory,
     WalletPort,
 )
-from neirapp.modules.dispatch.domain.entities import Delivery, DeliveryStop
+from neirapp.modules.dispatch.domain.entities import CourierRating, Delivery, DeliveryStop
 from neirapp.modules.dispatch.domain.errors import (
+    CourierAlreadyRated,
     CourierNotVerified,
     CourierProfileNotFound,
     DeliveryNotFound,
+    DeliveryNotRateable,
     NotDeliveryCourier,
     NotOrderCustomer,
     NotStopStoreOwner,
     OrderAlreadyClaimed,
     OrderNotClaimable,
+    StoreOrderNotReady,
 )
-from neirapp.modules.dispatch.domain.pricing import compute_earnings_cop
 from neirapp.modules.dispatch.domain.routing import suggest_route
 from neirapp.shared.application.ports import Clock
 
@@ -99,6 +101,8 @@ class ClaimDelivery:
             stops=stops,
             delivery_lat=order.delivery_lat,
             delivery_lng=order.delivery_lng,
+            courier_earnings_cop=order.courier_earnings_cop,
+            platform_earnings_cop=order.delivery_fee_cop - order.courier_earnings_cop,
             now=self._clock.now(),
         )
 
@@ -118,6 +122,37 @@ class GetMyActiveDelivery:
         courier_id = await _require_verified_courier(self._uow_factory, user_id)
         async with self._uow_factory() as uow:
             return await uow.deliveries.get_active_for_courier(courier_id)
+
+
+class GetEarningsSummary:
+    """Resumen para el administrador: lo que han ganado repartidores y plataforma en envíos."""
+
+    def __init__(self, uow_factory: UnitOfWorkFactory) -> None:
+        self._uow_factory = uow_factory
+
+    async def __call__(self) -> EarningsSummary:
+        async with self._uow_factory() as uow:
+            return await uow.deliveries.earnings_summary()
+
+
+class GetReadyStoreOrderIds:
+    """Qué tiendas de una entrega ya marcaron su pedido como listo (aviso al repartidor)."""
+
+    def __init__(self, ordering: OrderingPort) -> None:
+        self._ordering = ordering
+
+    async def __call__(self, delivery: Delivery) -> set[UUID]:
+        return await self._ordering.ready_store_order_ids(delivery.order_id)
+
+
+class GetDeliveryCustomerId:
+    """Quién es el cliente de una entrega, para que el repartidor pueda contactarlo."""
+
+    def __init__(self, ordering: OrderingPort) -> None:
+        self._ordering = ordering
+
+    async def __call__(self, delivery: Delivery) -> UUID | None:
+        return await self._ordering.get_order_customer_id(delivery.order_id)
 
 
 class ListMyDeliveryHistory:
@@ -160,6 +195,9 @@ class ConfirmPickup:
             stop = next(s for s in delivery.stops if s.store_order_id == store_order_id)
             if stop.store_owner_user_id != user_id:
                 raise NotStopStoreOwner()
+            # Sin esto quedaba confirmada aunque `ordering` no pudiera pasar a "entregado".
+            if not await self._ordering.is_store_order_ready(delivery.order_id, store_order_id):
+                raise StoreOrderNotReady()
             confirmed = delivery.confirm_pickup(stop.store_id, code, self._clock.now())
             await uow.deliveries.update(delivery)
             await uow.commit()
@@ -183,8 +221,10 @@ class ConfirmDelivery:
             delivery.confirm_delivery(code, self._clock.now())
             await uow.deliveries.update(delivery)
             await uow.commit()
-        earnings = compute_earnings_cop(len(delivery.stops))
-        await self._wallet.credit_courier(delivery.courier_id, earnings, delivery.id)
+        if delivery.courier_earnings_cop > 0:
+            await self._wallet.credit_courier(
+                delivery.courier_id, delivery.courier_earnings_cop, delivery.id
+            )
         return delivery
 
 
@@ -234,3 +274,59 @@ class GetDeliveryCourierUserIdRaw:
         async with self._uow_factory() as uow:
             delivery = await uow.deliveries.get_by_order(order_id)
         return delivery.courier_id if delivery else None
+
+
+class RateCourier:
+    """El cliente califica (en privado) al repartidor de un pedido ya entregado, una sola vez."""
+
+    def __init__(
+        self, uow_factory: UnitOfWorkFactory, ordering: OrderingPort, clock: Clock
+    ) -> None:
+        self._uow_factory = uow_factory
+        self._ordering = ordering
+        self._clock = clock
+
+    async def __call__(
+        self, order_id: UUID, user_id: UUID, *, rating: int, comment: str | None
+    ) -> CourierRating:
+        customer_id = await self._ordering.get_order_customer_id(order_id)
+        if customer_id is None or customer_id != user_id:
+            raise NotOrderCustomer()
+        async with self._uow_factory() as uow:
+            delivery = await uow.deliveries.get_by_order(order_id)
+            if delivery is None:
+                raise DeliveryNotRateable()
+            if await uow.courier_ratings.get_by_delivery(delivery.id) is not None:
+                raise CourierAlreadyRated()
+            courier_rating = CourierRating.create(
+                delivery=delivery,
+                customer_id=user_id,
+                rating=rating,
+                comment=comment,
+                now=self._clock.now(),
+            )
+            await uow.courier_ratings.add(courier_rating)
+            await uow.commit()
+        return courier_rating
+
+
+class GetMyCourierRating:
+    """La calificación que el cliente ya le dejó al repartidor de su pedido (o `None`)."""
+
+    def __init__(self, uow_factory: UnitOfWorkFactory) -> None:
+        self._uow_factory = uow_factory
+
+    async def __call__(self, delivery: Delivery) -> CourierRating | None:
+        async with self._uow_factory() as uow:
+            return await uow.courier_ratings.get_by_delivery(delivery.id)
+
+
+class ListCourierRatings:
+    """Todas las calificaciones a repartidores, para el administrador."""
+
+    def __init__(self, uow_factory: UnitOfWorkFactory) -> None:
+        self._uow_factory = uow_factory
+
+    async def __call__(self) -> list[CourierRating]:
+        async with self._uow_factory() as uow:
+            return await uow.courier_ratings.list_all()

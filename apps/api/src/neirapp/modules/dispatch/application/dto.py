@@ -14,6 +14,15 @@ class StoreLocationSnapshot:
 
 
 @dataclass(frozen=True)
+class EarningsSummary:
+    """Lo que dejaron las entregas completadas: cuántas, y lo de repartidores y plataforma."""
+
+    deliveries: int
+    courier_cop: int
+    platform_cop: int
+
+
+@dataclass(frozen=True)
 class ClaimableStopSnapshot:
     store_order_id: UUID
     store_id: UUID
@@ -31,3 +40,5 @@ class ClaimableOrderSnapshot:
     delivery_lng: float
     delivery_notes: str
     stops: list[ClaimableStopSnapshot]
+    delivery_fee_cop: int = 0
+    courier_earnings_cop: int = 0

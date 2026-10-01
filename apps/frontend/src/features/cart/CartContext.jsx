@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useReducer } from 'react';
+import { isServerId } from '../orders/api.js';
 
 // Carrito con la misma forma que el de la rama neirapp-architecture-plan:
 // groups = { [storeId]: { storeName, lines: { [productId]: { product, quantity } } } }
@@ -8,7 +9,9 @@ const MAX_QUANTITY = 20;
 
 const load = () => {
   try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY)) ?? {};
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY)) ?? {};
+    // Las tiendas locales de antes (ids `local-…`) ya no existen: no se pueden pedir al servidor.
+    return Object.fromEntries(Object.entries(saved).filter(([storeId]) => isServerId(storeId)));
   } catch {
     return {};
   }

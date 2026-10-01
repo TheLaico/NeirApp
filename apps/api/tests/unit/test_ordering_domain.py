@@ -10,6 +10,7 @@ from neirapp.modules.ordering.domain.entities import (
 )
 from neirapp.modules.ordering.domain.errors import (
     EmptyOrder,
+    InvalidRejectionReason,
     InvalidStoreOrderTransition,
     OutsideServiceArea,
 )
@@ -126,8 +127,17 @@ class TestStoreOrderTransitions:
     def test_rechazo_despues_de_pagado(self) -> None:
         store_order, _ = self._store_order()
         store_order.mark_paid(NOW)
-        store_order.reject(LATER)
+        store_order.reject("Se acabó el producto", LATER)
         assert store_order.status == StoreOrderStatus.REJECTED
+        assert store_order.rejection_reason == "Se acabó el producto"
+
+    @pytest.mark.parametrize("reason", ["", "  ", "ab", "x" * 301])
+    def test_rechazo_exige_un_motivo_valido(self, reason: str) -> None:
+        store_order, _ = self._store_order()
+        store_order.mark_paid(NOW)
+        with pytest.raises(InvalidRejectionReason):
+            store_order.reject(reason, LATER)
+        assert store_order.status == StoreOrderStatus.PAID
 
     @pytest.mark.parametrize(
         "action",
@@ -135,8 +145,9 @@ class TestStoreOrderTransitions:
     )
     def test_no_se_puede_saltar_directo_desde_pendiente_de_pago(self, action: str) -> None:
         store_order, _ = self._store_order()
+        args = ("por prueba", NOW) if action == "reject" else (NOW,)
         with pytest.raises(InvalidStoreOrderTransition):
-            getattr(store_order, action)(NOW)
+            getattr(store_order, action)(*args)
 
     def test_no_se_puede_aceptar_dos_veces(self) -> None:
         store_order, _ = self._store_order()
@@ -148,7 +159,7 @@ class TestStoreOrderTransitions:
     def test_rejected_es_terminal(self) -> None:
         store_order, _ = self._store_order()
         store_order.mark_paid(NOW)
-        store_order.reject(NOW)
+        store_order.reject("por prueba", NOW)
         with pytest.raises(InvalidStoreOrderTransition):
             store_order.accept(NOW)
         with pytest.raises(InvalidStoreOrderTransition):

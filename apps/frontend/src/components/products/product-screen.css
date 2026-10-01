@@ -80,9 +80,20 @@
 .product .product-add { pointer-events: auto; }
 
 @media (max-width: 1023px) {
-  /* En móvil el detalle cubre todo el mapa. */
   .product-screen { width: 100%; }
 }
+
+/* Celular y tableta: ventana emergente centrada sobre toda la pantalla, con fondo oscurecido. */
+/* La ventana va fuera de `.app` (en el body): necesita sus propias variables de color. */
+.ps-backdrop { --g: #0f5238; --ink: #23342b; --muted: #6b7a70; --card: rgba(255, 255, 255, .62); --line: #dfe4d2; font-family: 'Nunito', system-ui, sans-serif; position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; padding: 12px; background: rgba(20, 35, 27, .6); animation: ps-fade .2s ease both; }
+.product-screen.as-modal {
+  position: relative; inset: auto; width: min(460px, 100%); height: min(90dvh, 760px); border-radius: 22px; overflow: hidden;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, .35); animation: ps-pop .28s cubic-bezier(.22, .9, .3, 1) both;
+}
+.product-screen.as-modal .ps-art { height: 230px; }
+@keyframes ps-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes ps-pop { from { opacity: 0; transform: translateY(24px) scale(.97); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .ps-backdrop, .product-screen.as-modal { animation: none; } }
 
 /* Corazón de favorito en la tarjeta */
 .card-fav {
@@ -118,3 +129,13 @@
 }
 .drawer-checkout:hover { filter: brightness(1.12); }
 .drawer-checkout:active { transform: scale(.98); }
+
+.ps-reply { margin-top: 8px; padding: 8px 12px; border-radius: 10px; background: #eef4e6; font-size: 13.5px; }
+.ps-reply strong { display: block; margin-bottom: 2px; font-size: 12.5px; color: var(--g); }
+
+/* Horario de la tienda */
+.ps-hours { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.ps-hours li { display: flex; justify-content: space-between; gap: 12px; padding: 6px 12px; border-radius: 10px; font-size: 14px; }
+.ps-hours li.today { background: #e6efdc; font-weight: 700; color: var(--g); }
+
+.ps-open247 { padding: 10px 14px; border-radius: 12px; background: #e6efdc; font-size: 14.5px; font-weight: 700; color: var(--g); }

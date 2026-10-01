@@ -52,6 +52,8 @@ class RegisterUser:
         async with self._uow_factory() as uow:
             if await uow.users.get_by_email(email) is not None:
                 raise EmailAlreadyRegistered()
+            for grant in await uow.role_grants.list_for_email(email):
+                user.grant_role(grant.role)
             await uow.users.add(user)
             for document, version in self._policy.versions.items():
                 await uow.terms.add(

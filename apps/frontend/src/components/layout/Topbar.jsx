@@ -1,4 +1,4 @@
-import { ChevronDown, LogOut, Search, ShieldCheck, ShoppingCart, UserRound } from 'lucide-react';
+import { ChevronDown, LogOut, Map as MapIcon, Search, ShieldCheck, ShoppingCart, UserRound } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import logo from '../../assets/logo-neirapp.png';
 import { GROUPS } from '../../features/stores/categories.jsx';
@@ -74,8 +74,9 @@ function UserMenu({ user, onLogout }) {
   );
 }
 
-export default function Topbar({ user, onLogout, group, onGroup, query, onQuery, onOpenCart }) {
+export default function Topbar({ user, onLogout, group, onGroup, query, onQuery, onOpenCart, hideCart }) {
   const { totalItems } = useCart();
+  const navigate = useNavigate();
 
   return (
     <>
@@ -85,47 +86,55 @@ export default function Topbar({ user, onLogout, group, onGroup, query, onQuery,
 
       <header className="topbar">
         {onQuery && (
-          <>
-            <label className="search">
-              <Search size={22} aria-hidden="true" />
-              <input
-                type="search"
-                placeholder="Busca productos, tiendas o categorías..."
-                aria-label="Buscar"
-                value={query}
-                onChange={(e) => onQuery(e.target.value)}
-              />
-            </label>
+          <label className="search">
+            <Search size={22} aria-hidden="true" />
+            <input
+              type="search"
+              placeholder="Busca productos, tiendas o categorías..."
+              aria-label="Buscar"
+              value={query}
+              onChange={(e) => onQuery(e.target.value)}
+            />
+          </label>
+        )}
 
-            <div className="cats" role="group" aria-label="Categorías">
-              {Object.entries(GROUPS).map(([id, { label, color, Icon }]) => (
-                <button
-                  key={id}
-                  type="button"
-                  className={`cat${group === id ? ' active' : ''}`}
-                  aria-pressed={group === id}
-                  onClick={() => id !== 'mas' && onGroup(group === id ? null : id)}
-                >
-                  <span className="cat-dot" style={{ background: color }}>
-                    <Icon size={24} color="#fff" aria-hidden="true" />
-                  </span>
-                  {label}
-                </button>
-              ))}
-            </div>
-          </>
+        {/* Categorías generales de tiendas: solo en páginas que además filtran por ellas (ver `onGroup`).
+            Algunas páginas quieren el buscador sin esto (por ejemplo Profesionales, que tiene las suyas
+            propias más abajo en el cuerpo de la página). */}
+        {onGroup && (
+          <div className="cats" role="group" aria-label="Categorías">
+            {Object.entries(GROUPS).map(([id, { label, color, Icon }]) => (
+              <button
+                key={id}
+                type="button"
+                className={`cat${group === id ? ' active' : ''}`}
+                aria-pressed={group === id}
+                onClick={() => id !== 'mas' && onGroup(group === id ? null : id)}
+              >
+                <span className="cat-dot" style={{ background: color }}>
+                  <Icon size={24} color="#fff" aria-hidden="true" />
+                </span>
+                {label}
+              </button>
+            ))}
+          </div>
         )}
 
         <div className="top-right">
-          <button
-            type="button"
-            className="cart-btn"
-            aria-label={`Carrito${totalItems ? `, ${totalItems} productos` : ''}`}
-            onClick={onOpenCart}
-          >
-            <ShoppingCart size={24} aria-hidden="true" />
-            {totalItems > 0 && <span className="cart-badge">{totalItems > 99 ? '99+' : totalItems}</span>}
+          <button type="button" className="map-btn" aria-label="Ver el mapa de Neira" onClick={() => navigate('/mapa')}>
+            <MapIcon size={22} aria-hidden="true" />
           </button>
+          {!hideCart && (
+            <button
+              type="button"
+              className="cart-btn"
+              aria-label={`Carrito${totalItems ? `, ${totalItems} productos` : ''}`}
+              onClick={onOpenCart}
+            >
+              <ShoppingCart size={24} aria-hidden="true" />
+              {totalItems > 0 && <span className="cart-badge">{totalItems > 99 ? '99+' : totalItems}</span>}
+            </button>
+          )}
           <UserMenu user={user} onLogout={onLogout} />
         </div>
 

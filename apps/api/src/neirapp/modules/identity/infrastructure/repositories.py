@@ -1,13 +1,14 @@
 from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import select, update
+from sqlalchemy import delete, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from neirapp.modules.identity.domain.entities import (
     RefreshToken,
     Role,
+    RoleGrant,
     TermsAcceptance,
     TermsDocument,
     User,
@@ -15,6 +16,7 @@ from neirapp.modules.identity.domain.entities import (
 from neirapp.modules.identity.domain.errors import EmailAlreadyRegistered
 from neirapp.modules.identity.infrastructure.models import (
     RefreshTokenModel,
+    RoleGrantModel,
     TermsAcceptanceModel,
     UserModel,
     UserRoleModel,
@@ -159,3 +161,50 @@ class SqlAlchemyRefreshTokenRepository:
             .where(RefreshTokenModel.family_id == family_id, RefreshTokenModel.revoked_at.is_(None))
             .values(revoked_at=now)
         )
+
+
+def _to_grant(model: RoleGrantModel) -> RoleGrant:
+    return RoleGrant(
+        email=model.email,
+        role=Role(model.role),
+        granted_by=model.granted_by,
+        created_at=model.created_at,
+    )
+
+
+class SqlAlchemyRoleGrantRepository:
+    def __init__(self, session: AsyncSession) -> None:
+        self._session = session
+
+    async def add(self, grant: RoleGrant) -> None:
+        if await self._session.get(RoleGrantModel, (grant.email, grant.role.value)) is not None:
+            return
+        self._session.add(
+            RoleGrantModel(
+                email=grant.email,
+                role=grant.role.value,
+                granted_by=grant.granted_by,
+                created_at=grant.created_at,
+            )
+        )
+        await self._session.flush()
+
+    async def remove(self, email: str, role: Role) -> bool:
+        result = await self._session.execute(
+            delete(RoleGrantModel).where(
+                RoleGrantModel.email == email, RoleGrantModel.role == role.value
+            )
+        )
+        return bool(result.rowcount)  # type: ignore[attr-defined]
+
+    async def list_all(self) -> list[RoleGrant]:
+        result = await self._session.execute(
+            select(RoleGrantModel).order_by(RoleGrantModel.created_at.desc(), RoleGrantModel.email)
+        )
+        return [_to_grant(m) for m in result.scalars()]
+
+    async def list_for_email(self, email: str) -> list[RoleGrant]:
+        result = await self._session.execute(
+            select(RoleGrantModel).where(RoleGrantModel.email == email)
+        )
+        return [_to_grant(m) for m in result.scalars()]

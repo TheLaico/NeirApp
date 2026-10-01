@@ -44,3 +44,27 @@ class ReviewAlreadyExists(ConflictError):
     @classmethod
     def default_message(cls) -> str:
         return "Ya calificaste este pedido."
+
+
+class InvalidReply(ValidationError):
+    code = "invalid_reply"
+
+    @classmethod
+    def default_message(cls) -> str:
+        return "Escribe tu respuesta (entre 2 y 500 caracteres)."
+
+
+class ReviewNotFound(NotFoundError):
+    code = "review_not_found"
+
+    @classmethod
+    def default_message(cls) -> str:
+        return "Reseña no encontrada."
+
+
+class NotReviewedStoreOwner(PermissionDeniedError):
+    code = "not_reviewed_store_owner"
+
+    @classmethod
+    def default_message(cls) -> str:
+        return "Solo el dueño de la tienda puede responder esta reseña."

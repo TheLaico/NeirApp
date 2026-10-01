@@ -19,9 +19,19 @@ export default function AppShell({
   query,
   onQuery,
   className = '',
+  // Imagen decorativa opcional detrás del encabezado y el buscador (solo la usa el inicio, por ahora).
+  // Se aplica con un `::before` en `.app` (ver app-shell.css), así que no afecta a ninguna otra página.
+  heroImage,
+  // Centra el logo en todo el ancho del encabezado en vez de dejarlo confinado a la columna de la barra
+  // lateral (solo lo usa el inicio, por ahora; en móvil se queda arriba a la izquierda, como en el mockup).
+  centerLogo,
+  // Oculta el botón del carrito del navbar (por ejemplo, Profesionales: no vende productos, así que no
+  // tiene sentido tenerlo ahí).
+  hideCart,
   children,
 }) {
   const [cartOpen, setCartOpen] = useState(false);
+  const openCart = () => setCartOpen(true);
 
   // Las páginas internas ocupan todo el ancho: quita el marco de tarjeta que usan las pantallas de login.
   useEffect(() => {
@@ -30,7 +40,10 @@ export default function AppShell({
   }, []);
 
   return (
-    <div className={`app ${className}`.trim()}>
+    <div
+      className={`app ${heroImage ? 'has-hero' : ''} ${centerLogo ? 'center-logo' : ''} ${className}`.trim()}
+      style={heroImage ? { '--hero-image': `url(${heroImage})` } : undefined}
+    >
       <Topbar
         user={user}
         onLogout={onLogout}
@@ -38,9 +51,10 @@ export default function AppShell({
         onGroup={onGroup}
         query={query}
         onQuery={onQuery}
-        onOpenCart={() => setCartOpen(true)}
+        onOpenCart={openCart}
+        hideCart={hideCart}
       />
-      <Sidebar />
+      <Sidebar onOpenCart={openCart} />
 
       {children}
 

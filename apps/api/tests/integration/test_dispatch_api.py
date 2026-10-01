@@ -257,6 +257,9 @@ class TestClaimAndDeliveryFlow:
 
         active = await client.get(f"{API}/deliveries/mine/active", headers=_bearer(courier))
         assert active.json()["id"] == delivery["id"]
+        # El repartidor ve cómo contactar al cliente mientras la entrega está en curso.
+        assert active.json()["customer_name"] == "Ana Gómez"
+        assert active.json()["customer_phone"] == "+573001234567"
 
         confirm_pickup = await client.post(
             f"{API}/deliveries/store-orders/{store_order['id']}/confirm-pickup",
@@ -285,7 +288,58 @@ class TestClaimAndDeliveryFlow:
         assert [d["id"] for d in history.json()] == [delivery["id"]]
 
         balance = await client.get(f"{API}/wallet/balance", headers=_bearer(courier))
-        assert balance.json()["balance_cop"] == 3_000 + 1_500
+        assert balance.json()["balance_cop"] == 4_000  # 80 % del envío por defecto ($5.000)
+
+        # El admin ve lo acumulado: 80 % para el repartidor, 20 % para la plataforma.
+        admin = await _admin_tokens(client, app)
+        summary = await client.get(f"{API}/deliveries/earnings-summary", headers=_bearer(admin))
+        assert summary.json() == {"deliveries": 1, "courier_cop": 4_000, "platform_cop": 1_000}
+
+        # Antes de entregar no se podía calificar; luego el cliente califica en privado, una vez.
+        rating_url = f"{API}/deliveries/by-order/{order['id']}/rating"
+        assert (
+            await client.get(f"{API}/deliveries/by-order/{order['id']}", headers=_bearer(customer))
+        ).json()["my_rating"] is None
+        rated = await client.post(
+            rating_url, json={"rating": 5, "comment": "Muy amable"}, headers=_bearer(customer)
+        )
+        assert rated.status_code == 201, rated.text
+        again = await client.post(rating_url, json={"rating": 1}, headers=_bearer(customer))
+        assert again.json()["code"] == "courier_already_rated"
+        mine = await client.get(
+            f"{API}/deliveries/by-order/{order['id']}", headers=_bearer(customer)
+        )
+        assert mine.json()["my_rating"] == {"rating": 5, "comment": "Muy amable"}
+
+        # No son públicas: ni el repartidor ni el cliente las listan; el admin sí.
+        assert (
+            await client.get(f"{API}/deliveries/courier-ratings", headers=_bearer(courier))
+        ).status_code == 403
+        assert (
+            await client.get(f"{API}/deliveries/courier-ratings", headers=_bearer(customer))
+        ).status_code == 403
+        listing = await client.get(f"{API}/deliveries/courier-ratings", headers=_bearer(admin))
+        assert [(r["rating"], r["comment"]) for r in listing.json()] == [(5, "Muy amable")]
+        assert listing.json()[0]["courier_email"] == "repartidor@correo.com"
+
+    async def test_no_se_califica_antes_de_la_entrega_ni_por_otro_cliente(
+        self, client: httpx.AsyncClient, app: FastAPI
+    ) -> None:
+        order, _store_order, _owner, customer = await _claimable_order(client, app)
+        courier = await _verified_courier(client, app)
+        await client.post(f"{API}/deliveries/{order['id']}/claim", headers=_bearer(courier))
+
+        url = f"{API}/deliveries/by-order/{order['id']}/rating"
+        early = await client.post(url, json={"rating": 5}, headers=_bearer(customer))
+        assert early.status_code == 422
+        assert early.json()["code"] == "delivery_not_rateable"
+
+        stranger = await _register(client, "otro@correo.com")
+        foreign = await client.post(url, json={"rating": 5}, headers=_bearer(stranger))
+        assert foreign.status_code == 403
+
+        bad = await client.post(url, json={"rating": 6}, headers=_bearer(customer))
+        assert bad.status_code == 422
 
     async def test_segundo_repartidor_no_puede_reclamar_lo_mismo(
         self, client: httpx.AsyncClient, app: FastAPI

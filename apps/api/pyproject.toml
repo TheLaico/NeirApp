@@ -18,6 +18,7 @@ dependencies = [
   "email-validator>=2.2",
   "pyjwt>=2.9",
   "argon2-cffi>=23.1",
+  "pillow>=10.4",
 ]
 
 [project.optional-dependencies]
@@ -100,6 +101,26 @@ layers = [
 ]
 
 [[tool.importlinter.contracts]]
+name = "pricing: capas"
+type = "layers"
+layers = [
+  "neirapp.modules.pricing.presentation | neirapp.modules.pricing.infrastructure",
+  "neirapp.modules.pricing.application",
+  "neirapp.modules.leads.application",
+  "neirapp.modules.pricing.domain",
+  "neirapp.modules.leads.domain",
+]
+
+[[tool.importlinter.contracts]]
+name = "leads: capas"
+type = "layers"
+layers = [
+  "neirapp.modules.leads.presentation | neirapp.modules.leads.infrastructure",
+  "neirapp.modules.leads.application",
+  "neirapp.modules.leads.domain",
+]
+
+[[tool.importlinter.contracts]]
 name = "wallet: capas"
 type = "layers"
 layers = [
@@ -136,6 +157,7 @@ source_modules = [
   "neirapp.modules.ordering.domain",
   "neirapp.modules.dispatch.domain",
   "neirapp.modules.wallet.domain",
+  "neirapp.modules.pricing.domain",
   "neirapp.modules.reviews.domain",
   "neirapp.modules.incidents.domain",
   "neirapp.shared.domain",
@@ -152,6 +174,7 @@ source_modules = [
   "neirapp.modules.ordering.application",
   "neirapp.modules.dispatch.application",
   "neirapp.modules.wallet.application",
+  "neirapp.modules.pricing.application",
   "neirapp.modules.reviews.application",
   "neirapp.modules.incidents.application",
   "neirapp.shared.application",
@@ -194,7 +217,11 @@ source_modules = [
   "neirapp.modules.ordering.domain",
   "neirapp.modules.ordering.application",
 ]
-forbidden_modules = ["neirapp.modules.stores", "neirapp.modules.identity"]
+forbidden_modules = [
+  "neirapp.modules.stores",
+  "neirapp.modules.identity",
+  "neirapp.modules.pricing",
+]
 
 # `wallet` es el ledger financiero: domain/application no deben conocer a ningún otro módulo, ni
 # siquiera para leer. Todo lo que necesitan (courier_id) llega como un simple UUID desde quien los

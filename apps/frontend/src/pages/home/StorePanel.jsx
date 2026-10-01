@@ -1,4 +1,6 @@
 import { ArrowRight, ChevronRight, MapPin, Star } from 'lucide-react';
+import { useState } from 'react';
+import MerchantLeadModal from '../../features/leads/MerchantLeadModal.jsx';
 import { formatDistance } from '../../features/stores/categories.jsx';
 import banner from '../../assets/tienda-banner.png';
 import StoreDetail from './StoreDetail.jsx';
@@ -32,15 +34,20 @@ function StoreCard({ store, onSelect }) {
 }
 
 /** Banner "Tu tienda también en NeirAPP": la imagen ya trae el texto y el botón. */
-function Promo() {
+function Promo({ user }) {
+  const [open, setOpen] = useState(false);
   return (
-    <button type="button" className="promo-banner" aria-label="Tu tienda también en NeirAPP. Registra tu tienda">
-      <img src={banner} alt="" />
-    </button>
+    <>
+      <button type="button" className="promo-banner" aria-label="Tu tienda también en NeirAPP. Deja tus datos para que un asesor te contacte" onClick={() => setOpen(true)}>
+        <img src={banner} alt="" />
+      </button>
+      {open && <MerchantLeadModal onClose={() => setOpen(false)} defaultName={user?.name ?? ''} />}
+    </>
   );
 }
 
 export default function StorePanel({
+  user,
   stores,
   onSelect,
   status,
@@ -51,6 +58,8 @@ export default function StorePanel({
   overlayOpen,
   onOpenInfo,
 }) {
+  const [showAll, setShowAll] = useState(false);
+
   if (selected) {
     return (
       <StoreDetail
@@ -64,13 +73,20 @@ export default function StorePanel({
     );
   }
 
+  // Por defecto se ven las tiendas recomendadas, en el orden que decide el administrador. "Ver todas" muestra el resto.
+  const recommended = stores.filter((s) => s.recommended_position != null).sort((a, b) => a.recommended_position - b.recommended_position);
+  const hasRecommended = recommended.length > 0;
+  const list = showAll || !hasRecommended ? stores : recommended;
+
   return (
-    <aside className="panel has-banner" aria-label="Tiendas cercanas">
+    <aside className="panel has-banner" aria-label={showAll || !hasRecommended ? 'Todas las tiendas' : 'Tiendas recomendadas'}>
       <div className="panel-head">
-        <h2>Tiendas cercanas</h2>
-        <button type="button" className="see-all">
-          Ver todas <ArrowRight size={16} aria-hidden="true" />
-        </button>
+        <h2>{showAll || !hasRecommended ? 'Todas las tiendas' : 'Tiendas recomendadas'}</h2>
+        {hasRecommended && (
+          <button type="button" className="see-all" onClick={() => setShowAll((v) => !v)} aria-pressed={showAll}>
+            {showAll ? 'Ver recomendadas' : 'Ver todas'} <ArrowRight size={16} aria-hidden="true" />
+          </button>
+        )}
       </div>
 
       <div className="store-list">
@@ -83,12 +99,12 @@ export default function StorePanel({
         {status === 'ok' && stores.length === 0 && (
           <p className="panel-empty">Todavía no hay tiendas para mostrar.</p>
         )}
-        {stores.map((s) => (
+        {list.map((s) => (
           <StoreCard key={s.id} store={s} onSelect={onSelect} />
         ))}
       </div>
 
-      <Promo />
+      <Promo user={user} />
     </aside>
   );
 }

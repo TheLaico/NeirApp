@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from neirapp.modules.identity.infrastructure.repositories import (
     SqlAlchemyRefreshTokenRepository,
+    SqlAlchemyRoleGrantRepository,
     SqlAlchemyTermsRepository,
     SqlAlchemyUserRepository,
 )
@@ -14,6 +15,7 @@ class SqlAlchemyUnitOfWork:
     users: SqlAlchemyUserRepository
     terms: SqlAlchemyTermsRepository
     refresh_tokens: SqlAlchemyRefreshTokenRepository
+    role_grants: SqlAlchemyRoleGrantRepository
 
     def __init__(self, session_factory: async_sessionmaker[Any]) -> None:
         self._session_factory = session_factory
@@ -24,6 +26,7 @@ class SqlAlchemyUnitOfWork:
         self.users = SqlAlchemyUserRepository(self._session)
         self.terms = SqlAlchemyTermsRepository(self._session)
         self.refresh_tokens = SqlAlchemyRefreshTokenRepository(self._session)
+        self.role_grants = SqlAlchemyRoleGrantRepository(self._session)
         return self
 
     async def __aexit__(

@@ -5,8 +5,12 @@ from uuid import UUID, uuid4
 
 from neirapp.modules.dispatch.domain.codes import generate_code
 from neirapp.modules.dispatch.domain.errors import (
+    CannotCancelAfterPickup,
     DeliveryAlreadyFinished,
+    DeliveryNotRateable,
+    InvalidCourierRating,
     InvalidDeliveryCode,
+    InvalidLocation,
     InvalidPickupCode,
     InvalidPlate,
     NotAllStopsPickedUp,
@@ -19,6 +23,11 @@ class VehicleType(StrEnum):
     BIKE = "bike"
     MOTORCYCLE = "motorcycle"
     CAR = "car"
+    MOTOCARRO = "motocarro"
+
+
+# Vehículos habilitados mientras un admin no configure otra cosa: por ahora solo motos.
+DEFAULT_ENABLED_VEHICLES = frozenset({VehicleType.MOTORCYCLE})
 
 
 @dataclass
@@ -109,6 +118,9 @@ class Delivery:
     created_at: datetime
     updated_at: datetime
     delivered_at: datetime | None = None
+    # Lo que ganan el repartidor y la plataforma por el envío de este pedido (congelado al tomarlo).
+    courier_earnings_cop: int = 0
+    platform_earnings_cop: int = 0
 
     @classmethod
     def claim(
@@ -119,6 +131,8 @@ class Delivery:
         stops: list[tuple[UUID, UUID, str, UUID, float, float]],
         delivery_lat: float,
         delivery_lng: float,
+        courier_earnings_cop: int = 0,
+        platform_earnings_cop: int = 0,
         now: datetime,
     ) -> "Delivery":
         """`stops`: (store_order_id, store_id, store_name, store_owner_user_id, lat, lng)."""
@@ -144,6 +158,8 @@ class Delivery:
             delivery_code=generate_code(),
             created_at=now,
             updated_at=now,
+            courier_earnings_cop=courier_earnings_cop,
+            platform_earnings_cop=platform_earnings_cop,
         )
 
     @property
@@ -185,5 +201,73 @@ class Delivery:
     def cancel(self, now: datetime) -> None:
         if self.status != DeliveryStatus.ASSIGNED:
             raise DeliveryAlreadyFinished()
+        # Con algo ya recogido, cancelar dejaría la mercancía en manos del repartidor sin entrega.
+        if any(stop.is_picked_up for stop in self.stops):
+            raise CannotCancelAfterPickup()
         self.status = DeliveryStatus.CANCELLED
         self.updated_at = now
+
+
+MAX_RATING_COMMENT_LENGTH = 500
+
+
+@dataclass(frozen=True)
+class CourierRating:
+    """Calificación privada que el cliente le da al repartidor de un pedido entregado.
+    Nunca se muestra al público ni al propio repartidor: solo la ve el administrador."""
+
+    id: UUID
+    delivery_id: UUID
+    order_id: UUID
+    courier_id: UUID
+    customer_id: UUID
+    rating: int
+    comment: str | None
+    created_at: datetime
+
+    @classmethod
+    def create(
+        cls,
+        *,
+        delivery: "Delivery",
+        customer_id: UUID,
+        rating: int,
+        comment: str | None,
+        now: datetime,
+    ) -> "CourierRating":
+        if delivery.status != DeliveryStatus.DELIVERED:
+            raise DeliveryNotRateable()
+        if not 1 <= rating <= 5:
+            raise InvalidCourierRating()
+        text = " ".join(comment.split())[:MAX_RATING_COMMENT_LENGTH] if comment else ""
+        return cls(
+            id=uuid4(),
+            delivery_id=delivery.id,
+            order_id=delivery.order_id,
+            courier_id=delivery.courier_id,
+            customer_id=customer_id,
+            rating=rating,
+            comment=text or None,
+            created_at=now,
+        )
+
+
+@dataclass(frozen=True)
+class CourierLocation:
+    """Última posición conocida de un repartidor (solo se guarda la más reciente)."""
+
+    courier_id: UUID  # id del usuario en `identity`
+    lat: float
+    lng: float
+    heading: float | None
+    updated_at: datetime
+
+    @classmethod
+    def create(
+        cls, *, courier_id: UUID, lat: float, lng: float, heading: float | None, now: datetime
+    ) -> "CourierLocation":
+        if not (-90 <= lat <= 90 and -180 <= lng <= 180):
+            raise InvalidLocation()
+        if heading is not None and not 0 <= heading <= 360:
+            heading = None  # un rumbo raro no invalida la posición: se ignora
+        return cls(courier_id=courier_id, lat=lat, lng=lng, heading=heading, updated_at=now)

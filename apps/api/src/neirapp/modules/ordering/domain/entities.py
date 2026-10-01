@@ -5,10 +5,14 @@ from uuid import UUID, uuid4
 
 from neirapp.modules.ordering.domain.errors import (
     EmptyOrder,
+    InvalidRejectionReason,
     InvalidStoreOrderTransition,
     OutsideServiceArea,
 )
 from neirapp.modules.ordering.domain.geofence import is_within_neira
+
+MIN_REJECTION_REASON = 3
+MAX_REJECTION_REASON = 300
 
 
 class StoreOrderStatus(StrEnum):
@@ -69,6 +73,8 @@ class StoreOrder:
     lines: list[OrderLine]
     created_at: datetime
     updated_at: datetime
+    # Justificación del comercio cuando rechaza el pedido; el cliente la ve para saber por qué.
+    rejection_reason: str | None = None
 
     @property
     def subtotal_cop(self) -> int:
@@ -88,8 +94,12 @@ class StoreOrder:
     def accept(self, now: datetime) -> None:
         self._transition(StoreOrderStatus.ACCEPTED, now)
 
-    def reject(self, now: datetime) -> None:
+    def reject(self, reason: str, now: datetime) -> None:
+        reason = " ".join(reason.split())
+        if not MIN_REJECTION_REASON <= len(reason) <= MAX_REJECTION_REASON:
+            raise InvalidRejectionReason()
         self._transition(StoreOrderStatus.REJECTED, now)
+        self.rejection_reason = reason
 
     def start_preparing(self, now: datetime) -> None:
         self._transition(StoreOrderStatus.PREPARING, now)
@@ -113,10 +123,21 @@ class Order:
     delivery_notes: str
     created_at: datetime
     store_orders: list[StoreOrder] = field(default_factory=list)
+    # Envío que se cobró y la parte que se lleva el repartidor, tal como estaban al crear el pedido.
+    delivery_fee_cop: int = 0
+    courier_earnings_cop: int = 0
+
+    @property
+    def products_cop(self) -> int:
+        return sum(so.subtotal_cop for so in self.store_orders)
+
+    @property
+    def platform_earnings_cop(self) -> int:
+        return self.delivery_fee_cop - self.courier_earnings_cop
 
     @property
     def total_cop(self) -> int:
-        return sum(so.subtotal_cop for so in self.store_orders)
+        return self.products_cop + self.delivery_fee_cop
 
     def is_owned_by(self, user_id: UUID) -> bool:
         return self.customer_id == user_id
@@ -129,6 +150,8 @@ class Order:
         delivery_lat: float,
         delivery_lng: float,
         delivery_notes: str,
+        delivery_fee_cop: int = 0,
+        courier_earnings_cop: int = 0,
         now: datetime,
     ) -> "Order":
         if not is_within_neira(delivery_lat, delivery_lng):
@@ -140,6 +163,8 @@ class Order:
             delivery_lng=delivery_lng,
             delivery_notes=delivery_notes.strip()[:500],
             created_at=now,
+            delivery_fee_cop=delivery_fee_cop,
+            courier_earnings_cop=courier_earnings_cop,
         )
 
     def add_store_order(

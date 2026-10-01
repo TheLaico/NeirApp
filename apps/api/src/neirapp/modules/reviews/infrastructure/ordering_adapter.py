@@ -20,5 +20,6 @@ class OrderingAdapter:
             order_id=view.order_id,
             store_id=view.store_order.store_id,
             customer_id=view.customer_id,
+            store_owner_user_id=view.store_order.store_owner_user_id,
             status=view.store_order.status.value,
         )

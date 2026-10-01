@@ -1,8 +1,8 @@
-from datetime import datetime
+from datetime import date, datetime, time
 from uuid import UUID
 
-from sqlalchemy import Float, ForeignKey, Index, Integer, String, Uuid
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import Date, Float, ForeignKey, Index, Integer, String, Time, Uuid
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from neirapp.shared.infrastructure.db import Base, UTCDateTime
 
@@ -27,7 +27,44 @@ class StoreModel(Base):
     is_approved: Mapped[bool] = mapped_column(default=False, index=True)
     # Distingue "rechazada" de "todavía sin revisar" (las dos empiezan con is_approved=False).
     is_rejected: Mapped[bool] = mapped_column(default=False)
+    image_url: Mapped[str | None] = mapped_column(String(2048))
+    recommended_position: Mapped[int | None] = mapped_column(Integer, index=True)
+    is_listed: Mapped[bool] = mapped_column(default=True, server_default="1")
     created_at: Mapped[datetime] = mapped_column(UTCDateTime)
+
+    hours: Mapped[list["StoreHoursModel"]] = relationship(
+        cascade="all, delete-orphan", lazy="selectin"
+    )
+    closed_dates: Mapped[list["StoreClosedDateModel"]] = relationship(
+        cascade="all, delete-orphan", lazy="selectin"
+    )
+
+
+class StoreHoursModel(Base):
+    """Horario de un día de la semana (0 = lunes). Sin filas, la tienda no tiene horario."""
+
+    __tablename__ = "store_hours"
+
+    store_id: Mapped[UUID] = mapped_column(
+        ForeignKey("stores.id", ondelete="CASCADE"), primary_key=True
+    )
+    weekday: Mapped[int] = mapped_column(Integer, primary_key=True)
+    is_open: Mapped[bool]
+    opens: Mapped[time | None] = mapped_column(Time)
+    closes: Mapped[time | None] = mapped_column(Time)
+    all_day: Mapped[bool] = mapped_column(default=False, server_default="0")
+
+
+class StoreClosedDateModel(Base):
+    """Fecha puntual en que la tienda avisó que no abre."""
+
+    __tablename__ = "store_closed_dates"
+
+    store_id: Mapped[UUID] = mapped_column(
+        ForeignKey("stores.id", ondelete="CASCADE"), primary_key=True
+    )
+    day: Mapped[date] = mapped_column(Date, primary_key=True)
+    reason: Mapped[str] = mapped_column(String(120), default="")
 
 
 class StoreProductModel(Base):

@@ -22,9 +22,60 @@
   overflow: hidden;
 }
 
+/* Imagen decorativa opcional detrás del encabezado y el buscador (la usa el inicio; ver AppShell `heroImage`).
+   Va en un `::before` para no meterse en la cuadrícula: pinta detrás de todo lo demás (logo, navbar, contenido). */
+.app.has-hero {
+  /* Con solo 224px, `cover` recortaba casi la mitad de arriba de la imagen (donde están las puntas de las
+     montañas y de las hojas): las hojas quedaban cortadas, el logo no caía entre las montañas, y ahí mismo
+     terminaban los íconos de la derecha, encima de las hojas y casi invisibles. Con más alto se ve la
+     imagen casi completa (montañas, sol y hojas de las dos esquinas) sin recortar tanto por arriba. */
+  --hero-h: 340px; /* alto del área con la imagen: encabezado (127px) + una franja para el buscador */
+}
+.app.has-hero::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: var(--side-w);
+  right: 0;
+  height: var(--hero-h);
+  /* La imagen trae su propio espacio en blanco en la base: "bottom" hace que esa franja quede siempre
+     pegada al borde inferior de esta caja, que es donde cae el buscador. */
+  background: var(--hero-image) center bottom / cover no-repeat;
+  z-index: 0;
+  pointer-events: none;
+}
+/* En el mapa, solo en pantallas grandes: el navbar ya lleva buscador y categorías propias, y esa imagen
+   de fondo competía con ellos. En vez de seguir ajustando el recorte, se quita del todo aquí; en
+   celular/tableta se queda igual que en el inicio. (El logo ya no se centra en esta página —MapPage ya
+   no pasa `centerLogo`—, así que se queda en su posición de siempre, columna propia arriba de la barra
+   lateral, igual que en el resto de páginas como "Mis pedidos".) */
+@media (min-width: 1024px) {
+  .app.map-view.has-hero::before { display: none; }
+}
+
 /* ---------- Encabezado ---------- */
 .logo-cell { grid-column: 1; grid-row: 1; display: grid; place-items: center; padding: 8px 18px; }
 .logo-cell img { width: 100%; max-height: 108px; object-fit: contain; }
+
+/* Logo centrado en el navbar (ver AppShell `centerLogo`): la celda pasa a ocupar la misma columna que
+   `.topbar` (contenido + panel, sin la barra lateral), así que su centrado ("place-items: center") cae
+   en el centro real de la barra superior visible, no en el centro de toda la fila (que quedaría corrido
+   a la izquierda por el ancho de la barra lateral). Necesita quedar por encima de la imagen decorativa
+   del buscador (`.has-hero::before`, z-index 0) pero por debajo de los íconos de la derecha (`.top-right`,
+   z-index 6), que van en su propia columna y no se tocan con el logo.
+   Solo en escritorio/tableta (hay cuadrícula): en móvil el logo sigue arriba a la izquierda, como en el
+   mockup, así que esta regla no debe pisar el `position: absolute` que lo superpone ahí (ver más abajo).
+   `pointer-events: none`: la caja del logo ahora es tan ancha como el navbar (aunque el dibujo se vea
+   angosto, `object-fit: contain` no encoge la caja); sin esto, en páginas con buscador y categorías en el
+   navbar (como el mapa) esa caja les tapaba los clics aunque se vieran normales. El logo no es un enlace,
+   así que no pierde nada al dejar de recibir clics.
+   Desde 1280px (no 1024px): entre esos anchos la barra lateral y el panel se angostan (`--side-w`/`--panel-w`
+   más chicos, ver el breakpoint de abajo), así que el centro real de la barra queda más a la izquierda —
+   justo donde caen el buscador y las categorías del mapa. El logo centrado terminaba encima de ellos,
+   tapándolos. Por debajo de 1280px el logo se queda en su columna angosta de siempre, sin centrar. */
+@media (min-width: 1280px) {
+  .app.center-logo .logo-cell { grid-column: 2 / -1; position: relative; z-index: 5; transform: translateX(40px); pointer-events: none; }
+}
 
 .topbar {
   grid-column: 2 / -1;
@@ -116,6 +167,7 @@
 .side-item.active { background: var(--g); color: #fff; font-weight: 700; }
 .side-item .side-ico { position: relative; display: grid; place-items: center; color: var(--g); }
 .side-item.active .side-ico { color: #fff; }
+.side-badge.cart-count { display: none; } /* en computador el carrito ya está arriba */
 .side-badge {
   position: absolute; top: -7px; right: -8px; min-width: 17px; height: 17px; padding: 0 4px;
   border-radius: 999px; background: #e8531c; color: #fff; font-size: 11px; font-weight: 700;
@@ -126,9 +178,12 @@
 .side-art { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; padding: 0 0 calc(var(--foot-w) * .36); }
 .side-slogan { display: block; width: 92%; max-height: 100%; object-fit: contain; transform: rotate(-2deg); }
 
-/* Paisaje sobrepuesto en la esquina inferior izquierda: sale de la barra lateral y cubre parte del mapa. */
+/* Paisaje sobrepuesto en la esquina inferior izquierda: sale de la barra lateral y cubre parte del mapa.
+   `fixed` (no `absolute`) a propósito: `.app` tiene `overflow: hidden` para la cuadrícula, y con `absolute`
+   ese mismo overflow recortaba la imagen justo donde se sale de la barra lateral. `fixed` la ancla al
+   viewport, así que ya no la recorta ningún contenedor y queda por encima de toda la página. */
 .home-footer {
-  position: absolute; z-index: 10; left: calc(var(--foot-w) * -.4); bottom: calc(var(--foot-w) * -.035); /* compensa el margen transparente inferior de la imagen */ width: var(--foot-w); height: auto;
+  position: fixed; z-index: 10; left: calc(var(--foot-w) * -.4); bottom: calc(var(--foot-w) * -.035); /* compensa el margen transparente inferior de la imagen */ width: var(--foot-w); height: auto;
   pointer-events: none;
 }
 
@@ -141,10 +196,10 @@
 .map-card .map { position: absolute; inset: 0; }
 .map-card .leaf { z-index: 1; }
 
-.map-hint, .map-place {
+.map-hint {
   position: absolute; z-index: 5; display: flex; align-items: center; gap: 14px;
   background: rgba(255, 255, 255, .95); border-radius: 16px;
-  box-shadow: 0 6px 22px rgba(35, 52, 43, .14);
+  box-shadow: 0 6px 22px rgba(35, 52, 43, .1);
 }
 .map-hint {
   /* Dentro del mapa: el borde del mapa la recorta, así parece salir desde donde termina la barra lateral. */
@@ -165,36 +220,67 @@
   border: 0; border-radius: 50%; background: none; color: var(--muted); cursor: pointer;
 }
 .hint-close:hover { background: #e6efdc; color: var(--g); }
+/* Tras entrar, el aviso se puede arrastrar a la izquierda para descartarlo. */
+.map-hint { touch-action: pan-y; cursor: grab; }
+.map-hint.ready { animation: none; transition: transform .2s ease, opacity .2s ease; }
+.map-hint.ready.dragging { transition: none; cursor: grabbing; }
 @media (prefers-reduced-motion: reduce) { .map-hint { animation: none; } }
 .map-hint strong { display: block; font-family: 'Montserrat', sans-serif; font-size: 17px; font-weight: 700; color: var(--g); }
 .map-hint p { margin-top: 3px; font-size: 13px; line-height: 1.4; color: var(--muted); }
 
 .map-controls { position: absolute; z-index: 5; top: 28px; right: 20px; display: flex; flex-direction: column; gap: 12px; }
+/* Zoom, centrar, relieve y edificios quedan guardados detrás de este botón; `.map-controls-toggle` usa el
+   mismo look translúcido que ya tenían esos botones, para que no se note el cambio. */
+.map-controls-toggle {
+  width: 46px; height: 46px; display: grid; place-items: center; border: 0; border-radius: 14px;
+  background: rgba(255, 255, 255, .32); box-shadow: 0 4px 14px rgba(35, 52, 43, .16);
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  color: var(--g); cursor: pointer; transition: background .15s;
+}
+.map-controls-toggle:hover { background: rgba(238, 243, 228, .55); }
+.map-controls-toggle.on { background: rgba(15, 82, 56, .52); color: #fff; }
+.map-controls-panel {
+  display: flex; flex-direction: column; gap: 12px; transform-origin: top right;
+  animation: map-controls-in .16s ease both;
+}
+@keyframes map-controls-in {
+  from { opacity: 0; transform: scale(.92) translateY(-6px); }
+  to { opacity: 1; transform: none; }
+}
 .map-zoom, .map-locate {
-  background: #fff; border-radius: 14px; box-shadow: 0 4px 14px rgba(35, 52, 43, .16); overflow: hidden;
+  /* Translúcidos (se adivina el mapa detrás) pero sin llegar a ser transparentes */
+  background: rgba(255, 255, 255, .32); border-radius: 14px; box-shadow: 0 4px 14px rgba(35, 52, 43, .16); overflow: hidden;
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
 }
 .map-zoom button, .map-locate {
   display: grid; place-items: center; width: 46px; height: 46px; border: 0; background: none;
   color: var(--g); cursor: pointer;
 }
-.map-zoom button + button { border-top: 1px solid var(--line); }
-.map-zoom button:hover, .map-locate:hover { background: #eef3e4; }
-.map-locate.on { background: var(--g); color: #fff; }
-.map-locate.on:hover { background: var(--g); filter: brightness(1.12); }
+.map-zoom button + button { border-top: 1px solid rgba(35, 52, 43, .1); }
+.map-zoom button:hover, .map-locate:hover { background: rgba(238, 243, 228, .55); }
+.map-locate.on { background: rgba(15, 82, 56, .52); color: #fff; }
+.map-locate.on:hover { background: rgba(15, 82, 56, .68); }
 
-.map-place {
-  left: calc(var(--foot-w) * .6 - var(--side-w) + 16px); bottom: 20px; width: 340px; padding: 16px 20px; border: 0; text-align: left; cursor: pointer;
-  font: inherit; color: var(--ink);
+/* Solo en celular/tableta (ver MapPage): ahí el mapa ocupa toda la pantalla y captura el arrastre para
+   paneo/zoom, así que deslizar hacia abajo no baja la página. Mismo look translúcido que los demás
+   controles del mapa; el rebote sutil sugiere que sirve para bajar. */
+.map-scroll-down {
+  display: none; position: absolute; z-index: 5; bottom: 20px; right: 20px; width: 46px; height: 46px;
+  border: 0; border-radius: 14px; background: rgba(255, 255, 255, .32); box-shadow: 0 4px 14px rgba(35, 52, 43, .16);
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  color: var(--g); cursor: pointer; transition: background .15s;
+  animation: map-scroll-down-bounce 1.6s ease-in-out infinite;
 }
-.map-place span { flex: 1; display: flex; flex-direction: column; }
-.map-place strong { font-family: 'Montserrat', sans-serif; font-size: 16px; font-weight: 700; }
-.map-place small { margin-top: 2px; font-size: 13px; color: var(--muted); }
+.map-scroll-down:hover { background: rgba(238, 243, 228, .55); }
+@keyframes map-scroll-down-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(4px); }
+}
+@media (max-width: 1023px) {
+  .map-scroll-down { display: grid; place-items: center; }
+}
 
-.map-support {
-  position: absolute; z-index: 5; right: 34px; bottom: 28px; display: flex; align-items: flex-end; gap: 8px;
-  font-family: 'Kaushan Script', cursive; font-size: 25px; line-height: 1.05; color: var(--g);
-  transform: rotate(-6deg); text-align: right; text-shadow: 0 0 8px #f6f5e7, 0 0 8px #f6f5e7; pointer-events: none;
-}
+
 
 /* ---------- Panel de tiendas ---------- */
 .panel { grid-column: 3; grid-row: 2; min-height: 0; overflow-y: auto; padding: 4px 22px 20px 22px; }
@@ -265,7 +351,22 @@
 .detail-title p span { display: inline-flex; align-items: center; gap: 5px; }
 .open-tag { padding: 1px 10px; border-radius: 999px; background: #dcebdd; color: var(--g); font-weight: 700; font-size: 12px; }
 .open-tag.closed { background: #f3ddd3; color: #b6533c; }
-.detail-search { flex: none; width: 100%; margin-bottom: 16px; height: 48px; }
+/* Buscador de la tienda: fondo blanco sólido y borde marcado para que se distinga sobre el fondo de hojas. */
+.detail-search {
+  flex: none; width: 100%; margin-bottom: 16px; height: 50px;
+  background: #fff; border: 2px solid #8fa886; border-radius: 16px; box-shadow: 0 3px 10px rgba(35, 52, 43, .12);
+}
+.detail-search:focus-within { border-color: var(--g); box-shadow: 0 0 0 4px rgba(15, 82, 56, .16); }
+.detail-search input { font-size: 16px; font-weight: 600; }
+.detail-search input::placeholder { color: #5c6d62; font-weight: 500; }
+.detail-search svg { flex: none; stroke-width: 2.4; }
+/* Celular y tableta: el buscador queda fijo arriba mientras se recorren los productos, más alto y fácil de tocar. */
+@media (max-width: 1023px) {
+  /* `.store-detail` para ganarle a la regla `.search { order: 2; flex: 1 1 100% }` del buscador de la barra superior, que también le llegaba. */
+  .store-detail .detail-search { order: 0; flex: none; position: sticky; top: 8px; z-index: 12; height: 58px; padding: 0 20px; border-radius: 18px; box-shadow: 0 6px 18px rgba(35, 52, 43, .2); }
+  .detail-search input { font-size: 17px; }
+  .detail-search svg { width: 24px; height: 24px; }
+}
 
 .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 14px; }
 .product {
@@ -302,21 +403,35 @@
 
 @media (max-width: 1023px) {
   .home-footer { display: none; }
+  .side-badge.cart-count { display: grid; }
   .app, .app.has-store { --panel-w: auto; }
+  /* El encabezado es más bajo (sin sidebar a un lado) y no hay columna que saltar. */
+  .app.has-hero { --hero-h: 150px; }
+  .app.has-hero::before { left: 0; }
   .app {
     display: block;
     height: auto;
     min-height: 100dvh;
     overflow: visible;
-    padding-bottom: 76px;
+    /* El espacio de sobra deja lugar a `.sidebar` de abajo, que puede llevar además su propio
+       `env(safe-area-inset-bottom)` en celulares con indicador de inicio (ver más abajo). */
+    padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px));
   }
 
   .logo-cell { position: absolute; z-index: 7; top: 6px; left: 12px; padding: 0; display: block; }
   .logo-cell img { width: auto; height: 62px; }
 
+  /* Logo centrado también en móvil (ver AppShell `centerLogo`): no puede ir en el centro exacto de la
+     pantalla porque ahí choca con los íconos de la derecha (mapa + carrito + perfil, ~175px reservados
+     contra el borde derecho); se centra en el espacio que queda libre a la izquierda de esa franja. */
+  .app.center-logo .logo-cell { left: 50%; transform: translateX(calc(-50% - 48px)); }
+
   .topbar { display: flex; flex-wrap: wrap; gap: 12px; padding: 10px 16px 12px; }
   .top-right { order: 1; margin: 0 0 0 auto; height: 56px; }
-  .user-text { display: flex; }
+  /* El nombre completo ("Bienvenido, Nombre") se queda oculto, igual que en tableta: con el logo, el
+     mapa y el carrito ya no cabe sin encimarse con el logo. Queda solo el avatar. */
+  .user-btn { padding-right: 10px; background: rgba(240, 238, 220, .96); border: 1px solid #d9dfc9; box-shadow: 0 2px 8px rgba(35, 52, 43, .1); }
+  .user-btn:hover { background: #e8ecd6; }
   .top-leaves { width: 90px; height: 70px; }
   .search { order: 2; flex: 1 1 100%; }
   .cats { order: 3; flex: 1 1 100%; overflow-x: auto; justify-content: space-between; padding-bottom: 4px; }
@@ -327,9 +442,16 @@
   .panel { overflow: visible; padding: 8px 12px 20px; }
 
   .sidebar {
-    position: fixed; z-index: 30; left: 0; right: 0; bottom: 0; height: 68px; overflow: visible;
+    position: fixed; z-index: 30; left: 0; right: 0; bottom: 0;
+    height: calc(68px + env(safe-area-inset-bottom, 0px)); padding-bottom: env(safe-area-inset-bottom, 0px);
+    overflow: visible;
     background: rgba(255, 255, 255, .96); border-top: 1px solid var(--line);
     box-shadow: 0 -4px 16px rgba(35, 52, 43, .08);
+    /* Capa propia de composición: el mapa (WebGL, con relieve 3D) a veces pinta por encima de elementos
+       `fixed` en algunos navegadores de celular a pesar del z-index; esto obliga a que la barra siempre
+       quede en su propia capa, por encima. */
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
   }
   .sidebar nav { flex-direction: row; gap: 0; padding: 0; overflow-x: auto; width: 100%; }
   .side-art { display: none; }
@@ -342,7 +464,6 @@
 }
 
 @media (max-width: 640px) {
-  .map-place, .map-support { display: none; }
   .map-hint { top: 12px; left: 12px; right: 70px; max-width: none; padding: 12px 40px 12px 14px; }
   .map-hint p br { display: none; }
   .map-controls { top: 14px; right: 12px; }
@@ -351,6 +472,12 @@
   .user-text small { display: none; }
   .user-text strong { font-size: 14px; }
 }
+
+.map-btn {
+  width: 48px; height: 48px; display: grid; place-items: center; border: 0;
+  border-radius: 50%; background: none; color: var(--g); cursor: pointer; transition: background .15s;
+}
+.map-btn:hover { background: rgba(15, 82, 56, .09); }
 
 /* ---------- Carrito ---------- */
 .cart-btn {

@@ -6,9 +6,9 @@ import './page-shell.css';
  * con título opcional. Si la página no pasa `onQuery`, el navbar oculta el buscador y las categorías.
  * `flush` quita el relleno y el scroll del área central, para páginas que gestionan su propio scroll.
  */
-export default function PageShell({ title, subtitle, flush = false, children, ...shell }) {
+export default function PageShell({ title, subtitle, flush = false, className = '', children, ...shell }) {
   return (
-    <AppShell {...shell} className="page-view">
+    <AppShell {...shell} className={`page-view ${className}`.trim()}>
       <main className={`page-cell${flush ? ' flush' : ''}`}>
         {title && (
           <header className="page-head">

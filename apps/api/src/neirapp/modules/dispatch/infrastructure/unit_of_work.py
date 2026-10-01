@@ -4,8 +4,11 @@ from typing import Any, Self
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from neirapp.modules.dispatch.infrastructure.repositories import (
+    SqlAlchemyCourierLocationRepository,
+    SqlAlchemyCourierRatingRepository,
     SqlAlchemyCourierRepository,
     SqlAlchemyDeliveryRepository,
+    SqlAlchemyVehicleSettingsRepository,
 )
 
 
@@ -18,6 +21,9 @@ class SqlAlchemyUnitOfWork:
         self._session = self._session_factory()
         self.couriers = SqlAlchemyCourierRepository(self._session)
         self.deliveries = SqlAlchemyDeliveryRepository(self._session)
+        self.vehicle_settings = SqlAlchemyVehicleSettingsRepository(self._session)
+        self.courier_ratings = SqlAlchemyCourierRatingRepository(self._session)
+        self.courier_locations = SqlAlchemyCourierLocationRepository(self._session)
         return self
 
     async def __aexit__(

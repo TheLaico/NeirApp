@@ -4,11 +4,20 @@
   max-width: 430px;
   min-height: 100vh;
   margin: 0 auto;
-  background: var(--bg);
+  /* `100vh` de tamaño y fija (no `cover`, ni se desplaza con la página): la imagen está pensada para una
+     sola pantalla, con las hojas arriba y la iglesia abajo; el formulario es más alto que eso, así que si
+     el fondo se estirara o se moviera con el scroll, ese dibujo quedaría cortado o se saldría de la vista.
+     Fija, siempre se ven las hojas arriba Y la iglesia abajo dentro de la pantalla, sin importar cuánto
+     se desplace el formulario por encima. */
+  background: var(--bg) url('../../assets/fondo-movil.png') top center / 100% 100vh no-repeat fixed;
   overflow: hidden;
   display: flex;
   flex-direction: column;
 }
+/* El fondo ya trae sus propias hojas de esquina y el paisaje con la iglesia abajo. Acotado a `.screen`:
+   `.leaf` y `.bottom-decor` no son exclusivos de esta pantalla (el mismo componente `Leaf` se usa en el
+   inicio y el mapa), así que sin acotar también los habría ocultado ahí. */
+.screen .bottom-decor, .screen .leaf { display: none; }
 
 .content {
   position: relative;
@@ -22,7 +31,6 @@
 
 .bottom-decor {
   position: relative;
-  display: block;
   width: 100%;
   height: auto;
   margin-top: -9%; /* absorbe la franja transparente superior de la imagen */
@@ -239,8 +247,6 @@
     justify-self: center;
     padding: 48px 32px;
   }
-  /* El fondo ya trae sus propias hojas y el paisaje */
-  .bottom-decor, .leaf { display: none; }
   /* Sobre la iglesia, en el cielo de la mitad izquierda */
   .desktop-slogan {
     display: block;

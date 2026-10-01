@@ -58,7 +58,15 @@ export function normalizeStore(store) {
     lat: store.lat,
     lng: store.lng,
     is_open: store.is_open,
+    is_open_manual: store.is_open_manual,
+    closed_reason: store.closed_reason,
+    next_open_at: store.next_open_at,
     description: store.description,
     image_url: store.image_url,
+    recommended_position: store.recommended_position ?? null,
+    // Solo el panel de administrador los usa (la lista pública no trae el correo).
+    is_listed: store.is_listed !== false,
+    is_approved: store.is_approved,
+    owner_email: store.owner_email ?? '',
   };
 }

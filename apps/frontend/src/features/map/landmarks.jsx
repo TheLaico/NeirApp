@@ -27,6 +27,21 @@ const CHURCH_SVG = `
   </g>
 </svg>`;
 
+// Tamaño del ícono de la iglesia: completo desde CHURCH_FULL_ZOOM y de CHURCH_MIN_SCALE (proporción) a CHURCH_SMALL_ZOOM o menos.
+const CHURCH_W = 44;
+const CHURCH_H = 58;
+const CHURCH_MIN_SCALE = 0.4;
+const CHURCH_SMALL_ZOOM = 14.5;
+const CHURCH_FULL_ZOOM = 17;
+
+// Nombre del pueblo: tamaño de letra y altura sobre el mapa a TOWN_FULL_ZOOM; con menos zoom se achica (más lejos) y con más, crece.
+const TOWN_FONT = 34;
+const TOWN_HEIGHT = 60;
+const TOWN_FULL_ZOOM = 15;
+const TOWN_ZOOM_RATE = 0.85;
+const TOWN_MIN_SCALE = 0.3;
+const TOWN_MAX_SCALE = 1.5;
+
 // Solo se muestran los sitios que hacen parte de la app: la iglesia y los parques.
 // (Hoteles, estación de policía, estadio, etc. no se dibujan.)
 function parkIconHtml() {
@@ -51,9 +66,9 @@ export async function addLandmarks(map) {
   ]);
 
   const items = []; // { marker, min, max }
-  const add = (lngLat, el, { min = 0, max = 24, anchor = 'center', offset = [0, 0] }) => {
+  const add = (lngLat, el, { min = 0, max = 24, anchor = 'center', offset = [0, 0], onZoom }) => {
     const marker = new Marker({ element: el, anchor, offset }).setLngLat(lngLat).addTo(map);
-    items.push({ el, min, max });
+    items.push({ el, min, max, onZoom });
     return marker;
   };
 
@@ -63,9 +78,17 @@ export async function addLandmarks(map) {
     const at = f.geometry.coordinates;
     if (!inside(at)) continue;
     if (kind === 'church') {
-      add(at, element(`${CHURCH_SVG}<span class="lm-label lm-church">${name ?? 'Iglesia'}</span>`, 'lm-church-wrap'), {
+      const church = element(`${CHURCH_SVG}<span class="lm-label lm-church">${name ?? 'Iglesia'}</span>`, 'lm-church-wrap');
+      const icon = church.querySelector('svg');
+      add(at, church, {
         min: 14.5,
         anchor: 'bottom',
+        // El ícono se achica al alejar el zoom: si no, a la vista general tapa las tiendas que tiene cerca.
+        onZoom: (z) => {
+          const scale = CHURCH_MIN_SCALE + (1 - CHURCH_MIN_SCALE) * Math.min(1, Math.max(0, (z - CHURCH_SMALL_ZOOM) / (CHURCH_FULL_ZOOM - CHURCH_SMALL_ZOOM)));
+          icon.setAttribute('width', String(Math.round(CHURCH_W * scale)));
+          icon.setAttribute('height', String(Math.round(CHURCH_H * scale)));
+        },
       });
     } else if (kind === 'park' && name) {
       add(at, element(`${parkIconHtml()}<span class="lm-label">${name}</span>`, 'lm-poi'), { min: 15.5 });
@@ -80,7 +103,17 @@ export async function addLandmarks(map) {
     if (!name || seen.has(name)) continue;
     if (place === 'town') {
       seen.add(name);
-      add(at, element(`<span class="lm-town">${name}</span>`, 'lm-town-wrap'), { min: 0, max: 16.2, anchor: 'bottom', offset: [0, -66] });
+      // El nombre del pueblo está "escrito en el aire" sobre su posición del mapa, como los nombres de mapas de los juegos:
+      // se queda en ese punto del mapa (no en la pantalla) y crece o se achica con la distancia, junto con el resto del mapa.
+      const town = element(`<span class="lm-town">${name}</span>`, 'lm-town-wrap');
+      const label = town.querySelector('.lm-town');
+      const marker = add(at, town, { min: 0, max: 16.2, anchor: 'bottom', offset: [0, -TOWN_HEIGHT] });
+      const last = items[items.length - 1];
+      last.onZoom = (z) => {
+        const scale = Math.min(TOWN_MAX_SCALE, Math.max(TOWN_MIN_SCALE, 2 ** ((z - TOWN_FULL_ZOOM) * TOWN_ZOOM_RATE)));
+        label.style.fontSize = `${Math.round(TOWN_FONT * scale)}px`;
+        marker.setOffset([0, -Math.round(TOWN_HEIGHT * scale)]); // la altura sobre el suelo también sigue la escala
+      };
     } else if (place === 'peak' && inside(at)) {
       seen.add(name);
       add(at, element(`<span class="lm-peak">${svg(<Mountain size={14} strokeWidth={2.4} />)}<span>${name}</span></span>`, 'lm-peak-wrap'), { min: 14 });
@@ -92,7 +125,10 @@ export async function addLandmarks(map) {
 
   const refresh = () => {
     const z = map.getZoom();
-    for (const { el, min, max } of items) el.style.display = z >= min && z <= max ? '' : 'none';
+    for (const { el, min, max, onZoom } of items) {
+      el.style.display = z >= min && z <= max ? '' : 'none';
+      onZoom?.(z);
+    }
   };
   map.on('zoom', refresh);
   refresh();

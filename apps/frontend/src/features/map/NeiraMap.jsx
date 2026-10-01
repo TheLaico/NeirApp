@@ -4,14 +4,19 @@ import mlcontour from 'maplibre-contour';
 import { useEffect, useRef } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { GROUPS } from '../stores/categories.jsx';
-import { NEIRA_BOUNDS, NEIRA_CENTER, NEIRA_ZOOM } from './constants.js';
+import { NEIRA_BEARING, NEIRA_BOUNDS, NEIRA_CENTER, NEIRA_ZOOM, RELIEF_BEARING, RELIEF_PITCH } from './constants.js';
 import { addLandmarks } from './landmarks.jsx';
 import {
+  applyMapTheme,
   BUILDING_LAYER_IDS,
   BUILDINGS_SOURCE_ID,
   buildingLayers,
   buildingsSource,
   buildStyle,
+  createCityLightsImage,
+  createParkPatternImage,
+  CITY_LIGHTS_PATTERN_ID,
+  PARK_PATTERN_ID,
 } from './style.js';
 
 const TERRARIUM = 'https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png';
@@ -39,13 +44,13 @@ function terrainSources() {
 }
 
 /** Muestra u oculta los edificios. La primera vez que se muestran se descargan y se agregan al mapa. */
-export function setBuildings(map, on) {
+export function setBuildings(map, on, theme = 'day') {
   if (!map) return;
   if (on && !map.getSource(BUILDINGS_SOURCE_ID)) {
     map.addSource(BUILDINGS_SOURCE_ID, buildingsSource());
     // Por debajo de los rótulos de calles, encima de las calles
     const before = map.getLayer('road-labels') ? 'road-labels' : undefined;
-    buildingLayers().forEach((layer) => map.addLayer(layer, before));
+    buildingLayers(theme).forEach((layer) => map.addLayer(layer, before));
     return;
   }
   BUILDING_LAYER_IDS.forEach((id) => {
@@ -58,9 +63,9 @@ export function set3D(map, on) {
   if (!map) return;
   if (on) {
     map.setTerrain({ source: 'dem', exaggeration: 1.5 });
-    map.easeTo({ pitch: 50, bearing: -18, duration: 1100 });
+    map.easeTo({ pitch: RELIEF_PITCH, bearing: RELIEF_BEARING, duration: 1100 });
   } else {
-    map.easeTo({ pitch: 0, bearing: 0, duration: 900 });
+    map.easeTo({ pitch: 0, bearing: NEIRA_BEARING, duration: 900 });
     map.once('moveend', () => map.setTerrain(null));
   }
 }
@@ -105,7 +110,7 @@ function markerElement(store) {
 const LABELS_MIN_ZOOM = 14.5;
 
 /** `onMapReady` recibe la instancia del mapa (para los controles de zoom de la interfaz). */
-export function NeiraMap({ stores, onSelectStore, onMapReady, showBuildings = true, onPick, pin, className = '' }) {
+export function NeiraMap({ stores, onSelectStore, onMapReady, showBuildings = true, theme = 'day', onPick, pin, bearing = NEIRA_BEARING, className = '' }) {
   const containerRef = useRef(null);
   const mapRef = useRef(null);
   const markersRef = useRef([]);
@@ -113,14 +118,19 @@ export function NeiraMap({ stores, onSelectStore, onMapReady, showBuildings = tr
   readyRef.current = onMapReady;
   const buildingsRef = useRef(showBuildings);
   buildingsRef.current = showBuildings;
+  // Valor inicial nada más: el mapa arranca ya con el tema correcto (ver mount effect). Los cambios
+  // posteriores (se activó el ajuste, o cruzó la franja de la noche) los aplica el efecto de más abajo.
+  const themeRef = useRef(theme);
+  const appliedThemeRef = useRef(theme);
 
   useEffect(() => {
     if (!containerRef.current) return undefined;
     const map = new MapLibreMap({
       container: containerRef.current,
-      style: buildStyle(terrainSources()),
+      style: buildStyle(terrainSources(), themeRef.current),
       center: NEIRA_CENTER,
       zoom: NEIRA_ZOOM,
+      bearing,
       minZoom: 13,
       maxZoom: 19,
       maxPitch: 60,
@@ -139,7 +149,9 @@ export function NeiraMap({ stores, onSelectStore, onMapReady, showBuildings = tr
     let removeLandmarks = () => {};
     let disposed = false;
     map.once('load', () => {
-      if (buildingsRef.current) setBuildings(map, true);
+      if (!map.hasImage(PARK_PATTERN_ID)) map.addImage(PARK_PATTERN_ID, createParkPatternImage(themeRef.current), { pixelRatio: 2 });
+      if (!map.hasImage(CITY_LIGHTS_PATTERN_ID)) map.addImage(CITY_LIGHTS_PATTERN_ID, createCityLightsImage(), { pixelRatio: 2 });
+      if (buildingsRef.current) setBuildings(map, true, themeRef.current);
       addLandmarks(map)
         .then((cleanup) => (disposed ? cleanup() : (removeLandmarks = cleanup)))
         .catch(() => {});
@@ -160,8 +172,23 @@ export function NeiraMap({ stores, onSelectStore, onMapReady, showBuildings = tr
   // Botón "edificios": mostrar u ocultar (si el mapa aún no cargó, lo aplica el evento 'load').
   useEffect(() => {
     const map = mapRef.current;
-    if (map?.loaded()) setBuildings(map, showBuildings);
+    if (map?.loaded()) setBuildings(map, showBuildings, themeRef.current);
   }, [showBuildings]);
+
+  // Día/noche: cambia los colores de las capas ya existentes en caliente (ver `applyMapTheme`), sin
+  // recargar el mapa ni perder el relieve 3D o los edificios ya activados.
+  useEffect(() => {
+    themeRef.current = theme;
+    const map = mapRef.current;
+    if (!map || appliedThemeRef.current === theme) return;
+    appliedThemeRef.current = theme;
+    const apply = () => {
+      applyMapTheme(map, theme);
+      if (map.hasImage(PARK_PATTERN_ID)) map.updateImage(PARK_PATTERN_ID, createParkPatternImage(theme));
+    };
+    if (map.loaded()) apply();
+    else map.once('load', apply);
+  }, [theme]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -207,5 +234,9 @@ export function NeiraMap({ stores, onSelectStore, onMapReady, showBuildings = tr
     }
   }, [pin]);
 
-  return <div ref={containerRef} className={className} role="application" aria-label="Mapa de Neira" />;
+  // `map-theme-night` le cambia el halo de los rótulos HTML (nombres, calles, tiendas) en map-ambience.css:
+  // esas etiquetas son DOM aparte del estilo de MapLibre, así que `applyMapTheme` no las alcanza.
+  return (
+    <div ref={containerRef} className={`${className} map-theme-${theme}`.trim()} role="application" aria-label="Mapa de Neira" />
+  );
 }

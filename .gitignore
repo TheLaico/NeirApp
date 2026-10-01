@@ -27,3 +27,6 @@ Thumbs.db
 
 # Claude Code (worktrees locales)
 .claude/worktrees/
+
+# Imágenes subidas en desarrollo
+apps/api/uploads/

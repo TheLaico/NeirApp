@@ -18,7 +18,6 @@ from neirapp.modules.dispatch.domain.errors import (
     PickupAlreadyConfirmed,
     StopNotFound,
 )
-from neirapp.modules.dispatch.domain.pricing import compute_earnings_cop
 from neirapp.modules.dispatch.domain.routing import suggest_route
 
 NOW = datetime(2026, 9, 22, 12, 0, tzinfo=UTC)
@@ -193,12 +192,6 @@ class TestDeliveryPickupAndDelivery:
         assert not delivery.is_owned_by_courier(uuid4())
 
 
-class TestPricing:
-    def test_tarifa_base_mas_por_parada(self) -> None:
-        assert compute_earnings_cop(1) == 3_000 + 1_500
-        assert compute_earnings_cop(3) == 3_000 + 1_500 * 3
-
-
 class TestRouting:
     def test_sin_paradas(self) -> None:
         assert suggest_route([], NEIRA_CENTER[0], NEIRA_CENTER[1]) == []
@@ -212,3 +205,18 @@ class TestRouting:
         # arranca en la primera parada de la lista (far_id) y de ahí visita por cercanía
         route = suggest_route(stops, NEIRA_CENTER[0], NEIRA_CENTER[1])
         assert route == [far_id, near_id]
+
+
+class TestGenerateCode:
+    def test_son_seis_digitos(self) -> None:
+        from neirapp.modules.dispatch.domain.codes import generate_code
+
+        for _ in range(200):
+            code = generate_code()
+            assert len(code) == 6
+            assert code.isdigit()
+
+    def test_no_repite_siempre_el_mismo(self) -> None:
+        from neirapp.modules.dispatch.domain.codes import generate_code
+
+        assert len({generate_code() for _ in range(50)}) > 1

@@ -23,8 +23,8 @@ class StoresCatalogAdapter:
             id=store.id,
             name=store.name,
             owner_user_id=store.owner_user_id,
-            is_open=store.is_open,
-            is_approved=store.is_approved,
+            is_open=store.is_open_now(self._stores.clock.now()),
+            is_approved=store.is_visible_to_customers(),
         )
 
     async def get_product(self, store_id: UUID, product_id: UUID) -> ProductSnapshot | None:

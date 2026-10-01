@@ -14,7 +14,11 @@ class StoreRepository(Protocol):
     async def get_by_owner(self, owner_user_id: UUID) -> Store | None: ...
 
     async def list_all(
-        self, *, category: StoreCategory | None = None, is_approved: bool | None = None
+        self,
+        *,
+        category: StoreCategory | None = None,
+        is_approved: bool | None = None,
+        is_listed: bool | None = None,
     ) -> list[Store]: ...
 
     async def update(self, store: Store) -> None: ...

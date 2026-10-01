@@ -6,6 +6,7 @@ from neirapp.modules.ordering.application.dto import StoreOrderView
 from neirapp.modules.ordering.application.ports import (
     CatalogPort,
     PaymentGateway,
+    PricingPort,
     StoreNotifier,
     UnitOfWorkFactory,
 )
@@ -44,9 +45,16 @@ class CreateOrder:
     """Arma el pedido a partir del carrito. El precio y la disponibilidad se leen SIEMPRE del
     catálogo en este instante — nunca se confía en un precio que mande el cliente."""
 
-    def __init__(self, uow_factory: UnitOfWorkFactory, catalog: CatalogPort, clock: Clock) -> None:
+    def __init__(
+        self,
+        uow_factory: UnitOfWorkFactory,
+        catalog: CatalogPort,
+        pricing: PricingPort,
+        clock: Clock,
+    ) -> None:
         self._uow_factory = uow_factory
         self._catalog = catalog
+        self._pricing = pricing
         self._clock = clock
 
     async def __call__(self, customer_id: UUID, cmd: CreateOrderCommand) -> Order:
@@ -60,11 +68,14 @@ class CreateOrder:
             by_store[item.store_id].append(item)
 
         now = self._clock.now()
+        fee = await self._pricing.current_delivery_fee()
         order = Order.create_empty(
             customer_id=customer_id,
             delivery_lat=cmd.delivery_lat,
             delivery_lng=cmd.delivery_lng,
             delivery_notes=cmd.delivery_notes,
+            delivery_fee_cop=fee.delivery_fee_cop,
+            courier_earnings_cop=fee.courier_earnings_cop,
             now=now,
         )
 
@@ -279,9 +290,9 @@ class RejectStoreOrder:
         self._uow_factory = uow_factory
         self._clock = clock
 
-    async def __call__(self, store_order_id: UUID, user_id: UUID) -> StoreOrder:
+    async def __call__(self, store_order_id: UUID, user_id: UUID, reason: str) -> StoreOrder:
         store_order = await _load_owned_store_order(self._uow_factory, store_order_id, user_id)
-        store_order.reject(self._clock.now())
+        store_order.reject(reason, self._clock.now())
         async with self._uow_factory() as uow:
             await uow.orders.update_store_order(store_order)
             await uow.commit()

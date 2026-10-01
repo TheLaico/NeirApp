@@ -16,6 +16,14 @@ class StoreSnapshot:
 
 
 @dataclass(frozen=True)
+class DeliveryFeeSnapshot:
+    """Tarifa de envío vigente: se guarda en cada pedido al crearse."""
+
+    delivery_fee_cop: int
+    courier_earnings_cop: int
+
+
+@dataclass(frozen=True)
 class ProductSnapshot:
     id: UUID
     name: str

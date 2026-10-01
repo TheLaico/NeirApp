@@ -14,7 +14,12 @@ class Role(StrEnum):
     CUSTOMER = "customer"
     COURIER = "courier"
     STORE_STAFF = "store_staff"
+    PROFESSIONAL = "professional"
     ADMIN = "admin"
+
+
+# Roles autorizables por correo. `customer` es automático y `admin` nunca sale de la API.
+ASSIGNABLE_ROLES = frozenset({Role.COURIER, Role.STORE_STAFF, Role.PROFESSIONAL})
 
 
 class TermsDocument(StrEnum):
@@ -57,8 +62,21 @@ class User:
     def grant_role(self, role: Role) -> None:
         self.roles.add(role)
 
+    def revoke_role(self, role: Role) -> None:
+        self.roles.discard(role)
+
     def has_any_role(self, *roles: Role) -> bool:
         return bool(self.roles.intersection(roles))
+
+
+@dataclass(frozen=True)
+class RoleGrant:
+    """Correo autorizado para un rol: se aplica al usuario existente o cuando se registre."""
+
+    email: str
+    role: Role
+    granted_by: UUID
+    created_at: datetime
 
 
 @dataclass(frozen=True)

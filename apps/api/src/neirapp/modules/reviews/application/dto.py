@@ -10,4 +10,5 @@ class ReviewableStoreOrderSnapshot:
     order_id: UUID
     store_id: UUID
     customer_id: UUID
+    store_owner_user_id: UUID
     status: str  # espejo de StoreOrderStatus de `ordering`, como texto (ver CatalogPort)

@@ -22,3 +22,5 @@ class ReviewModel(Base):
     rating: Mapped[int] = mapped_column()
     comment: Mapped[str | None] = mapped_column(String(500))
     created_at: Mapped[datetime] = mapped_column(UTCDateTime)
+    merchant_reply: Mapped[str | None] = mapped_column(String(500))
+    replied_at: Mapped[datetime | None] = mapped_column(UTCDateTime)

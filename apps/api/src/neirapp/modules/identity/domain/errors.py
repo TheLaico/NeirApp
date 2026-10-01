@@ -87,6 +87,14 @@ class InvalidFullName(ValidationError):
         return "El nombre debe tener entre 2 y 120 caracteres."
 
 
+class RoleNotAssignable(ValidationError):
+    code = "role_not_assignable"
+
+    @classmethod
+    def default_message(cls) -> str:
+        return "Ese rol no se puede autorizar por correo. Usa repartidor, comerciante o profesional."
+
+
 class TermsNotAccepted(ValidationError):
     code = "terms_not_accepted"
 

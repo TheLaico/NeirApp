@@ -1,4 +1,4 @@
-import { ArrowLeft, LayoutDashboard, LogOut, ShieldCheck, Store } from 'lucide-react';
+import { ArrowLeft, Bike, Briefcase, LayoutDashboard, LogOut, MapPinned, MessageSquarePlus, ShieldCheck, Store, Truck, UserCog } from 'lucide-react';
 import { useEffect } from 'react';
 import { canAccessAdmin, ROLES } from '../../config/roles.js';
 import { useNavigate, usePath } from '../../lib/router.jsx';
@@ -7,10 +7,16 @@ import './admin.css';
 const ITEMS = [
   { to: '/admin', label: 'Resumen', Icon: LayoutDashboard },
   { to: '/admin/tiendas', label: 'Tiendas', Icon: Store },
+  { to: '/admin/roles', label: 'Roles', Icon: UserCog },
+  { to: '/admin/repartidores', label: 'Repartidores', Icon: Bike },
+  { to: '/admin/profesionales', label: 'Gestión de profesionales', Icon: Briefcase },
+  { to: '/admin/mapa', label: 'Mapa en vivo', Icon: MapPinned },
+  { to: '/admin/envios', label: 'Envíos', Icon: Truck },
+  { to: '/admin/solicitudes', label: 'Solicitudes', Icon: MessageSquarePlus },
 ];
 
 /**
- * Marco del panel de administrador: sidebar propio (Resumen, Tiendas), título de la sección y contenido.
+ * Marco del panel de administrador: sidebar propio (Resumen, Tiendas, Roles, Repartidores, Envíos), título de la sección y contenido.
  * Solo se muestra a usuarios con rol de desarrollador o administrador.
  */
 export default function AdminLayout({ user, onLogout, title, subtitle, actions, children }) {

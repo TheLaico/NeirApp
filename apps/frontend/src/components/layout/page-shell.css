@@ -2,6 +2,9 @@
 .app.page-view { grid-template-columns: var(--side-w) minmax(0, 1fr); }
 /* El paisaje sobrepuesto se queda dentro de la barra lateral para no tapar el contenido. */
 .app.page-view .home-footer { clip-path: inset(0 calc(100% - (var(--side-w) + var(--foot-w) * .4)) 0 0); }
+/* Profesionales: como en el mapa, se deja salir del todo (no tiene listas de contenido pegadas al
+   borde de la barra lateral con las que choque, así que puede sobresalir igual que ahí). */
+.app.page-view.pros-view .home-footer { clip-path: none; }
 
 .page-cell {
   grid-column: 2 / -1; grid-row: 2; position: relative; min-width: 0; min-height: 0;

@@ -3,7 +3,12 @@ from types import TracebackType
 from typing import Protocol, Self
 from uuid import UUID
 
-from neirapp.modules.ordering.application.dto import ProductSnapshot, StoreOrderView, StoreSnapshot
+from neirapp.modules.ordering.application.dto import (
+    DeliveryFeeSnapshot,
+    ProductSnapshot,
+    StoreOrderView,
+    StoreSnapshot,
+)
 from neirapp.modules.ordering.domain.entities import Order, StoreOrder, StoreOrderStatus
 
 
@@ -15,6 +20,12 @@ class CatalogPort(Protocol):
     async def get_store(self, store_id: UUID) -> StoreSnapshot | None: ...
 
     async def get_product(self, store_id: UUID, product_id: UUID) -> ProductSnapshot | None: ...
+
+
+class PricingPort(Protocol):
+    """Capa anticorrupción hacia `pricing`: el valor del envío que se le cobra al cliente."""
+
+    async def current_delivery_fee(self) -> DeliveryFeeSnapshot: ...
 
 
 class PaymentGateway(Protocol):

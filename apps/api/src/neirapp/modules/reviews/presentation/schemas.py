@@ -12,6 +12,10 @@ class CreateReviewRequest(BaseModel):
     comment: str | None = Field(default=None, max_length=500)
 
 
+class ReplyRequest(BaseModel):
+    text: str = Field(min_length=2, max_length=500)
+
+
 class ReviewResponse(BaseModel):
     id: UUID
     store_order_id: UUID
@@ -19,6 +23,8 @@ class ReviewResponse(BaseModel):
     rating: int
     comment: str | None
     created_at: datetime
+    merchant_reply: str | None
+    replied_at: datetime | None
 
     @classmethod
     def from_domain(cls, review: Review) -> "ReviewResponse":
@@ -29,7 +35,15 @@ class ReviewResponse(BaseModel):
             rating=review.rating,
             comment=review.comment,
             created_at=review.created_at,
+            merchant_reply=review.merchant_reply,
+            replied_at=review.replied_at,
         )
+
+
+class StoreRatingResponse(BaseModel):
+    store_id: UUID
+    average: float
+    count: int
 
 
 class RatingSummaryResponse(BaseModel):

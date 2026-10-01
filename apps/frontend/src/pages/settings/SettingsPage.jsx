@@ -11,6 +11,7 @@ const PREFERENCES = [
   { key: 'orderNotifications', title: 'Avisos de mis pedidos', text: 'Recibe una notificación cuando cambie el estado de un pedido.' },
   { key: 'offersNotifications', title: 'Ofertas y novedades', text: 'Entérate de promociones de las tiendas de Neira.' },
   { key: 'mapHint', title: 'Sugerencia del mapa', text: 'Muestra el aviso "Explora las tiendas" al entrar al inicio.' },
+  { key: 'mapNightAuto', title: 'Mapa nocturno automático', text: 'De noche, el mapa se ve oscuro con las calles iluminadas. Apagado, siempre se ve de día.' },
 ];
 
 function Switch({ checked, onChange, label }) {
