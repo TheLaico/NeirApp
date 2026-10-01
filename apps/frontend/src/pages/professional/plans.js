@@ -1,9 +1,11 @@
 // Planes de suscripción para profesionales. Precios y beneficios provisionales: se ajustan aquí y la
-// página /profesional/planes los toma tal cual. Todavía no hay cobro; elegir un plan solo lo marca.
+// página /profesional/planes los toma tal cual. `id` también define el color de la tarjeta (verde claro,
+// verde NeirAPP y dorado) e `icon` es el nombre del ícono de lucide-react. Todavía no hay cobro; elegir un plan solo lo marca.
 
 export const PLANS = [
   {
     id: 'basic',
+    icon: 'Sprout',
     tag: 'Plan 1',
     name: 'Básico',
     price: 0,
@@ -20,6 +22,7 @@ export const PLANS = [
   },
   {
     id: 'pro',
+    icon: 'BriefcaseBusiness',
     tag: 'Plan 2',
     name: 'Profesional',
     recommended: true,
@@ -37,6 +40,7 @@ export const PLANS = [
   },
   {
     id: 'premium',
+    icon: 'Crown',
     tag: 'Plan 3',
     name: 'Premium',
     price: 59900,

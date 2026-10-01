@@ -1,61 +1,124 @@
-/* Página "Planes para profesionales". */
+/* Página "Planes para profesionales". Cada plan tiene su color: Básico verde claro, Profesional verde NeirAPP
+   y Premium dorado (variables --c, --c2 y --soft de cada tarjeta). */
 
-.plans { --g: #0f5238; --ink: #23342b; --muted: #6b7a70; --line: #dfe4d2; min-height: 100vh; min-height: 100dvh; padding: 24px 32px 48px; background: #f8f5ed; color: var(--ink); font-family: 'Nunito', system-ui, sans-serif; }
+.plans { --g: #0f5238; --ink: #23342b; --muted: #6b7a70; --line: #dfe4d2; position: relative; min-height: 100vh; min-height: 100dvh; overflow: hidden; padding: 24px 32px 56px; background: radial-gradient(1100px 520px at 50% -8%, #e6eed6 0%, transparent 70%), linear-gradient(180deg, #f8f5ed 0%, #f3f0e2 100%); color: var(--ink); font-family: 'Nunito', system-ui, sans-serif; }
+
+/* Hojas decorativas de la página: se mecen suavemente */
+.plans-leaves { position: absolute; inset: 0; pointer-events: none; }
+.plans .leaf { position: absolute; transform: rotate(var(--r, 0deg)); transform-origin: 50% 100%; filter: drop-shadow(0 3px 5px rgba(35, 52, 43, .15)); }
+.plans-leaves .leaf { animation: plans-sway 6s ease-in-out infinite; }
+.plans-leaves .leaf:nth-child(2n) { animation-duration: 7.5s; animation-delay: -2s; }
+.plans-leaves .leaf:nth-child(3n) { animation-duration: 8.5s; animation-delay: -4s; }
+@keyframes plans-sway {
+  0%, 100% { transform: rotate(var(--r, 0deg)); }
+  50% { transform: rotate(calc(var(--r, 0deg) + 7deg)); }
+}
 
 /* 1. Encabezado */
-.plans-head { display: flex; align-items: center; gap: 28px; max-width: 1180px; margin: 0 auto 34px; }
-.plans-logo { flex: none; width: 170px; height: auto; }
+.plans-head { position: relative; display: flex; align-items: center; gap: 28px; max-width: 1180px; margin: 0 auto 44px; }
+.plans-logo { flex: none; width: 170px; height: auto; transition: transform .3s; }
+.plans-logo:hover { transform: rotate(-3deg) scale(1.04); }
 .plans-intro { flex: 1; min-width: 0; }
 .plans-intro h1 { font-family: 'Montserrat', sans-serif; font-size: clamp(28px, 3vw, 40px); font-weight: 800; line-height: 1.1; color: #14392a; }
-.plans-intro p { max-width: 560px; margin-top: 8px; font-size: 18px; line-height: 1.45; color: #3b4a42; }
-.plans-back { flex: none; align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; min-height: 42px; padding: 0 16px; border: 1.5px solid #b9c9b3; border-radius: 999px; background: none; color: var(--g); font: inherit; font-size: 14.5px; font-weight: 700; cursor: pointer; }
-.plans-back:hover { background: rgba(15, 82, 56, .06); }
+.plans-intro h1::after { content: ''; display: block; width: 84px; height: 5px; margin-top: 12px; border-radius: 999px; background: linear-gradient(90deg, #0f5238, #5a9a4a 55%, #e8a92c); }
+.plans-intro p { max-width: 560px; margin-top: 12px; font-size: 18px; line-height: 1.45; color: #3b4a42; }
+.plans-back { flex: none; align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; min-height: 42px; padding: 0 16px; border: 1.5px solid #b9c9b3; border-radius: 999px; background: rgba(255, 255, 255, .6); color: var(--g); font: inherit; font-size: 14.5px; font-weight: 700; cursor: pointer; transition: background .2s, transform .2s; }
+.plans-back:hover { background: #fff; transform: translateX(-3px); }
 
 /* 2. Planes: tres columnas en escritorio */
-.plans-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; align-items: stretch; max-width: 1180px; margin: 0 auto; padding: 0; list-style: none; }
+.plans-grid { position: relative; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 26px; align-items: stretch; max-width: 1180px; margin: 0 auto; padding: 0; list-style: none; }
 .plans-grid > li { display: flex; }
-.plan { display: flex; flex-direction: column; width: 100%; padding: 26px 24px 24px; border: 1px solid var(--line); border-radius: 22px; background: #fff; box-shadow: 0 2px 10px rgba(35, 52, 43, .05); transition: box-shadow .15s, border-color .15s; }
-.plan.recommended { border: 2px solid var(--g); box-shadow: 0 14px 34px rgba(15, 82, 56, .16); transform: translateY(-10px); }
-.plan.chosen { border-color: #e8a92c; }
+
+.plan { --c: #5a9a4a; --c2: #3f7d35; --soft: #eef4e6; --lift: 0px; position: relative; display: flex; flex-direction: column; width: 100%; overflow: hidden; border: 1px solid var(--line); border-radius: 24px; background: #fff; box-shadow: 0 2px 10px rgba(35, 52, 43, .06); transform: translateY(var(--lift)); transition: transform .35s cubic-bezier(.2, .8, .3, 1.2), box-shadow .35s, border-color .35s; }
+.plan.pro { --c: #0f5238; --c2: #2d7a3d; --soft: #e6f0e3; }
+.plan.premium { --c: #c8901a; --c2: #f0c04a; --soft: #fbf1d6; border-color: #ecd49a; background: linear-gradient(180deg, #fffdf6 0%, #fff 40%); }
+.plan.recommended { --lift: -12px; border: 2px solid var(--c); box-shadow: 0 16px 36px rgba(15, 82, 56, .18); }
+.plan:hover { transform: translateY(calc(var(--lift) - 10px)); box-shadow: 0 22px 44px color-mix(in srgb, var(--c) 28%, transparent); border-color: var(--c); }
+.plan.chosen { border-color: var(--c); box-shadow: 0 0 0 4px color-mix(in srgb, var(--c) 25%, transparent), 0 16px 36px rgba(35, 52, 43, .14); }
+
+/* Franja de color con el ícono del plan y sus hojas */
+.plan-band { position: relative; height: 92px; background: linear-gradient(120deg, var(--c) 0%, var(--c2) 100%); }
+.plan-band::after { content: ''; position: absolute; inset: 0; background: radial-gradient(160px 80px at 20% 0%, rgba(255, 255, 255, .28), transparent 70%); }
+.plan.premium .plan-band { background: linear-gradient(120deg, #b07a10 0%, #e8a92c 45%, #f6d36b 70%, #d99a1e 100%); background-size: 220% 100%; animation: plans-shine 6s ease-in-out infinite; }
+@keyframes plans-shine {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+.plan-leaves { position: absolute; inset: 0; overflow: hidden; }
+.plan-leaves .leaf { transition: transform .5s cubic-bezier(.2, .8, .3, 1.3); }
+.plan:hover .plan-leaves .leaf { transform: rotate(calc(var(--r, 0deg) + 16deg)) scale(1.08); }
+.plan-icon { position: absolute; z-index: 1; left: 24px; bottom: -30px; display: grid; place-items: center; width: 64px; height: 64px; border: 4px solid #fff; border-radius: 20px; background: linear-gradient(140deg, var(--c2), var(--c)); color: #fff; box-shadow: 0 8px 18px color-mix(in srgb, var(--c) 35%, transparent); transition: transform .45s cubic-bezier(.2, .8, .3, 1.4); }
+.plan:hover .plan-icon { transform: translateY(-6px) rotate(-8deg) scale(1.08); }
+
+.plan-body { display: flex; flex: 1; flex-direction: column; padding: 42px 24px 24px; }
 .plan-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 28px; }
-.plan-tag { font-size: 13px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
-.plan-badge { display: inline-flex; align-items: center; gap: 5px; padding: 5px 12px; border-radius: 999px; background: #e8a92c; color: #fff; font-size: 13px; font-weight: 800; white-space: nowrap; }
+.plan-tag { font-size: 13px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--c); }
+.plan-badge { display: inline-flex; align-items: center; gap: 5px; padding: 5px 12px; border-radius: 999px; background: linear-gradient(120deg, #e8a92c, #f0c04a); color: #fff; font-size: 13px; font-weight: 800; white-space: nowrap; box-shadow: 0 4px 10px rgba(232, 169, 44, .35); }
+.plan-badge svg { animation: plans-twinkle 2.2s ease-in-out infinite; }
+@keyframes plans-twinkle {
+  0%, 100% { transform: scale(1) rotate(0); }
+  50% { transform: scale(1.25) rotate(15deg); }
+}
 .plan h2 { margin-top: 6px; font-family: 'Montserrat', sans-serif; font-size: 26px; font-weight: 800; color: #14392a; }
 .plan-price { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
-.plan-price strong { font-family: 'Montserrat', sans-serif; font-size: 36px; font-weight: 800; color: var(--g); }
+.plan-price strong { font-family: 'Montserrat', sans-serif; font-size: 36px; font-weight: 800; color: var(--c); }
+.plan.premium .plan-price strong { background: linear-gradient(120deg, #a8700c, #e0a425 60%, #b07a10); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .plan-price span { font-size: 15px; color: var(--muted); }
 .plan-summary { margin-top: 10px; font-size: 15.5px; line-height: 1.45; color: #3b4a42; }
 .plan hr { width: 100%; margin: 20px 0 16px; border: 0; border-top: 1px solid var(--line); }
+.plan.premium hr { border-top-color: #f0e2bd; }
 .plan h3 { font-size: 15.5px; font-weight: 800; color: #14392a; }
 .plan-features { flex: 1; display: flex; flex-direction: column; gap: 10px; margin: 12px 0 0; padding: 0; list-style: none; }
-.plan-features li { display: flex; align-items: flex-start; gap: 10px; font-size: 15px; line-height: 1.4; }
-.plan-features svg { flex: none; margin-top: 1px; padding: 2px; border-radius: 50%; background: #e1eedf; color: var(--g); }
-.plan-audience { display: flex; align-items: flex-start; gap: 10px; margin-top: 20px; padding: 14px 14px; border-radius: 14px; background: #f3f1e4; font-size: 14.5px; line-height: 1.45; color: #3b4a42; }
-.plan-audience svg { flex: none; margin-top: 1px; color: var(--g); }
-.plan.recommended .plan-audience { background: #e9f1e4; }
-.plan-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 52px; margin-top: 20px; border: 1.5px solid var(--g); border-radius: 999px; background: none; color: var(--g); font: inherit; font-size: 16.5px; font-weight: 800; cursor: pointer; transition: background .15s, color .15s; }
-.plan-btn:hover { background: rgba(15, 82, 56, .07); }
-.plan.recommended .plan-btn { background: var(--g); color: #fff; box-shadow: 0 6px 16px rgba(15, 82, 56, .25); }
-.plan.recommended .plan-btn:hover { background: #0b4430; }
-.plan.chosen .plan-btn { border-color: #e8a92c; background: #e8a92c; color: #fff; box-shadow: none; }
-.plan-btn:focus-visible, .plans-back:focus-visible { outline: 3px solid #e8a92c; outline-offset: 3px; }
+.plan-features li { display: flex; align-items: flex-start; gap: 10px; font-size: 15px; line-height: 1.4; transition: transform .2s; }
+.plan-features li:hover { transform: translateX(4px); }
+.plan-features svg { flex: none; margin-top: 1px; padding: 2px; border-radius: 50%; background: var(--soft); color: var(--c); }
+.plan-audience { display: flex; align-items: flex-start; gap: 10px; margin-top: 20px; padding: 14px; border-radius: 14px; background: var(--soft); font-size: 14.5px; line-height: 1.45; color: #3b4a42; }
+.plan-audience svg { flex: none; margin-top: 1px; color: var(--c); }
 
-.plans-notice { max-width: 1180px; margin: 26px auto 0; padding: 14px 18px; border-radius: 14px; background: #e9f1e4; color: var(--g); font-size: 15.5px; text-align: center; }
+/* Botón: palpita para llamar la atención; al pasar el cursor se llena con el color del plan */
+.plan-btn { position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 52px; margin-top: 20px; border: 0; border-radius: 999px; background: linear-gradient(120deg, var(--c), var(--c2)); color: #fff; font: inherit; font-size: 16.5px; font-weight: 800; cursor: pointer; animation: plans-pulse 2s ease-in-out infinite; transition: filter .2s; }
+.plan.premium .plan-btn { color: #3d2a00; background: linear-gradient(120deg, #e8a92c, #f6d36b 55%, #e0a425); }
+.plan-btn:hover { filter: brightness(1.08); animation-duration: 1s; }
+.plan-btn:active { transform: scale(.97); }
+.plan-btn:focus-visible, .plans-back:focus-visible { outline: 3px solid #14392a; outline-offset: 3px; }
+.plan.recommended .plan-btn { animation-name: plans-pulse-strong; }
+.plan.chosen .plan-btn { animation: none; background: #fff; color: var(--c); box-shadow: inset 0 0 0 2px var(--c); }
+.plan.premium.chosen .plan-btn { color: #9a6a08; }
+@keyframes plans-pulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 6px 14px color-mix(in srgb, var(--c) 25%, transparent), 0 0 0 0 color-mix(in srgb, var(--c) 45%, transparent); }
+  50% { transform: scale(1.03); box-shadow: 0 8px 18px color-mix(in srgb, var(--c) 32%, transparent), 0 0 0 10px color-mix(in srgb, var(--c) 0%, transparent); }
+}
+@keyframes plans-pulse-strong {
+  0%, 100% { transform: scale(1); box-shadow: 0 8px 18px color-mix(in srgb, var(--c) 30%, transparent), 0 0 0 0 color-mix(in srgb, var(--c) 55%, transparent); }
+  50% { transform: scale(1.05); box-shadow: 0 10px 22px color-mix(in srgb, var(--c) 38%, transparent), 0 0 0 14px color-mix(in srgb, var(--c) 0%, transparent); }
+}
 
-/* Tableta: dos columnas no caben bien con el recomendado al centro, así que se apilan antes */
+.plans-notice { position: relative; max-width: 1180px; margin: 30px auto 0; padding: 14px 18px; border-radius: 14px; background: #e9f1e4; color: var(--g); font-size: 15.5px; text-align: center; animation: plans-pop .4s cubic-bezier(.2, .8, .3, 1.3); }
+@keyframes plans-pop {
+  from { opacity: 0; transform: translateY(8px) scale(.98); }
+}
+
+/* Celular y tableta: los planes se apilan */
 @media (max-width: 960px) {
-  .plans { padding: 16px 16px 40px; }
-  .plans-head { flex-wrap: wrap; gap: 14px 18px; margin-bottom: 24px; }
+  .plans { padding: 16px 16px 44px; }
+  .plans-head { flex-wrap: wrap; gap: 14px 18px; margin-bottom: 28px; }
   .plans-logo { width: 120px; }
   .plans-back { margin-left: auto; align-self: center; }
   .plans-intro { order: 1; flex-basis: 100%; }
   .plans-intro p { font-size: 16px; }
-  .plans-grid { grid-template-columns: minmax(0, 520px); justify-content: center; gap: 18px; }
-  .plan.recommended { transform: none; }
+  .plans-grid { grid-template-columns: minmax(0, 520px); justify-content: center; gap: 22px; }
+  .plan.recommended { --lift: 0px; }
+  .plan:hover { transform: translateY(-4px); }
+  .plans-leaves .leaf:nth-child(-n + 4) { display: none; } /* en celular solo quedan las de abajo, para no tapar el texto */
 }
 @media (max-width: 420px) {
   .plans-logo { width: 104px; }
-  .plans-back span, .plans-back { font-size: 13.5px; padding: 0 12px; }
-  .plan { padding: 22px 18px 20px; }
+  .plans-back { font-size: 13.5px; padding: 0 12px; }
+  .plan-body { padding: 40px 18px 20px; }
   .plan-price strong { font-size: 32px; }
+}
+
+/* Sin animaciones para quien prefiere reducir el movimiento */
+@media (prefers-reduced-motion: reduce) {
+  .plans *, .plans *::before, .plans *::after { animation: none !important; }
 }
