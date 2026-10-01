@@ -114,6 +114,14 @@ from neirapp.modules.professionals.application.categories import (
     ListCategories,
     SetSubcategoryColor,
 )
+from neirapp.modules.professionals.application.gallery import (
+    AddGalleryImage,
+    DeleteGalleryImage,
+    ListMyGallery,
+    ListPublicGallery,
+    ReorderGallery,
+    SetGalleryCaption,
+)
 from neirapp.modules.professionals.application.profiles import (
     GetMyProfile,
     GetPublicProfile,
@@ -129,6 +137,7 @@ from neirapp.modules.professionals.application.services import (
     UpdateService,
 )
 from neirapp.modules.professionals.infrastructure.categories import SqlAlchemyCategoryRepository
+from neirapp.modules.professionals.infrastructure.gallery import SqlAlchemyGalleryRepository
 from neirapp.modules.professionals.infrastructure.identity_adapter import IdentityAccessAdapter
 from neirapp.modules.professionals.infrastructure.repositories import SqlAlchemyProfileRepository
 from neirapp.modules.professionals.infrastructure.services import SqlAlchemyServiceRepository
@@ -301,6 +310,7 @@ def build_professionals(
     repo = SqlAlchemyProfileRepository(session_factory)
     categories = SqlAlchemyCategoryRepository(session_factory)
     services = SqlAlchemyServiceRepository(session_factory)
+    gallery = SqlAlchemyGalleryRepository(session_factory)
     access = IdentityAccessAdapter(identity)
     clock = clock or SystemClock()
     return ProfessionalsApp(
@@ -320,6 +330,12 @@ def build_professionals(
         update_service=UpdateService(services, clock),
         delete_service=DeleteService(services),
         list_public_services=ListPublicServices(services, access),
+        list_my_gallery=ListMyGallery(gallery),
+        add_gallery_image=AddGalleryImage(gallery, clock),
+        set_gallery_caption=SetGalleryCaption(gallery),
+        reorder_gallery=ReorderGallery(gallery),
+        delete_gallery_image=DeleteGalleryImage(gallery),
+        list_public_gallery=ListPublicGallery(gallery, access),
     )
 
 

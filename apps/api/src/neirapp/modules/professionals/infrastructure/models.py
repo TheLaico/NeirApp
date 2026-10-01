@@ -78,3 +78,14 @@ class ServiceModel(Base):
     position: Mapped[int] = mapped_column()
     created_at: Mapped[datetime] = mapped_column(UTCDateTime)
     updated_at: Mapped[datetime] = mapped_column(UTCDateTime)
+
+
+class GalleryImageModel(Base):
+    __tablename__ = "professionals_gallery_image"
+
+    id: Mapped[UUID] = mapped_column(Uuid, primary_key=True)
+    user_id: Mapped[UUID] = mapped_column(Uuid, index=True)
+    url: Mapped[str] = mapped_column(String(300))
+    caption: Mapped[str] = mapped_column(String(140), default="")
+    position: Mapped[int] = mapped_column()
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime)

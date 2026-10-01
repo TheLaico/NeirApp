@@ -15,6 +15,7 @@ from neirapp.modules.professionals.domain.entities import (
     ProfessionalProfile,
     ProfileData,
 )
+from neirapp.modules.professionals.domain.gallery import MAX_CAPTION, MAX_IMAGES, GalleryImage
 from neirapp.modules.professionals.domain.services import (
     MAX_SERVICE_DESCRIPTION,
     PriceKind,
@@ -211,6 +212,71 @@ async def delete_service(
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
+class GalleryImageRequest(BaseModel):
+    url: str = Field(max_length=400)
+    caption: str = Field(default="", max_length=MAX_CAPTION * 2)
+
+
+class CaptionRequest(BaseModel):
+    caption: str = Field(max_length=MAX_CAPTION * 2)
+
+
+class GalleryOrderRequest(BaseModel):
+    ids: list[UUID] = Field(max_length=MAX_IMAGES)
+
+
+class GalleryImageResponse(BaseModel):
+    id: UUID
+    url: str
+    caption: str
+
+    @classmethod
+    def from_domain(cls, i: GalleryImage) -> "GalleryImageResponse":
+        return cls(id=i.id, url=i.url, caption=i.caption)
+
+
+@router.get("/me/gallery", response_model=list[GalleryImageResponse])
+async def list_my_gallery(
+    user: RequireProfessional, app: ProfessionalsDep
+) -> list[GalleryImageResponse]:
+    return [GalleryImageResponse.from_domain(i) for i in await app.list_my_gallery(user.id)]
+
+
+@router.post("/me/gallery", response_model=GalleryImageResponse, status_code=201)
+async def add_gallery_image(
+    body: GalleryImageRequest, user: RequireProfessional, app: ProfessionalsDep
+) -> GalleryImageResponse:
+    """Agrega una foto ya subida con `POST /uploads/images` (se manda la URL que devolvió)."""
+    image = await app.add_gallery_image(user.id, body.url, body.caption)
+    return GalleryImageResponse.from_domain(image)
+
+
+# Antes que "/me/gallery/{image_id}" para que "order" no se tome como un id.
+@router.put("/me/gallery/order", response_model=list[GalleryImageResponse])
+async def reorder_gallery(
+    body: GalleryOrderRequest, user: RequireProfessional, app: ProfessionalsDep
+) -> list[GalleryImageResponse]:
+    """Cambia el orden: se mandan todos los ids, el primero queda como portada."""
+    images = await app.reorder_gallery(user.id, body.ids)
+    return [GalleryImageResponse.from_domain(i) for i in images]
+
+
+@router.patch("/me/gallery/{image_id}", response_model=GalleryImageResponse)
+async def set_gallery_caption(
+    image_id: UUID, body: CaptionRequest, user: RequireProfessional, app: ProfessionalsDep
+) -> GalleryImageResponse:
+    image = await app.set_gallery_caption(user.id, image_id, body.caption)
+    return GalleryImageResponse.from_domain(image)
+
+
+@router.delete("/me/gallery/{image_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_gallery_image(
+    image_id: UUID, user: RequireProfessional, app: ProfessionalsDep
+) -> Response:
+    await app.delete_gallery_image(user.id, image_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
 @router.get("", response_model=list[ProfileResponse])
 async def list_directory(
     app: ProfessionalsDep,
@@ -343,3 +409,9 @@ async def set_featured(
 async def list_public_services(user_id: UUID, app: ProfessionalsDep) -> list[ServiceResponse]:
     """Servicios visibles de un profesional (para su página de perfil)."""
     return [ServiceResponse.from_domain(s) for s in await app.list_public_services(user_id)]
+
+
+@router.get("/{user_id}/gallery", response_model=list[GalleryImageResponse])
+async def list_public_gallery(user_id: UUID, app: ProfessionalsDep) -> list[GalleryImageResponse]:
+    """Galería de un profesional (para su página de perfil)."""
+    return [GalleryImageResponse.from_domain(i) for i in await app.list_public_gallery(user_id)]

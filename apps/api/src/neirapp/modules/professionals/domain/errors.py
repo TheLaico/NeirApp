@@ -170,3 +170,35 @@ class ServiceNotFound(NotFoundError):
     @classmethod
     def default_message(cls) -> str:
         return "Servicio no encontrado."
+
+
+class InvalidGalleryImage(ValidationError):
+    code = "invalid_gallery_image"
+
+    @classmethod
+    def default_message(cls) -> str:
+        return "La imagen debe subirse desde la app."
+
+
+class TooManyImages(ValidationError):
+    code = "too_many_images"
+
+    @classmethod
+    def default_message(cls) -> str:
+        return "Puedes tener hasta 30 imágenes en tu galería. Borra alguna para agregar otra."
+
+
+class InvalidGalleryOrder(ValidationError):
+    code = "invalid_gallery_order"
+
+    @classmethod
+    def default_message(cls) -> str:
+        return "El nuevo orden debe incluir todas tus imágenes, sin repetir."
+
+
+class GalleryImageNotFound(NotFoundError):
+    code = "gallery_image_not_found"
+
+    @classmethod
+    def default_message(cls) -> str:
+        return "Imagen no encontrada."

@@ -412,3 +412,103 @@ class TestServicios:
             f"{API}/professionals/me/services", json=SERVICE, headers=_bearer(customer)
         )
         assert response.status_code == 403
+
+
+def _photo(n: int) -> str:
+    return f"/api/v1/uploads/images/{n:032x}.webp"
+
+
+class TestGaleria:
+    async def test_el_profesional_arma_su_galeria(
+        self, client: httpx.AsyncClient, app: FastAPI
+    ) -> None:
+        admin = await _admin(client, app)
+        pro = await _professional(client, admin, "laura@correo.com")
+        url = f"{API}/professionals/me/gallery"
+
+        ids = []
+        for n in range(3):
+            added = await client.post(
+                url, json={"url": _photo(n), "caption": f"Foto {n}"}, headers=_bearer(pro)
+            )
+            assert added.status_code == 201, added.text
+            ids.append(added.json()["id"])
+
+        captioned = await client.patch(
+            f"{url}/{ids[1]}", json={"caption": "  Consultorio   nuevo "}, headers=_bearer(pro)
+        )
+        assert captioned.json()["caption"] == "Consultorio nuevo"
+
+        reordered = await client.put(
+            f"{url}/order", json={"ids": [ids[2], ids[0], ids[1]]}, headers=_bearer(pro)
+        )
+        assert reordered.status_code == 200, reordered.text
+        assert [i["id"] for i in reordered.json()] == [ids[2], ids[0], ids[1]]
+
+        assert (await client.delete(f"{url}/{ids[0]}", headers=_bearer(pro))).status_code == 204
+        mine = (await client.get(url, headers=_bearer(pro))).json()
+        assert [i["id"] for i in mine] == [ids[2], ids[1]]
+
+    async def test_solo_fotos_subidas_a_la_app(
+        self, client: httpx.AsyncClient, app: FastAPI
+    ) -> None:
+        admin = await _admin(client, app)
+        pro = await _professional(client, admin, "laura@correo.com")
+
+        for bad in ("https://otro-sitio.com/foto.jpg", "/api/v1/uploads/images/../../etc.png"):
+            response = await client.post(
+                f"{API}/professionals/me/gallery", json={"url": bad}, headers=_bearer(pro)
+            )
+            assert response.status_code == 422
+            assert response.json()["code"] == "invalid_gallery_image"
+
+    async def test_el_orden_debe_incluir_todas_las_fotos(
+        self, client: httpx.AsyncClient, app: FastAPI
+    ) -> None:
+        admin = await _admin(client, app)
+        pro = await _professional(client, admin, "laura@correo.com")
+        url = f"{API}/professionals/me/gallery"
+        a = (await client.post(url, json={"url": _photo(1)}, headers=_bearer(pro))).json()["id"]
+        await client.post(url, json={"url": _photo(2)}, headers=_bearer(pro))
+
+        for ids in ([a], [a, a]):
+            response = await client.put(f"{url}/order", json={"ids": ids}, headers=_bearer(pro))
+            assert response.status_code == 422
+            assert response.json()["code"] == "invalid_gallery_order"
+
+    async def test_no_toca_fotos_de_otro_profesional(
+        self, client: httpx.AsyncClient, app: FastAPI
+    ) -> None:
+        admin = await _admin(client, app)
+        laura = await _professional(client, admin, "laura@correo.com")
+        carlos = await _professional(client, admin, "carlos@correo.com")
+        url = f"{API}/professionals/me/gallery"
+        image_id = (await client.post(url, json={"url": _photo(1)}, headers=_bearer(laura))).json()[
+            "id"
+        ]
+
+        edit = await client.patch(
+            f"{url}/{image_id}", json={"caption": "mía"}, headers=_bearer(carlos)
+        )
+        remove = await client.delete(f"{url}/{image_id}", headers=_bearer(carlos))
+
+        assert edit.status_code == 404 and remove.status_code == 404
+
+    async def test_los_clientes_ven_la_galeria(
+        self, client: httpx.AsyncClient, app: FastAPI
+    ) -> None:
+        admin = await _admin(client, app)
+        pro = await _professional(client, admin, "laura@correo.com")
+        user_id = (
+            await client.put(f"{API}/professionals/me", json=PROFILE, headers=_bearer(pro))
+        ).json()["user_id"]
+        await client.post(
+            f"{API}/professionals/me/gallery",
+            json={"url": _photo(1), "caption": "Mi consultorio"},
+            headers=_bearer(pro),
+        )
+
+        public = await client.get(f"{API}/professionals/{user_id}/gallery")
+
+        assert public.status_code == 200
+        assert [i["caption"] for i in public.json()] == ["Mi consultorio"]

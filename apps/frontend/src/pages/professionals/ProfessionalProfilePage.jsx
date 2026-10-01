@@ -1,5 +1,6 @@
 import { ArrowLeft, BadgeCheck, Briefcase, Clock, Home, Mail, MapPin, MessageCircle, Monitor, Phone, Star, User } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import Lightbox from '../../components/common/Lightbox.jsx';
 import PageShell from '../../components/layout/PageShell.jsx';
 import { professionalsApi } from '../../features/professionals/api.js';
 import { CATEGORY_ICONS, DEFAULT_SUBCATEGORY_COLOR, useProfessionalCategories } from '../../features/professionals/categories.js';
@@ -15,6 +16,9 @@ const MODES = [
   { key: 'online', label: 'Virtual', Icon: Monitor },
 ];
 
+// Cuántas fotos se ven en la página; la última muestra "+N" si hay más (todas se ven en el visor).
+const GALLERY_PREVIEW = 6;
+
 const mapsLink = (address) => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${address}, Neira, Caldas`)}`;
 
 /**
@@ -26,6 +30,8 @@ export default function ProfessionalProfilePage({ user, onLogout }) {
   const [id] = useState(() => new URLSearchParams(window.location.search).get('id'));
   const [state, setState] = useState({ profile: null, loading: true, error: '' });
   const [services, setServices] = useState([]);
+  const [gallery, setGallery] = useState([]);
+  const [viewer, setViewer] = useState(null);
   const { categories } = useProfessionalCategories();
 
   useEffect(() => {
@@ -38,6 +44,10 @@ export default function ProfessionalProfilePage({ user, onLogout }) {
     professionalsApi
       .services(id)
       .then((list) => alive && setServices(list.map(serviceFromApi)))
+      .catch(() => {});
+    professionalsApi
+      .gallery(id)
+      .then((list) => alive && setGallery(list))
       .catch(() => {});
     return () => {
       alive = false;
@@ -132,6 +142,25 @@ export default function ProfessionalProfilePage({ user, onLogout }) {
                 </section>
               )}
 
+              {gallery.length > 0 && (
+                <section className="pp-card">
+                  <h2>Galería</h2>
+                  <ul className={`pp-gallery n${Math.min(gallery.length, GALLERY_PREVIEW)}`}>
+                    {gallery.slice(0, GALLERY_PREVIEW).map((image, n) => {
+                      const more = n === GALLERY_PREVIEW - 1 ? gallery.length - GALLERY_PREVIEW : 0;
+                      return (
+                        <li key={image.id}>
+                          <button type="button" aria-label={more > 0 ? `Ver las ${gallery.length} fotos` : `Ver foto ${n + 1}${image.caption ? `: ${image.caption}` : ''}`} onClick={() => setViewer(n)}>
+                            <img src={image.url} alt="" loading="lazy" />
+                            {more > 0 && <span className="pp-gallery-more">+{more}</span>}
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </section>
+              )}
+
               {services.length > 0 && (
                 <section className="pp-card">
                   <h2>Servicios</h2>
@@ -195,6 +224,7 @@ export default function ProfessionalProfilePage({ user, onLogout }) {
           </div>
         )}
       </div>
+      {viewer !== null && <Lightbox images={gallery} index={viewer} onIndex={setViewer} onClose={() => setViewer(null)} />}
     </PageShell>
   );
 }

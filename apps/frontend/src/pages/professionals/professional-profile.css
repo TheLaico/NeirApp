@@ -64,3 +64,28 @@
 .pp-service-price { flex: none; font-family: 'Montserrat', sans-serif; font-size: 15.5px; font-weight: 800; color: #0f5238; white-space: nowrap; }
 .pp-service-price.quote { font-family: inherit; font-size: 13.5px; font-weight: 700; color: #8a6510; }
 .pp-services-note { margin-top: 6px; font-size: 12.5px; color: var(--muted, #6b7a70); }
+
+/* Galería: la primera foto grande y el resto en mosaico */
+.pp-gallery { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-auto-rows: 120px; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.pp-gallery li:first-child { grid-column: span 2; grid-row: span 2; }
+.pp-gallery.n1 { grid-template-columns: 1fr; grid-auto-rows: 260px; }
+.pp-gallery.n1 li:first-child { grid-column: auto; grid-row: auto; }
+.pp-gallery.n2 { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: 200px; }
+.pp-gallery.n2 li:first-child { grid-column: auto; grid-row: auto; }
+.pp-gallery.n3 { grid-template-columns: 2fr 1fr; grid-auto-rows: 130px; }
+.pp-gallery.n3 li:first-child { grid-column: auto; grid-row: span 2; }
+.pp-gallery.n4 { grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-rows: 120px; }
+.pp-gallery.n4 li:first-child { grid-column: span 3; grid-row: span 2; }
+.pp-gallery.n6 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.pp-gallery button { position: relative; display: block; width: 100%; height: 100%; padding: 0; overflow: hidden; border: 0; border-radius: 12px; background: #eef0e6; cursor: zoom-in; }
+.pp-gallery img { width: 100%; height: 100%; object-fit: cover; transition: transform .3s; }
+.pp-gallery button:hover img { transform: scale(1.05); }
+.pp-gallery-more { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(12, 24, 18, .55); color: #fff; font-family: 'Montserrat', sans-serif; font-size: 24px; font-weight: 800; }
+@media (max-width: 640px) {
+  .pp-gallery, .pp-gallery.n3, .pp-gallery.n4, .pp-gallery.n6 { grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-rows: 90px; gap: 6px; }
+  .pp-gallery li:first-child, .pp-gallery.n3 li:first-child, .pp-gallery.n4 li:first-child { grid-column: span 3; grid-row: span 2; }
+  .pp-gallery.n3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .pp-gallery.n3 li:first-child { grid-column: span 2; }
+  .pp-gallery.n1 { grid-auto-rows: 200px; }
+  .pp-gallery.n2 { grid-auto-rows: 140px; }
+}

@@ -3,6 +3,7 @@ from uuid import UUID
 
 from neirapp.modules.professionals.domain.categories import Category, Subcategory
 from neirapp.modules.professionals.domain.entities import ProfessionalProfile
+from neirapp.modules.professionals.domain.gallery import GalleryImage
 from neirapp.modules.professionals.domain.services import ProfessionalService
 
 
@@ -52,3 +53,19 @@ class ServiceRepository(Protocol):
         ...
 
     async def delete(self, service_id: UUID) -> None: ...
+
+
+class GalleryRepository(Protocol):
+    async def list_for(self, user_id: UUID) -> list[GalleryImage]:
+        """Las fotos de un profesional, en su orden (la primera es la portada)."""
+        ...
+
+    async def get(self, image_id: UUID) -> GalleryImage | None: ...
+
+    async def save(self, image: GalleryImage) -> None:
+        """Crea o reemplaza la foto."""
+        ...
+
+    async def set_positions(self, positions: dict[UUID, int]) -> None: ...
+
+    async def delete(self, image_id: UUID) -> None: ...

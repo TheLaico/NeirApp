@@ -1,13 +1,15 @@
 import { Construction, ShieldCheck, UserRound } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import slogan from '../../assets/slogan.png';
 import PanelDesktop from '../../components/panel/PanelDesktop.jsx';
 import PanelMobile from '../../components/panel/PanelMobile.jsx';
 import { canAccessAdmin } from '../../config/roles.js';
+import { professionalsApi } from '../../features/professionals/api.js';
 import { displayName, useProfessionalProfile } from '../../features/professionals/profile.js';
 import { useNavigate } from '../../lib/router.jsx';
 import { useMediaQuery } from '../../lib/useMediaQuery.js';
 import '../admin/admin.css';
+import GalleryView from './GalleryView.jsx';
 import HomeView from './HomeView.jsx';
 import ProfileView from './ProfileView.jsx';
 import ServicesView from './ServicesView.jsx';
@@ -28,7 +30,16 @@ export default function ProfessionalPage({ user, onLogout }) {
   const mine = useProfessionalProfile(user);
   const profile = mine.profile;
   const name = (profile && displayName(profile)) || user.name;
-  const activity = { ...SAMPLE_ACTIVITY, hasDescription: (profile?.description.trim().length ?? 0) >= 80 };
+  // Cuántas fotos tiene en la galería: el inicio le sugiere agregar si no tiene ninguna.
+  const [images, setImages] = useState(null);
+  useEffect(() => {
+    if (!allowed) return;
+    professionalsApi
+      .myGallery()
+      .then((list) => setImages(list.length))
+      .catch(() => {});
+  }, [allowed]);
+  const activity = { ...SAMPLE_ACTIVITY, hasDescription: (profile?.description.trim().length ?? 0) >= 80, images: images ?? 0 };
 
   let content;
   if (!allowed) {
@@ -57,6 +68,8 @@ export default function ProfessionalPage({ user, onLogout }) {
     );
   } else if (view === 'home') {
     content = <HomeView name={name} activity={activity} onGo={setView} onPlans={() => navigate('/profesional/planes')} />;
+  } else if (view === 'gallery') {
+    content = <GalleryView onCountChange={setImages} />;
   } else if (view === 'services') {
     content = <ServicesView onGoProfile={() => setView('profile')} />;
   } else if (view === 'profile') {

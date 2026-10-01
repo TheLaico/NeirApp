@@ -8,6 +8,14 @@ from neirapp.modules.professionals.application.categories import (
     ListCategories,
     SetSubcategoryColor,
 )
+from neirapp.modules.professionals.application.gallery import (
+    AddGalleryImage,
+    DeleteGalleryImage,
+    ListMyGallery,
+    ListPublicGallery,
+    ReorderGallery,
+    SetGalleryCaption,
+)
 from neirapp.modules.professionals.application.profiles import (
     GetMyProfile,
     GetPublicProfile,
@@ -42,3 +50,9 @@ class ProfessionalsApp:
     update_service: UpdateService
     delete_service: DeleteService
     list_public_services: ListPublicServices
+    list_my_gallery: ListMyGallery
+    add_gallery_image: AddGalleryImage
+    set_gallery_caption: SetGalleryCaption
+    reorder_gallery: ReorderGallery
+    delete_gallery_image: DeleteGalleryImage
+    list_public_gallery: ListPublicGallery

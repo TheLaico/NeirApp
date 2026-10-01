@@ -1,0 +1,19 @@
+/* Visor de fotos a pantalla completa (galería de profesionales). */
+.lb { position: fixed; inset: 0; z-index: 2000; display: flex; align-items: center; justify-content: center; padding: 56px 72px; background: rgba(12, 24, 18, .92); animation: lb-in .18s ease-out; }
+@keyframes lb-in { from { opacity: 0; } }
+.lb-figure { display: flex; flex-direction: column; align-items: center; gap: 12px; max-width: 100%; max-height: 100%; margin: 0; }
+.lb-figure img { max-width: 100%; max-height: calc(100dvh - 160px); border-radius: 12px; object-fit: contain; box-shadow: 0 12px 40px rgba(0, 0, 0, .45); }
+.lb-figure figcaption { display: flex; flex-direction: column; align-items: center; gap: 4px; color: #fff; text-align: center; }
+.lb-figure figcaption span { font-size: 16px; font-weight: 600; }
+.lb-figure figcaption small { font-size: 13px; color: rgba(255, 255, 255, .7); }
+.lb-btn { position: absolute; display: grid; place-items: center; width: 48px; height: 48px; border: 0; border-radius: 50%; background: rgba(255, 255, 255, .14); color: #fff; cursor: pointer; transition: background .15s; }
+.lb-btn:hover { background: rgba(255, 255, 255, .28); }
+.lb-close { top: 14px; right: 14px; }
+.lb-prev { left: 14px; top: 50%; transform: translateY(-50%); }
+.lb-next { right: 14px; top: 50%; transform: translateY(-50%); }
+@media (max-width: 640px) {
+  .lb { padding: 64px 10px 80px; }
+  .lb-prev, .lb-next { top: auto; bottom: 16px; transform: none; }
+  .lb-prev { left: calc(50% - 60px); }
+  .lb-next { right: calc(50% - 60px); }
+}
