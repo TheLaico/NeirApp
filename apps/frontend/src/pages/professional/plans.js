@@ -8,8 +8,8 @@ export const PLANS = [
     icon: 'Sprout',
     tag: 'Plan 1',
     name: 'Básico',
-    price: 0,
-    period: 'Gratis para siempre',
+    price: 14900,
+    period: 'al mes',
     summary: 'Lo esencial para que la comunidad de Neira sepa que estás aquí.',
     includesTitle: 'Incluye:',
     features: [
@@ -18,7 +18,7 @@ export const PLANS = [
       'Botones de llamada y WhatsApp',
       'Hasta 3 imágenes en tu galería',
     ],
-    audience: 'Ideal si estás empezando o quieres probar NeirAPP sin costo.',
+    audience: 'Ideal si estás empezando y quieres darte a conocer en Neira.',
   },
   {
     id: 'pro',
