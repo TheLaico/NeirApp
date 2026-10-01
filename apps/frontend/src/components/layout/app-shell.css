@@ -1,0 +1,552 @@
+/* Vista principal: barra lateral, buscador, mapa y panel de tiendas cercanas. */
+
+.app {
+  --g: #0f5238;
+  --ink: #23342b;
+  --muted: #6b7a70;
+  --card: rgba(255, 255, 255, .62);
+  --line: #dfe4d2;
+  --side-w: 244px;
+  --foot-w: clamp(460px, 36vw, 580px); /* ancho del paisaje sobrepuesto */
+
+  position: relative;
+  display: grid;
+  --panel-w: 420px;
+  grid-template-columns: var(--side-w) minmax(0, 1fr) var(--panel-w);
+  transition: grid-template-columns .35s ease;
+  grid-template-rows: 127px minmax(0, 1fr);
+  height: 100dvh;
+  min-height: 640px;
+  background: #f6f5e7;
+  color: var(--ink);
+  overflow: hidden;
+}
+
+/* Imagen decorativa opcional detrás del encabezado y el buscador (la usa el inicio; ver AppShell `heroImage`).
+   Va en un `::before` para no meterse en la cuadrícula: pinta detrás de todo lo demás (logo, navbar, contenido). */
+.app.has-hero {
+  /* Con solo 224px, `cover` recortaba casi la mitad de arriba de la imagen (donde están las puntas de las
+     montañas y de las hojas): las hojas quedaban cortadas, el logo no caía entre las montañas, y ahí mismo
+     terminaban los íconos de la derecha, encima de las hojas y casi invisibles. Con más alto se ve la
+     imagen casi completa (montañas, sol y hojas de las dos esquinas) sin recortar tanto por arriba. */
+  --hero-h: 340px; /* alto del área con la imagen: encabezado (127px) + una franja para el buscador */
+}
+.app.has-hero::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: var(--side-w);
+  right: 0;
+  height: var(--hero-h);
+  /* La imagen trae su propio espacio en blanco en la base: "bottom" hace que esa franja quede siempre
+     pegada al borde inferior de esta caja, que es donde cae el buscador. */
+  background: var(--hero-image) center bottom / cover no-repeat;
+  z-index: 0;
+  pointer-events: none;
+}
+/* En el mapa, solo en pantallas grandes: el navbar ya lleva buscador y categorías propias, y esa imagen
+   de fondo competía con ellos. En vez de seguir ajustando el recorte, se quita del todo aquí; en
+   celular/tableta se queda igual que en el inicio. (El logo ya no se centra en esta página —MapPage ya
+   no pasa `centerLogo`—, así que se queda en su posición de siempre, columna propia arriba de la barra
+   lateral, igual que en el resto de páginas como "Mis pedidos".) */
+@media (min-width: 1024px) {
+  .app.map-view.has-hero::before { display: none; }
+}
+
+/* ---------- Encabezado ---------- */
+.logo-cell { grid-column: 1; grid-row: 1; display: grid; place-items: center; padding: 8px 18px; }
+.logo-cell img { width: 100%; max-height: 108px; object-fit: contain; }
+
+/* Logo centrado en el navbar (ver AppShell `centerLogo`): la celda pasa a ocupar la misma columna que
+   `.topbar` (contenido + panel, sin la barra lateral), así que su centrado ("place-items: center") cae
+   en el centro real de la barra superior visible, no en el centro de toda la fila (que quedaría corrido
+   a la izquierda por el ancho de la barra lateral). Necesita quedar por encima de la imagen decorativa
+   del buscador (`.has-hero::before`, z-index 0) pero por debajo de los íconos de la derecha (`.top-right`,
+   z-index 6), que van en su propia columna y no se tocan con el logo.
+   Solo en escritorio/tableta (hay cuadrícula): en móvil el logo sigue arriba a la izquierda, como en el
+   mockup, así que esta regla no debe pisar el `position: absolute` que lo superpone ahí (ver más abajo).
+   `pointer-events: none`: la caja del logo ahora es tan ancha como el navbar (aunque el dibujo se vea
+   angosto, `object-fit: contain` no encoge la caja); sin esto, en páginas con buscador y categorías en el
+   navbar (como el mapa) esa caja les tapaba los clics aunque se vieran normales. El logo no es un enlace,
+   así que no pierde nada al dejar de recibir clics.
+   Desde 1280px (no 1024px): entre esos anchos la barra lateral y el panel se angostan (`--side-w`/`--panel-w`
+   más chicos, ver el breakpoint de abajo), así que el centro real de la barra queda más a la izquierda —
+   justo donde caen el buscador y las categorías del mapa. El logo centrado terminaba encima de ellos,
+   tapándolos. Por debajo de 1280px el logo se queda en su columna angosta de siempre, sin centrar. */
+@media (min-width: 1280px) {
+  .app.center-logo .logo-cell { grid-column: 2 / -1; position: relative; z-index: 5; transform: translateX(40px); pointer-events: none; }
+}
+
+.topbar {
+  grid-column: 2 / -1;
+  grid-row: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  padding: 0 24px 0 8px;
+}
+
+.search {
+  flex: 0 1 440px;
+  min-width: 200px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 18px;
+  border: 1.5px solid #c3cdb8;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, .55);
+  color: var(--g);
+}
+.search:focus-within { border-color: var(--g); box-shadow: 0 0 0 3px rgba(15, 82, 56, .12); }
+.search input {
+  flex: 1; min-width: 0; border: 0; outline: 0; background: transparent;
+  font: inherit; font-size: 15px; color: var(--ink);
+}
+.search input::placeholder { color: var(--muted); }
+
+.cats { display: flex; gap: 12px; }
+.cat {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  min-width: 64px; padding: 2px 6px; border: 0; background: none;
+  font: inherit; font-size: 14px; color: var(--ink); cursor: pointer; border-radius: 12px;
+}
+.cat-dot {
+  width: 50px; height: 50px; border-radius: 50%; display: grid; place-items: center;
+  box-shadow: 0 3px 8px rgba(35, 52, 43, .18); transition: transform .15s, box-shadow .15s;
+}
+.cat:hover .cat-dot { transform: translateY(-2px); }
+.cat.active .cat-dot { box-shadow: 0 0 0 3px #f6f5e7, 0 0 0 5px var(--g); }
+.cat.active { font-weight: 700; }
+
+.top-right { display: flex; align-items: center; gap: 8px; margin-left: auto; margin-right: 96px; z-index: 6; }
+.user-menu { position: relative; }
+.user-btn {
+  display: flex; align-items: center; gap: 12px; padding: 4px 8px 4px 4px;
+  border: 0; border-radius: 999px; background: none; font: inherit; color: var(--ink); cursor: pointer;
+}
+.user-btn:hover { background: rgba(15, 82, 56, .07); }
+.user-avatar {
+  width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center;
+  background: #dfe6d6; color: var(--g);
+}
+.user-text { display: flex; flex-direction: column; text-align: left; line-height: 1.25; }
+.user-text small { font-size: 13px; color: var(--muted); }
+.user-text strong { font-size: 16px; font-weight: 700; }
+.user-dropdown {
+  position: absolute; right: 0; top: calc(100% + 8px); width: 230px; padding: 6px;
+  background: #fff; border: 1px solid var(--line); border-radius: 16px;
+  box-shadow: 0 12px 32px rgba(32, 39, 36, .14);
+}
+.user-dropdown-head { padding: 10px 12px; margin-bottom: 6px; border-bottom: 1px solid var(--line); }
+.user-dropdown-head p { font-size: 14px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.user-dropdown-head small { display: block; font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; }
+.user-dropdown button {
+  width: 100%; display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 0;
+  background: none; border-radius: 12px; font: inherit; font-size: 14px; color: var(--ink); cursor: pointer;
+}
+.user-dropdown button:hover { background: #e6efdc; }
+
+.top-leaves { position: absolute; top: 0; right: 0; width: 130px; height: 110px; pointer-events: none; overflow: hidden; }
+
+/* ---------- Barra lateral ---------- */
+.sidebar {
+  grid-column: 1; grid-row: 2; position: relative; display: flex; flex-direction: column;
+  min-height: 0; overflow: hidden;
+}
+.sidebar nav { display: flex; flex-direction: column; gap: 6px; padding-top: 12px; }
+.side-item {
+  display: flex; align-items: center; gap: 16px; height: 48px; margin-right: 18px; padding: 0 20px 0 32px;
+  border: 0; border-radius: 0 999px 999px 0; background: none;
+  font: inherit; font-size: 16px; font-weight: 500; color: var(--ink); cursor: pointer; text-align: left;
+  transition: background .15s;
+}
+.side-item:hover { background: rgba(15, 82, 56, .08); }
+.side-item.active { background: var(--g); color: #fff; font-weight: 700; }
+.side-item .side-ico { position: relative; display: grid; place-items: center; color: var(--g); }
+.side-item.active .side-ico { color: #fff; }
+.side-badge.cart-count { display: none; } /* en computador el carrito ya está arriba */
+.side-badge {
+  position: absolute; top: -7px; right: -8px; min-width: 17px; height: 17px; padding: 0 4px;
+  border-radius: 999px; background: #e8531c; color: #fff; font-size: 11px; font-weight: 700;
+  display: grid; place-items: center; line-height: 1;
+}
+
+/* Ocupa el espacio entre el último botón y el paisaje, con el eslogan centrado en él. */
+.side-art { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; padding: 0 0 calc(var(--foot-w) * .36); }
+.side-slogan { display: block; width: 92%; max-height: 100%; object-fit: contain; transform: rotate(-2deg); }
+
+/* Paisaje sobrepuesto en la esquina inferior izquierda: sale de la barra lateral y cubre parte del mapa.
+   `fixed` (no `absolute`) a propósito: `.app` tiene `overflow: hidden` para la cuadrícula, y con `absolute`
+   ese mismo overflow recortaba la imagen justo donde se sale de la barra lateral. `fixed` la ancla al
+   viewport, así que ya no la recorta ningún contenedor y queda por encima de toda la página. */
+.home-footer {
+  position: fixed; z-index: 10; left: calc(var(--foot-w) * -.4); bottom: calc(var(--foot-w) * -.035); /* compensa el margen transparente inferior de la imagen */ width: var(--foot-w); height: auto;
+  pointer-events: none;
+}
+
+/* ---------- Mapa ---------- */
+.map-cell { grid-column: 2; grid-row: 2; min-width: 0; min-height: 0; padding: 0 0 20px; }
+.map-card {
+  position: relative; height: 100%; overflow: hidden; border-radius: 20px 20px 20px 20px;
+  background: #e8efdc; box-shadow: 0 2px 10px rgba(35, 52, 43, .08);
+}
+.map-card .map { position: absolute; inset: 0; }
+.map-card .leaf { z-index: 1; }
+
+.map-hint {
+  position: absolute; z-index: 5; display: flex; align-items: center; gap: 14px;
+  background: rgba(255, 255, 255, .95); border-radius: 16px;
+  box-shadow: 0 6px 22px rgba(35, 52, 43, .1);
+}
+.map-hint {
+  /* Dentro del mapa: el borde del mapa la recorta, así parece salir desde donde termina la barra lateral. */
+  top: 20px; left: 20px; padding: 16px 44px 16px 20px; max-width: 350px;
+  border-left: 4px solid var(--g);
+  animation: hint-in .7s cubic-bezier(.22, .9, .3, 1) both;
+}
+@keyframes hint-in {
+  from { transform: translateX(calc(-100% - 20px)); }
+  to { transform: none; }
+}
+.hint-icon {
+  flex: none; width: 46px; height: 46px; display: grid; place-items: center;
+  border-radius: 50%; background: #dcebdd; box-shadow: 0 0 0 4px rgba(220, 235, 221, .5);
+}
+.hint-close {
+  position: absolute; top: 8px; right: 8px; width: 26px; height: 26px; display: grid; place-items: center;
+  border: 0; border-radius: 50%; background: none; color: var(--muted); cursor: pointer;
+}
+.hint-close:hover { background: #e6efdc; color: var(--g); }
+/* Tras entrar, el aviso se puede arrastrar a la izquierda para descartarlo. */
+.map-hint { touch-action: pan-y; cursor: grab; }
+.map-hint.ready { animation: none; transition: transform .2s ease, opacity .2s ease; }
+.map-hint.ready.dragging { transition: none; cursor: grabbing; }
+@media (prefers-reduced-motion: reduce) { .map-hint { animation: none; } }
+.map-hint strong { display: block; font-family: 'Montserrat', sans-serif; font-size: 17px; font-weight: 700; color: var(--g); }
+.map-hint p { margin-top: 3px; font-size: 13px; line-height: 1.4; color: var(--muted); }
+
+.map-controls { position: absolute; z-index: 5; top: 28px; right: 20px; display: flex; flex-direction: column; gap: 12px; }
+/* Zoom, centrar, relieve y edificios quedan guardados detrás de este botón; `.map-controls-toggle` usa el
+   mismo look translúcido que ya tenían esos botones, para que no se note el cambio. */
+.map-controls-toggle {
+  width: 46px; height: 46px; display: grid; place-items: center; border: 0; border-radius: 14px;
+  background: rgba(255, 255, 255, .32); box-shadow: 0 4px 14px rgba(35, 52, 43, .16);
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  color: var(--g); cursor: pointer; transition: background .15s;
+}
+.map-controls-toggle:hover { background: rgba(238, 243, 228, .55); }
+.map-controls-toggle.on { background: rgba(15, 82, 56, .52); color: #fff; }
+.map-controls-panel {
+  display: flex; flex-direction: column; gap: 12px; transform-origin: top right;
+  animation: map-controls-in .16s ease both;
+}
+@keyframes map-controls-in {
+  from { opacity: 0; transform: scale(.92) translateY(-6px); }
+  to { opacity: 1; transform: none; }
+}
+.map-zoom, .map-locate {
+  /* Translúcidos (se adivina el mapa detrás) pero sin llegar a ser transparentes */
+  background: rgba(255, 255, 255, .32); border-radius: 14px; box-shadow: 0 4px 14px rgba(35, 52, 43, .16); overflow: hidden;
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+}
+.map-zoom button, .map-locate {
+  display: grid; place-items: center; width: 46px; height: 46px; border: 0; background: none;
+  color: var(--g); cursor: pointer;
+}
+.map-zoom button + button { border-top: 1px solid rgba(35, 52, 43, .1); }
+.map-zoom button:hover, .map-locate:hover { background: rgba(238, 243, 228, .55); }
+.map-locate.on { background: rgba(15, 82, 56, .52); color: #fff; }
+.map-locate.on:hover { background: rgba(15, 82, 56, .68); }
+
+/* Solo en celular/tableta (ver MapPage): ahí el mapa ocupa toda la pantalla y captura el arrastre para
+   paneo/zoom, así que deslizar hacia abajo no baja la página. Mismo look translúcido que los demás
+   controles del mapa; el rebote sutil sugiere que sirve para bajar. */
+.map-scroll-down {
+  display: none; position: absolute; z-index: 5; bottom: 20px; right: 20px; width: 46px; height: 46px;
+  border: 0; border-radius: 14px; background: rgba(255, 255, 255, .32); box-shadow: 0 4px 14px rgba(35, 52, 43, .16);
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  color: var(--g); cursor: pointer; transition: background .15s;
+  animation: map-scroll-down-bounce 1.6s ease-in-out infinite;
+}
+.map-scroll-down:hover { background: rgba(238, 243, 228, .55); }
+@keyframes map-scroll-down-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(4px); }
+}
+@media (max-width: 1023px) {
+  .map-scroll-down { display: grid; place-items: center; }
+}
+
+
+
+/* ---------- Panel de tiendas ---------- */
+.panel { grid-column: 3; grid-row: 2; min-height: 0; overflow-y: auto; padding: 4px 22px 20px 22px; }
+.panel-head { display: flex; align-items: center; justify-content: space-between; margin: 18px 4px 14px; }
+.panel-head h2 { font-family: 'Montserrat', sans-serif; font-size: 20px; font-weight: 700; color: var(--g); }
+.see-all {
+  display: flex; align-items: center; gap: 6px; border: 0; background: none; font: inherit;
+  font-size: 14px; color: var(--ink); cursor: pointer;
+}
+.see-all:hover { color: var(--g); }
+
+.store-list { display: flex; flex-direction: column; gap: 12px; }
+.store-card {
+  display: flex; align-items: center; gap: 16px; width: 100%; padding: 12px 16px 12px 14px;
+  border: 1px solid var(--line); border-radius: 14px; background: var(--card);
+  font: inherit; color: var(--ink); text-align: left; cursor: pointer;
+  transition: box-shadow .15s, transform .15s;
+}
+.store-card:hover { box-shadow: 0 6px 18px rgba(35, 52, 43, .12); transform: translateY(-1px); }
+.store-ico { flex: none; width: 72px; height: 72px; border-radius: 50%; display: grid; place-items: center; }
+.store-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.store-info strong { font-size: 16px; font-weight: 700; color: #14392a; }
+.store-cat { font-size: 14px; color: var(--muted); }
+.store-meta { display: flex; align-items: center; gap: 20px; margin-top: 3px; font-size: 13.5px; }
+.store-meta span { display: inline-flex; align-items: center; gap: 6px; }
+.store-meta span + span { color: var(--g); }
+.store-chev { flex: none; color: var(--ink); }
+.panel-empty, .panel-note { margin-top: 10px; text-align: center; font-size: 13px; color: var(--muted); }
+
+.promo-banner {
+  display: block; width: 100%; margin-top: 14px; padding: 0; border: 0; background: none; cursor: pointer;
+  border-radius: 16px; transition: transform .18s, filter .18s;
+}
+.promo-banner img { display: block; width: 100%; height: auto; }
+.promo-banner:hover { transform: translateY(-2px); filter: drop-shadow(0 8px 14px rgba(35, 52, 43, .18)); }
+.promo-banner:active { transform: scale(.985); }
+.promo-banner:focus-visible { outline: 3px solid rgba(15, 82, 56, .4); outline-offset: 2px; }
+
+/* Computador: banner fijo (no se desplaza con la lista) en la esquina inferior derecha de la pantalla. */
+@media (min-width: 1024px) {
+  .app { --banner-w: clamp(420px, 32vw, 520px); }
+  .promo-banner {
+    position: fixed; z-index: 12; right: calc(var(--banner-w) * -.02); bottom: calc(var(--banner-w) * -.03);
+    width: var(--banner-w); margin: 0;
+  }
+  /* La lista termina por encima del banner para que su última tarjeta no quede tapada. */
+  .panel.has-banner { padding-bottom: calc(var(--banner-w) * .44); }
+}
+
+
+/* ---------- Detalle de tienda: el mapa cede ancho al panel ---------- */
+.app.has-store { --panel-w: 600px; }
+
+.store-detail { display: flex; flex-direction: column; }
+.detail-head { display: flex; align-items: center; gap: 14px; margin: 16px 0 14px; }
+.back-btn {
+  flex: none; width: 44px; height: 44px; display: grid; place-items: center; border: 1px solid var(--line);
+  border-radius: 50%; background: var(--card); color: var(--g); cursor: pointer;
+  transition: background .15s, transform .15s;
+}
+.back-btn:hover { background: #e6efdc; transform: translateX(-2px); }
+.detail-title { min-width: 0; }
+.detail-title h2 {
+  font-family: 'Montserrat', sans-serif; font-size: 21px; font-weight: 700; color: var(--g);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.detail-title p { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; margin-top: 3px; font-size: 13.5px; color: var(--muted); }
+.detail-title p span { display: inline-flex; align-items: center; gap: 5px; }
+.open-tag { padding: 1px 10px; border-radius: 999px; background: #dcebdd; color: var(--g); font-weight: 700; font-size: 12px; }
+.open-tag.closed { background: #f3ddd3; color: #b6533c; }
+/* Buscador de la tienda: fondo blanco sólido y borde marcado para que se distinga sobre el fondo de hojas. */
+.detail-search {
+  flex: none; width: 100%; margin-bottom: 16px; height: 50px;
+  background: #fff; border: 2px solid #8fa886; border-radius: 16px; box-shadow: 0 3px 10px rgba(35, 52, 43, .12);
+}
+.detail-search:focus-within { border-color: var(--g); box-shadow: 0 0 0 4px rgba(15, 82, 56, .16); }
+.detail-search input { font-size: 16px; font-weight: 600; }
+.detail-search input::placeholder { color: #5c6d62; font-weight: 500; }
+.detail-search svg { flex: none; stroke-width: 2.4; }
+/* Celular y tableta: el buscador queda fijo arriba mientras se recorren los productos, más alto y fácil de tocar. */
+@media (max-width: 1023px) {
+  /* `.store-detail` para ganarle a la regla `.search { order: 2; flex: 1 1 100% }` del buscador de la barra superior, que también le llegaba. */
+  .store-detail .detail-search { order: 0; flex: none; position: sticky; top: 8px; z-index: 12; height: 58px; padding: 0 20px; border-radius: 18px; box-shadow: 0 6px 18px rgba(35, 52, 43, .2); }
+  .detail-search input { font-size: 17px; }
+  .detail-search svg { width: 24px; height: 24px; }
+}
+
+.product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 14px; }
+.product {
+  aspect-ratio: 1; display: flex; flex-direction: column; overflow: hidden;
+  border: 1px solid var(--line); border-radius: 16px; background: var(--card);
+  transition: box-shadow .15s, transform .15s;
+}
+.product:hover { box-shadow: 0 8px 20px rgba(35, 52, 43, .13); transform: translateY(-2px); }
+.product-art {
+  position: relative; flex: 1; min-height: 0; display: grid; place-items: center;
+  background: linear-gradient(145deg, var(--tint), color-mix(in srgb, var(--tint) 62%, #000));
+}
+.product-art img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.product-badge {
+  position: absolute; top: 8px; left: 8px; padding: 2px 9px; border-radius: 999px;
+  background: rgba(35, 52, 43, .85); color: #fff; font-size: 11.5px; font-weight: 700;
+}
+.product.sold-out .product-art { filter: grayscale(.7); opacity: .75; }
+.product-info { padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 3px; }
+.product-info strong {
+  font-size: 14px; line-height: 1.25; color: #14392a;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.product-price { font-size: 15px; font-weight: 800; color: var(--g); }
+
+/* ---------- Tablet y móvil ---------- */
+@media (max-width: 1279px) {
+  .app { --side-w: 220px; --panel-w: 340px; }
+  .app.has-store { --panel-w: 460px; }
+  .top-right { margin-right: 70px; }
+  .user-text { display: none; }
+  .cats { gap: 4px; }
+}
+
+@media (max-width: 1023px) {
+  .home-footer { display: none; }
+  .side-badge.cart-count { display: grid; }
+  .app, .app.has-store { --panel-w: auto; }
+  /* El encabezado es más bajo (sin sidebar a un lado) y no hay columna que saltar. */
+  .app.has-hero { --hero-h: 150px; }
+  .app.has-hero::before { left: 0; }
+  .app {
+    display: block;
+    height: auto;
+    min-height: 100dvh;
+    overflow: visible;
+    /* El espacio de sobra deja lugar a `.sidebar` de abajo, que puede llevar además su propio
+       `env(safe-area-inset-bottom)` en celulares con indicador de inicio (ver más abajo). */
+    padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .logo-cell { position: absolute; z-index: 7; top: 6px; left: 12px; padding: 0; display: block; }
+  .logo-cell img { width: auto; height: 62px; }
+
+  /* Logo centrado también en móvil (ver AppShell `centerLogo`): no puede ir en el centro exacto de la
+     pantalla porque ahí choca con los íconos de la derecha (mapa + carrito + perfil, ~175px reservados
+     contra el borde derecho); se centra en el espacio que queda libre a la izquierda de esa franja. */
+  .app.center-logo .logo-cell { left: 50%; transform: translateX(calc(-50% - 48px)); }
+
+  .topbar { display: flex; flex-wrap: wrap; gap: 12px; padding: 10px 16px 12px; }
+  .top-right { order: 1; margin: 0 0 0 auto; height: 56px; }
+  /* El nombre completo ("Bienvenido, Nombre") se queda oculto, igual que en tableta: con el logo, el
+     mapa y el carrito ya no cabe sin encimarse con el logo. Queda solo el avatar. */
+  .user-btn { padding-right: 10px; background: rgba(240, 238, 220, .96); border: 1px solid #d9dfc9; box-shadow: 0 2px 8px rgba(35, 52, 43, .1); }
+  .user-btn:hover { background: #e8ecd6; }
+  .top-leaves { width: 90px; height: 70px; }
+  .search { order: 2; flex: 1 1 100%; }
+  .cats { order: 3; flex: 1 1 100%; overflow-x: auto; justify-content: space-between; padding-bottom: 4px; }
+  .cat { flex: 1 0 64px; }
+
+  .map-cell { padding: 0 12px; }
+  .map-card { height: 62dvh; min-height: 380px; border-radius: 20px; }
+  .panel { overflow: visible; padding: 8px 12px 20px; }
+
+  .sidebar {
+    position: fixed; z-index: 30; left: 0; right: 0; bottom: 0;
+    height: calc(68px + env(safe-area-inset-bottom, 0px)); padding-bottom: env(safe-area-inset-bottom, 0px);
+    overflow: visible;
+    background: rgba(255, 255, 255, .96); border-top: 1px solid var(--line);
+    box-shadow: 0 -4px 16px rgba(35, 52, 43, .08);
+    /* Capa propia de composición: el mapa (WebGL, con relieve 3D) a veces pinta por encima de elementos
+       `fixed` en algunos navegadores de celular a pesar del z-index; esto obliga a que la barra siempre
+       quede en su propia capa, por encima. */
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+  }
+  .sidebar nav { flex-direction: row; gap: 0; padding: 0; overflow-x: auto; width: 100%; }
+  .side-art { display: none; }
+  .side-item {
+    flex: 1 0 74px; flex-direction: column; justify-content: center; gap: 3px; height: 68px;
+    margin: 0; padding: 0 4px; border-radius: 0; font-size: 11px; text-align: center;
+  }
+  .side-item.active { background: none; color: var(--g); font-weight: 700; box-shadow: inset 0 3px 0 var(--g); }
+  .side-item.active .side-ico { color: var(--g); }
+}
+
+@media (max-width: 640px) {
+  .map-hint { top: 12px; left: 12px; right: 70px; max-width: none; padding: 12px 40px 12px 14px; }
+  .map-hint p br { display: none; }
+  .map-controls { top: 14px; right: 12px; }
+  .store-ico { width: 60px; height: 60px; }
+  .store-ico svg { width: 28px; height: 28px; }
+  .user-text small { display: none; }
+  .user-text strong { font-size: 14px; }
+}
+
+.map-btn {
+  width: 48px; height: 48px; display: grid; place-items: center; border: 0;
+  border-radius: 50%; background: none; color: var(--g); cursor: pointer; transition: background .15s;
+}
+.map-btn:hover { background: rgba(15, 82, 56, .09); }
+
+/* ---------- Carrito ---------- */
+.cart-btn {
+  position: relative; width: 48px; height: 48px; display: grid; place-items: center; border: 0;
+  border-radius: 50%; background: none; color: var(--g); cursor: pointer; transition: background .15s;
+}
+.cart-btn:hover { background: rgba(15, 82, 56, .09); }
+.cart-badge {
+  position: absolute; top: 2px; right: 0; min-width: 20px; height: 20px; padding: 0 5px; display: grid; place-items: center;
+  border-radius: 999px; background: #e8531c; color: #fff; font-size: 11.5px; font-weight: 700; line-height: 1;
+  box-shadow: 0 0 0 2px #f6f5e7;
+}
+
+.stepper {
+  display: inline-flex; align-items: center; gap: 6px; padding: 3px; border: 1px solid var(--line);
+  border-radius: 999px; background: #fff; box-shadow: 0 3px 10px rgba(35, 52, 43, .18);
+}
+.stepper button {
+  width: 28px; height: 28px; display: grid; place-items: center; border: 0; border-radius: 50%;
+  background: none; color: var(--g); cursor: pointer;
+}
+.stepper button:hover:not(:disabled) { background: #e6efdc; }
+.stepper button:disabled { opacity: .35; cursor: default; }
+.stepper span { min-width: 18px; text-align: center; font-size: 14px; font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; }
+
+.product-add { position: absolute; right: 8px; bottom: 8px; z-index: 1; }
+.add-btn {
+  width: 38px; height: 38px; display: grid; place-items: center; border: 0; border-radius: 50%;
+  background: #fff; color: var(--g); cursor: pointer; box-shadow: 0 3px 10px rgba(35, 52, 43, .25);
+  transition: transform .15s, background .15s, color .15s;
+}
+.add-btn:hover { transform: scale(1.08); background: var(--g); color: #fff; }
+
+.drawer-root { position: fixed; inset: 0; z-index: 60; }
+.drawer-backdrop { position: absolute; inset: 0; background: rgba(20, 35, 27, .38); animation: fade-in .25s ease both; }
+.drawer {
+  position: absolute; top: 0; right: 0; bottom: 0; width: min(440px, 100%); display: flex; flex-direction: column;
+  background: #f9f8ee; color: var(--ink); box-shadow: -12px 0 40px rgba(20, 35, 27, .2);
+  animation: drawer-in .3s cubic-bezier(.22, .9, .3, 1) both;
+}
+@keyframes drawer-in { from { transform: translateX(100%); } to { transform: none; } }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+.drawer-head { display: flex; align-items: center; justify-content: space-between; padding: 20px 22px 14px; border-bottom: 1px solid var(--line); }
+.drawer-head h2 { display: flex; align-items: center; gap: 10px; font-family: 'Montserrat', sans-serif; font-size: 21px; font-weight: 700; color: var(--g); }
+.drawer-count { min-width: 26px; height: 26px; padding: 0 8px; display: grid; place-items: center; border-radius: 999px; background: #dcebdd; font-size: 13px; }
+.drawer-close { width: 40px; height: 40px; display: grid; place-items: center; border: 0; border-radius: 50%; background: none; color: var(--ink); cursor: pointer; }
+.drawer-close:hover { background: #e6efdc; }
+.drawer-empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; color: var(--muted); text-align: center; padding: 24px; }
+.drawer-empty svg { color: #b9c9b3; }
+.drawer-link { border: 0; background: none; font: inherit; font-weight: 700; color: var(--g); cursor: pointer; text-decoration: underline; }
+.drawer-body { flex: 1; overflow-y: auto; padding: 14px 22px; display: flex; flex-direction: column; gap: 16px; }
+.cart-group { border: 1px solid var(--line); border-radius: 16px; background: var(--card); padding: 14px 16px 6px; }
+.cart-group h3 { font-family: 'Montserrat', sans-serif; font-size: 15px; font-weight: 700; color: var(--g); margin-bottom: 4px; }
+.cart-group ul { list-style: none; padding: 0; }
+.cart-line { display: grid; grid-template-columns: 1fr auto auto; grid-template-areas: 'info step remove' 'info total remove'; align-items: center; gap: 2px 12px; padding: 12px 0; border-top: 1px solid var(--line); }
+.cart-line:first-child { border-top: 0; }
+.cart-line-info { grid-area: info; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.cart-line-info strong { font-size: 14.5px; color: #14392a; }
+.cart-line-info span { font-size: 13px; color: var(--muted); }
+.cart-line .stepper { grid-area: step; box-shadow: none; }
+.cart-line-total { grid-area: total; text-align: right; font-size: 14px; font-weight: 800; color: var(--g); }
+.cart-remove { grid-area: remove; width: 34px; height: 34px; display: grid; place-items: center; border: 0; border-radius: 50%; background: none; color: var(--muted); cursor: pointer; }
+.cart-remove:hover { background: #f3ddd3; color: #b6533c; }
+.drawer-foot { padding: 16px 22px 22px; border-top: 1px solid var(--line); background: #fff; display: flex; flex-direction: column; gap: 10px; }
+.cart-total { display: flex; align-items: center; justify-content: space-between; }
+.cart-total span { font-family: 'Montserrat', sans-serif; font-size: 17px; font-weight: 700; }
+.cart-total strong { font-family: 'Montserrat', sans-serif; font-size: 22px; font-weight: 800; color: var(--g); }
+.drawer-clear { border: 0; background: none; font: inherit; font-size: 13.5px; color: var(--muted); cursor: pointer; text-decoration: underline; align-self: center; }
+.drawer-clear:hover { color: #b6533c; }
+@media (prefers-reduced-motion: reduce) { .drawer, .drawer-backdrop { animation: none; } }
+
+.role-tag { display: inline-block; margin-top: 6px; padding: 2px 10px; border-radius: 999px; background: #dcebdd; color: var(--g); font-size: 11.5px; font-weight: 700; }

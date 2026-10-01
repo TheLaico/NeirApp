@@ -1,0 +1,120 @@
+/* Marco de escritorio de los paneles (comerciante y repartidor): mismo diseño que la app de clientes (.app). */
+
+.app.md { --panel-w: clamp(350px, 30vw, 440px); --bad: #b6533c; }
+
+/* Perfil: la tienda es el avatar */
+.md-avatar { background: var(--g); color: #fff; overflow: hidden; }
+.md-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.md-bell { color: var(--g); }
+.md .side-item { gap: 18px; }
+.md .side-item .side-ico svg { transition: transform .15s; }
+.md .side-item:hover .side-ico svg { transform: scale(1.12); }
+.md .side-item.active .side-ico svg { transform: none; }
+.md-sep { align-self: center; width: 1px; height: 38px; margin: 0 10px; background: var(--line); }
+
+/* Columnas */
+.md-main { grid-column: 2; grid-row: 2; min-width: 0; min-height: 0; overflow-y: auto; padding: 0 22px 34px 12px; display: flex; flex-direction: column; gap: 18px; }
+.md-right { grid-column: 3; grid-row: 2; min-height: 0; overflow-y: auto; padding: 0 26px 210px 4px; display: flex; flex-direction: column; gap: 18px; }
+.md-page { display: flex; flex-direction: column; gap: 14px; max-width: 780px; }
+
+/* Tarjetas */
+.md-card { flex: none; padding: 18px 20px; border: 1px solid var(--line); border-radius: 18px; background: rgba(255, 255, 255, .72); box-shadow: 0 1px 3px rgba(35, 52, 43, .05); }
+.md-card-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+.md-card-head h2 { display: flex; align-items: center; gap: 8px; font-family: 'Montserrat', sans-serif; font-size: 19px; font-weight: 700; color: #14392a; }
+.md-more { display: inline-flex; align-items: center; gap: 3px; border: 0; background: none; font: inherit; font-size: 13.5px; font-weight: 600; color: var(--ink); cursor: pointer; }
+.md-more:hover { color: var(--g); }
+.md-empty { padding: 14px 4px; font-size: 14.5px; color: var(--muted); }
+.md-date { display: inline-flex; align-items: center; gap: 6px; font-size: 13.5px; color: var(--muted); }
+
+/* Círculos de color con icono */
+.md-bubble { flex: none; display: grid; place-items: center; width: 56px; height: 56px; border-radius: 50%; color: #fff; background: var(--g); }
+.md-bubble.sm { width: 44px; height: 44px; }
+.md-bubble.gold, .md-bubble.pay { background: #e8a92c; }
+.md-bubble.route { background: #1d7da8; }
+.md-bubble.bad { background: #b6533c; }
+.md-bubble.review { background: #d1462a; }
+
+/* Banner de la tienda */
+.md-hero { position: relative; flex: none; min-height: 190px; overflow: hidden; border: 1px solid var(--line); border-radius: 20px; background: linear-gradient(100deg, #f4f1e1 0%, #e9efd9 62%, #dde8c9 100%); }
+.md-hero-img { position: absolute; top: 0; right: 0; width: 58%; height: 100%; object-fit: cover; -webkit-mask-image: linear-gradient(to right, transparent 0, #000 42%); mask-image: linear-gradient(to right, transparent 0, #000 42%); }
+.md-hero-art { position: absolute; inset: 0; pointer-events: none; }
+.md-hero-art .leaf { position: absolute; }
+.md-hero-body { position: relative; display: flex; align-items: center; gap: 24px; padding: 30px 34px; }
+.md-hero-logo { flex: none; display: grid; place-items: center; width: 108px; height: 108px; border: 6px solid #fff; border-radius: 50%; box-shadow: 0 6px 18px rgba(35, 52, 43, .2); }
+.md-hero h1 { font-family: 'Montserrat', sans-serif; font-size: clamp(26px, 2.6vw, 36px); font-weight: 800; line-height: 1.1; color: #14392a; }
+.md-hero-place { display: flex; align-items: center; gap: 6px; margin-top: 8px; font-size: 17px; }
+.md-hero-place svg { color: var(--g); }
+.md-hero-tag { display: flex; align-items: center; gap: 6px; margin-top: 12px; max-width: 420px; font-size: 16px; color: var(--g); }
+.md-hero-cta { margin-top: 12px; font-size: 14px; color: var(--g); }
+
+/* Pedidos recientes */
+.md-orders { list-style: none; margin: 0; padding: 0; }
+.md-orders li + li { border-top: 1px solid var(--line); }
+.md-orders button { display: grid; grid-template-columns: auto minmax(0, 1fr) auto 84px 18px; align-items: center; gap: 14px; width: 100%; padding: 12px 6px; border: 0; background: none; font: inherit; color: var(--ink); text-align: left; cursor: pointer; }
+.md-orders button:hover { background: rgba(15, 82, 56, .05); }
+.md-order-main { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.md-order-main strong { font-size: 16px; }
+.md-order-main span { font-size: 14.5px; color: var(--muted); }
+.md-order-main i { font-style: normal; margin: 0 4px; }
+.md-orders time { font-size: 14px; color: var(--muted); }
+.md-chev { flex: none; color: var(--muted); }
+.md-pill { padding: 4px 14px; border-radius: 999px; background: #e4ecdf; color: #4d5a50; font-size: 13.5px; font-weight: 700; white-space: nowrap; }
+.md-pill.new { background: #fde3d3; color: #b1400f; }
+.md-pill.prep { background: #fbeec8; color: #8a6510; }
+.md-pill.ready { background: #dfe9ef; color: #3f6478; }
+.md-pill.done { background: var(--g); color: #fff; }
+.md-pill.bad { background: #f5dcd3; color: #8c3520; }
+
+/* Productos */
+.md-products { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; list-style: none; margin: 0; padding: 0; }
+.md-products button { display: flex; flex-direction: column; gap: 4px; width: 100%; padding: 6px 6px 12px; border: 1px solid var(--line); border-radius: 14px; background: #fff; font: inherit; color: var(--ink); text-align: left; cursor: pointer; transition: box-shadow .15s; }
+.md-products button:hover { box-shadow: 0 6px 16px rgba(35, 52, 43, .12); }
+.md-product-img { position: relative; display: grid; place-items: center; aspect-ratio: 4 / 3; overflow: hidden; margin-bottom: 6px; border-radius: 10px; background: #f1f4e6; font-size: 13px; color: var(--muted); }
+.md-product-img img { width: 100%; height: 100%; object-fit: cover; }
+.md-dots { position: absolute; top: 6px; right: 6px; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: #fff; color: var(--ink); box-shadow: 0 1px 4px rgba(0, 0, 0, .2); }
+.md-products strong { padding: 0 6px; font-size: 15px; }
+.md-price { padding: 0 6px; font-size: 15px; font-weight: 700; }
+.md-products small { display: flex; align-items: center; gap: 6px; padding: 0 6px; font-size: 13px; color: var(--g); }
+.md-products small i { width: 8px; height: 8px; border-radius: 50%; background: var(--g); }
+.md-products small.off { color: #9b3d28; }
+.md-products small.off i { background: #b6533c; }
+
+/* Resumen de hoy */
+.md-today { display: grid; grid-template-columns: repeat(3, 1fr); }
+.md-today > div { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px 4px; text-align: center; }
+.md-today > div + div { border-left: 1px solid var(--line); }
+.md-today .md-bubble { margin-bottom: 6px; }
+.md-today strong { font-family: 'Montserrat', sans-serif; font-size: clamp(18px, 1.7vw, 24px); color: #14392a; }
+.md-today small { font-size: 13px; color: var(--muted); }
+
+/* Notificaciones */
+.md-notices { list-style: none; margin: 0; padding: 0; }
+.md-notices li + li { border-top: 1px solid var(--line); }
+.md-notices button { display: flex; align-items: center; gap: 14px; width: 100%; padding: 12px 4px; border: 0; background: none; font: inherit; color: var(--ink); text-align: left; cursor: pointer; }
+.md-notices button:hover { background: rgba(15, 82, 56, .05); }
+.md-notice-text { display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 2px; }
+.md-notice-text strong { font-size: 15.5px; }
+.md-notice-text span { font-size: 14px; line-height: 1.35; color: var(--muted); }
+.md-notice-text small { font-size: 12.5px; color: var(--muted); }
+
+
+/* Tarjeta promocional: imagen completa (con su texto y botón), fija en la esquina inferior derecha */
+.md-promo { position: absolute; z-index: 12; right: 18px; bottom: 6px; width: min(380px, calc(var(--panel-w) - 40px)); padding: 0; border: 0; background: none; cursor: pointer; transition: transform .2s; }
+.md-promo:hover { transform: translateY(-3px); }
+.md-promo:focus-visible { outline: 3px solid var(--g); outline-offset: 2px; border-radius: 18px; }
+.md-promo img { display: block; width: 100%; height: auto; filter: drop-shadow(0 6px 14px rgba(35, 52, 43, .18)); }
+
+/* Las pantallas de gestión (pedidos, productos…) reutilizan los estilos del celular dentro del panel */
+.md .cr-card { background: rgba(255, 255, 255, .78); }
+.md .cr-btn { width: auto; min-width: 150px; }
+.md .cr-actions .cr-btn { flex: 1; width: auto; }
+.md .cr-toast { top: 4px; }
+
+/* Pantallas de poca altura: menos avisos y una tarjeta promocional más chica, para que no se encimen */
+@media (max-height: 860px) {
+  .md-notices li:nth-child(n + 3) { display: none; }
+  .md-notice-text small { display: none; }
+  .md-notices button { padding: 8px 4px; }
+  .md-promo:not(.inline) { width: min(310px, calc(var(--panel-w) - 40px)); }
+  .md-right { padding-bottom: 170px; }
+}

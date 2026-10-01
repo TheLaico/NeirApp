@@ -1,0 +1,85 @@
+/* ---------- Ambiente del mapa: luz, nubes, papel y créditos ---------- */
+.ambience { position: absolute; inset: 0; z-index: 2; pointer-events: none; overflow: hidden; }
+.ambience > div { position: absolute; }
+
+/* Luz según la hora */
+.amb-light { inset: 0; transition: background 2s; }
+.phase-dawn .amb-light { background: linear-gradient(160deg, rgba(255, 196, 140, .22), rgba(255, 220, 190, .06)); }
+.phase-golden .amb-light { background: linear-gradient(200deg, rgba(255, 176, 84, .22), rgba(255, 210, 140, .06)); }
+.phase-dusk .amb-light { background: linear-gradient(200deg, rgba(120, 88, 160, .26), rgba(240, 150, 110, .14)); }
+.phase-night .amb-light { background: linear-gradient(200deg, rgba(40, 66, 110, .1), rgba(50, 80, 120, .05)); }
+
+/* Sombras de nubes que cruzan despacio */
+.amb-cloud {
+  width: 46%; height: 26%; border-radius: 50%; background: rgba(23, 73, 54, .06); filter: blur(34px);
+  animation: cloud-drift 140s linear infinite;
+}
+.amb-cloud.c1 { top: 8%; left: -50%; }
+.amb-cloud.c2 { top: 46%; left: -60%; width: 38%; animation-duration: 190s; animation-delay: -70s; }
+.amb-cloud.c3 { top: 74%; left: -45%; width: 52%; height: 22%; animation-duration: 230s; animation-delay: -130s; }
+@keyframes cloud-drift { to { transform: translateX(300%); } }
+
+/* Viñeta suave, como una lámina de atlas */
+.amb-vignette { inset: 0; background: radial-gradient(ellipse at center, transparent 68%, rgba(23, 73, 54, .10) 100%); }
+
+/* Grano de papel */
+.amb-grain {
+  inset: 0; opacity: .12; mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .18  0 0 0 0 .34  0 0 0 0 .26  0 0 0 .5 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+
+.amb-credits {
+  position: absolute; left: 50%; bottom: 6px; transform: translateX(-50%); white-space: nowrap;
+  font-size: 10.5px; color: rgba(38, 60, 44, .72); text-shadow: 0 0 4px #f7f3e4, 0 0 4px #f7f3e4;
+}
+
+@media (prefers-reduced-motion: reduce) { .amb-cloud { animation: none; } }
+@media (max-width: 640px) { .amb-credits { font-size: 9px; white-space: normal; text-align: center; width: 90%; } }
+
+/* ---------- Marcadores de sitios y nombres ---------- */
+.lm { pointer-events: none; }
+.lm-label {
+  display: block; margin-top: 2px; font: 700 11.5px/1.2 'Nunito', sans-serif; color: #174936; white-space: nowrap; text-align: center;
+  text-shadow: 0 0 3px #f8f5ed, 0 0 3px #f8f5ed, 0 0 3px #f8f5ed, 0 0 6px #f8f5ed;
+}
+.lm-poi { display: flex; flex-direction: column; align-items: center; }
+.lm-dot { width: 26px; height: 26px; display: grid; place-items: center; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 2px 6px rgba(35, 52, 43, .3); }
+
+.lm-church-wrap { display: flex; flex-direction: column; align-items: center; filter: drop-shadow(0 3px 3px rgba(35, 52, 43, .3)); }
+.lm-church-wrap svg { display: block; }
+.lm-church { font-size: 12px; color: #174936; }
+
+.lm-town { font: 400 34px/1 'Kaushan Script', cursive; /* el tamaño real lo pone landmarks.jsx según el zoom */ color: #174936; letter-spacing: .01em; white-space: nowrap; text-shadow: 0 0 6px #f7f3e4, 0 0 6px #f7f3e4, 0 0 10px #f7f3e4, 0 2px 0 rgba(255, 255, 255, .6); }
+.lm-place { font: italic 600 12.5px/1.2 'Nunito', sans-serif; color: #236B4A; white-space: nowrap; letter-spacing: .03em; text-shadow: 0 0 4px #f8f5ed, 0 0 4px #f8f5ed, 0 0 4px #f8f5ed; }
+.lm-peak { display: flex; align-items: center; gap: 4px; font: 700 11.5px/1 'Nunito', sans-serif; color: #5B6B4F; white-space: nowrap; text-shadow: 0 0 4px #f8f5ed, 0 0 4px #f8f5ed, 0 0 4px #f8f5ed; }
+.lm-peak svg { color: #7A8A6A; }
+
+/* Nombre de la tienda junto a su puntero (visible desde cierto zoom) */
+.store-label {
+  display: none; position: absolute; left: calc(100% + 4px); top: 5px; max-width: 110px; padding: 1px 7px;
+  border-radius: 999px; background: rgba(255, 255, 255, .36); color: #174936; box-shadow: 0 1px 3px rgba(35, 52, 43, .1);
+  -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px);
+  font: 700 10px/1.35 'Nunito', sans-serif; text-shadow: 0 0 3px rgba(255, 255, 255, .9), 0 0 3px rgba(255, 255, 255, .9); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none;
+}
+.store-labels .store-label { display: block; }
+
+/* Modo noche (ver NeiraMap `theme`): todas estas etiquetas son HTML, no capas de MapLibre, así que
+   `applyMapTheme` no las toca. El halo blanco de arriba se ve como un borrón sobre el mapa oscuro; aquí
+   se invierte (halo oscuro + texto claro), igual que en el resto del mapa. */
+.map-theme-night .amb-credits { color: rgba(215, 224, 209, .75); text-shadow: 0 0 4px #0a0f0b, 0 0 4px #0a0f0b; }
+.map-theme-night .lm-label,
+.map-theme-night .lm-church {
+  color: #F3ECDB;
+  text-shadow: 0 0 3px #0a0f0b, 0 0 3px #0a0f0b, 0 0 3px #0a0f0b, 0 0 6px #0a0f0b;
+}
+.map-theme-night .lm-town {
+  color: #F3ECDB;
+  text-shadow: 0 0 6px #0a0f0b, 0 0 6px #0a0f0b, 0 0 10px #0a0f0b, 0 2px 0 rgba(0, 0, 0, .5);
+}
+.map-theme-night .lm-place { color: #CFE8D4; text-shadow: 0 0 4px #0a0f0b, 0 0 4px #0a0f0b, 0 0 4px #0a0f0b; }
+.map-theme-night .lm-peak { color: #C9D6C2; text-shadow: 0 0 4px #0a0f0b, 0 0 4px #0a0f0b, 0 0 4px #0a0f0b; }
+.map-theme-night .lm-peak svg { color: #8FA285; }
+.map-theme-night .store-label {
+  background: rgba(10, 15, 11, .55); color: #F3ECDB; box-shadow: 0 1px 3px rgba(0, 0, 0, .4);
+  text-shadow: 0 0 3px rgba(0, 0, 0, .9), 0 0 3px rgba(0, 0, 0, .9);
+}

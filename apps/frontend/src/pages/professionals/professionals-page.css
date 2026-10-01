@@ -1,0 +1,142 @@
+/* Página "Profesionales": portada con búsqueda y categorías (todavía sin directorio real detrás). */
+
+.pros-page {
+  /* PageShell recibe `flush` (fondo/paisaje de borde a borde); sin relleno propio hay que darle el suyo aquí. */
+  padding: 4px 20px 32px;
+}
+/* `flush` también le quita el scroll a `.page-cell` (pensado para páginas que manejan el suyo); esta
+   página es más alta que la pantalla, así que sin esto el contenido de abajo queda cortado. */
+@media (min-width: 1024px) {
+  .pros-page { height: 100%; overflow-y: auto; }
+}
+
+/* ---------- Portada ---------- */
+/* Texto e imagen lado a lado (no la imagen sangrando detrás del texto): más simple y se acomoda solo
+   al reducirse, sin recortes raros ni superposición con nada. */
+.pros-hero {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  overflow: hidden;
+  margin-top: 12px;
+  padding: 32px;
+  border-radius: 24px;
+  background: linear-gradient(100deg, #eef2df 45%, #dce8d0 100%);
+}
+/* En el HTML la imagen va primero (así queda arriba del texto cuando se apilan en celular sin tocar el
+   orden de las etiquetas); acá se reordena para que en el layout de lado a lado quede a la derecha. */
+.pros-hero-text { order: 1; flex: 1 1 280px; min-width: 0; max-width: 520px; }
+.pros-hero-art { order: 2; flex: 1 1 260px; width: 100%; max-width: 320px; height: auto; object-fit: contain; pointer-events: none; }
+.pros-hero h1 {
+  font-family: 'Montserrat', sans-serif; font-size: 34px; font-weight: 800; color: var(--g); line-height: 1.15;
+}
+.pros-tagline { margin-top: 8px; font-size: 17px; font-weight: 700; color: var(--ink); }
+.pros-desc { margin-top: 10px; font-size: 14.5px; line-height: 1.5; color: var(--muted); }
+
+/* Buscador aparte, debajo de la portada del todo (no se superpone ni compite por ancho con la imagen). */
+.pros-search {
+  display: flex; align-items: center; gap: 10px;
+  margin: 20px auto 24px; height: 54px; max-width: 640px;
+  padding: 0 8px 0 20px; border-radius: 999px; background: #fff; color: var(--g);
+  box-shadow: 0 8px 22px rgba(35, 52, 43, 0.12);
+}
+.pros-search:focus-within { box-shadow: 0 0 0 3px rgba(15, 82, 56, 0.18), 0 8px 22px rgba(35, 52, 43, 0.12); }
+.pros-search input {
+  flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; font: inherit; font-size: 15px; color: var(--ink);
+}
+.pros-search input::placeholder { color: var(--muted); }
+.pros-search button {
+  flex: none; width: 42px; height: 42px; display: grid; place-items: center; border: 0; border-radius: 50%;
+  background: var(--g); color: #fff; cursor: pointer; transition: filter 0.15s;
+}
+.pros-search button:hover { filter: brightness(1.1); }
+
+.pros-search-mic {
+  background: transparent !important; color: var(--muted) !important;
+  transition: background 0.15s, color 0.15s !important;
+}
+.pros-search-mic:hover { background: rgba(15, 82, 56, 0.08) !important; color: var(--g) !important; }
+.pros-search-mic.is-listening {
+  background: #d64545 !important; color: #fff !important; animation: pros-mic-pulse 1.2s ease-in-out infinite;
+}
+@keyframes pros-mic-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(214, 69, 69, 0.45); }
+  50% { box-shadow: 0 0 0 8px rgba(214, 69, 69, 0); }
+}
+
+/* ---------- Categorías ---------- */
+.pros-categories { margin-top: 30px; }
+.pros-categories h2 { font-family: 'Montserrat', sans-serif; font-size: 18px; font-weight: 700; color: var(--ink); margin-bottom: 14px; }
+
+.pros-cat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px; }
+.pros-cat {
+  display: flex; align-items: center; gap: 12px; padding: 14px 16px; border: 1px solid var(--line);
+  border-radius: 16px; background: #fff; font: inherit; font-size: 14.5px; font-weight: 700; color: var(--ink);
+  text-align: left; cursor: pointer; transition: box-shadow 0.15s, transform 0.15s;
+  animation: pros-cat-in 0.25s ease both;
+}
+.pros-cat:hover { box-shadow: 0 6px 16px rgba(35, 52, 43, 0.1); transform: translateY(-1px); }
+.pros-cat-ico { flex: none; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; }
+.pros-cat-empty { margin-top: 14px; font-size: 14px; color: var(--muted); }
+
+@keyframes pros-cat-in {
+  from { opacity: 0; transform: translateY(6px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ---------- Pantallas grandes ---------- */
+@media (min-width: 1280px) {
+  .pros-cat-grid { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 18px; }
+  .pros-cat { padding: 18px 20px; font-size: 16px; border-radius: 18px; }
+  .pros-cat-ico { width: 48px; height: 48px; }
+}
+
+/* ---------- Tablet y móvil ---------- */
+@media (max-width: 1023px) {
+  .pros-page { padding: 4px 14px 28px; }
+  .pros-hero { padding: 24px; gap: 20px; }
+  .pros-hero-art { max-width: 220px; }
+  .pros-hero h1 { font-size: 26px; }
+  .pros-search { margin: 16px 0 24px; max-width: none; }
+}
+
+/* Sigue lado a lado hasta el celular más angosto (nunca se apila): la imagen solo se va achicando. */
+@media (max-width: 640px) {
+  .pros-hero { padding: 18px; gap: 12px; }
+  .pros-hero-art { flex: 0 0 84px; max-width: 84px; }
+  .pros-hero h1 { font-size: 19px; }
+  .pros-tagline { font-size: 13.5px; }
+  .pros-desc { font-size: 12px; line-height: 1.4; }
+  .pros-search { margin: 14px 0 20px; }
+}
+
+@media (max-width: 480px) {
+  .pros-cat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* ---------- Ventana emergente de subcategorías ---------- */
+.pros-sub-backdrop {
+  position: fixed; inset: 0; z-index: 80; display: grid; place-items: center; padding: 16px;
+  background: rgba(20, 40, 30, .55);
+}
+.pros-sub-modal {
+  position: relative; width: min(420px, 100%); max-height: min(560px, 84vh); overflow-y: auto;
+  padding: 28px 24px 24px; border-radius: 22px; background: #fbfaef; box-shadow: 0 24px 60px rgba(0, 0, 0, .28);
+}
+.pros-sub-close {
+  position: absolute; top: 14px; right: 14px; display: grid; place-items: center; width: 38px; height: 38px;
+  border: 0; border-radius: 50%; background: #e9eddc; color: #14392a; cursor: pointer;
+}
+.pros-sub-head { display: flex; align-items: center; gap: 12px; padding-right: 30px; }
+.pros-sub-head h2 { font-family: 'Montserrat', sans-serif; font-size: 19px; color: #14392a; }
+.pros-sub-empty { margin-top: 16px; font-size: 14px; color: var(--muted); }
+.pros-sub-list { list-style: none; padding: 0; margin-top: 18px; display: flex; flex-direction: column; gap: 8px; }
+.pros-sub-list button {
+  width: 100%; display: flex; align-items: center; gap: 10px; padding: 12px 16px;
+  border: 1px solid var(--line); border-left: 4px solid var(--line); border-radius: 14px; background: #fff;
+  font: inherit; font-size: 14.5px; font-weight: 700; color: var(--ink); text-align: left; cursor: pointer;
+  transition: box-shadow .15s, transform .15s;
+}
+.pros-sub-list button:hover { box-shadow: 0 4px 12px rgba(35, 52, 43, .1); transform: translateY(-1px); }
+.pros-sub-dot { flex: none; width: 10px; height: 10px; border-radius: 50%; }

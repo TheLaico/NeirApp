@@ -1,0 +1,186 @@
+/* Página de inicio (resumen): buscador, categorías, acceso al mapa y tiendas destacadas. */
+
+.home-feed {
+  /* PageShell recibe `flush`: el área de contenido (.page-cell) ya no trae relleno propio, así que
+     el fondo del buscador y las tarjetas llegan de borde a borde sin necesidad de márgenes negativos. */
+  padding-bottom: 28px;
+}
+
+/* `flush` también le quita el scroll a `.page-cell` (pensado para páginas que manejan el suyo, como
+   Favoritos), pero este feed es más alto que la pantalla: sin esto, todo lo que no cabe (categorías,
+   "Apoya lo nuestro", marcas, otros servicios) queda cortado y solo se ve la card del mapa. En móvil no
+   hace falta: ahí `.page-cell.flush` ya vuelve a `overflow: visible` y desplaza la página entera. */
+@media (min-width: 1024px) {
+  .home-feed { height: 100%; overflow-y: auto; }
+}
+
+/* ---------- Buscador ---------- */
+/* La imagen (fondo-buscador.png) ya no va aquí: vive en `.app.has-hero::before` (ver app-shell.css), para
+   que se vea detrás del encabezado (logo + íconos) y no solo detrás de esta sección. La imagen trae su
+   propio espacio en blanco en la base, pensado para el buscador; `padding-top` deja esa franja libre para
+   que el buscador caiga justo ahí en vez de sobre las montañas. */
+.feed-hero {
+  position: relative;
+  padding: 26px 28px 18px;
+}
+
+.feed-search {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 56px;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 0 20px;
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: 0 8px 22px rgba(35, 52, 43, 0.14);
+  color: var(--g);
+}
+.feed-search:focus-within { box-shadow: 0 0 0 3px rgba(15, 82, 56, 0.18), 0 8px 22px rgba(35, 52, 43, 0.14); }
+.feed-search input {
+  flex: 1; min-width: 0; border: 0; outline: 0; background: transparent;
+  font: inherit; font-size: 16px; color: var(--ink);
+}
+.feed-search input::placeholder { color: var(--muted); }
+.feed-mic {
+  flex: none; width: 34px; height: 34px; display: grid; place-items: center; border: 0; border-radius: 50%;
+  background: none; color: var(--muted); cursor: pointer; transition: background .15s, color .15s;
+}
+.feed-mic:hover:not(:disabled) { background: rgba(15, 82, 56, .1); color: var(--g); }
+.feed-mic:disabled { cursor: not-allowed; }
+/* Micrófono escuchando: parpadea en rojo mientras espera lo que digas. */
+.feed-mic.listening { color: #c0392b; background: rgba(192, 57, 43, .12); animation: feed-mic-pulse 1s ease-in-out infinite; }
+@keyframes feed-mic-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+}
+
+/* Fila de categorías: la pasarela que se desliza sola (`.feed-cat-track`, ver HomePage `CatCarousel`) más
+   el botón "Más" fijo al final, que no se mueve con las demás. */
+.feed-cats-wrap { display: flex; align-items: flex-start; gap: 14px; margin-top: 18px; }
+.feed-cat-track {
+  flex: 1; min-width: 0; display: flex; gap: clamp(10px, 3vw, 26px); overflow-x: auto; overflow-y: hidden;
+  cursor: grab; -webkit-user-select: none; user-select: none; touch-action: pan-y;
+  scrollbar-width: none; -ms-overflow-style: none;
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 20px, #000 calc(100% - 20px), transparent);
+  mask-image: linear-gradient(to right, transparent, #000 20px, #000 calc(100% - 20px), transparent);
+}
+.feed-cat-track::-webkit-scrollbar { display: none; }
+.feed-cat-track:active { cursor: grabbing; }
+.feed-cat {
+  display: flex; flex-direction: column; align-items: center; gap: 6px; width: 78px; padding: 2px;
+  border: 0; background: none; font: inherit; font-size: 12.5px; font-weight: 600; color: var(--ink);
+  text-align: center; cursor: pointer;
+}
+.feed-cat-track .feed-cat { flex: none; }
+.feed-cat-static { flex: none; }
+.feed-cat-dot {
+  width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center;
+  box-shadow: 0 4px 10px rgba(35, 52, 43, 0.2); transition: transform 0.15s, box-shadow 0.15s;
+}
+.feed-cat:hover .feed-cat-dot { transform: translateY(-2px); }
+/* Burbuja fija de "Más": no representa una categoría propia, solo abre el aviso de "próximamente". */
+.feed-cat-more { background: var(--muted); }
+
+/* ---------- Ventana "todas las categorías" (ver HomePage `MoreCategoriesModal`) ---------- */
+.cats-backdrop { position: fixed; inset: 0; z-index: 80; display: grid; place-items: center; padding: 16px; background: rgba(20, 40, 30, .55); }
+.cats-modal { position: relative; width: min(460px, 100%); padding: 28px 24px 24px; border-radius: 22px; background: #fbfaef; box-shadow: 0 24px 60px rgba(0, 0, 0, .28); text-align: center; }
+.cats-modal h2 { margin: 0; font-family: 'Montserrat', sans-serif; font-size: 20px; color: #14392a; }
+.cats-close { position: absolute; top: 14px; right: 14px; display: grid; place-items: center; width: 38px; height: 38px; border: 0; border-radius: 50%; background: #e9eddc; color: #14392a; cursor: pointer; }
+/* Cuadrícula quieta: mismas burbujas que la pasarela, pero sin moverse, para elegir con calma. */
+.cats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 18px 10px; margin-top: 20px; }
+.cats-grid-item {
+  display: flex; flex-direction: column; align-items: center; gap: 6px; border: 0; background: none;
+  font: inherit; font-size: 12.5px; font-weight: 600; color: var(--ink); text-align: center; cursor: pointer;
+}
+.cats-grid-item .feed-soon { margin-top: -2px; }
+
+/* ---------- Tarjeta "Ver mapa" ---------- */
+.feed-card { display: block; width: 100%; padding: 0; border: 0; background: none; cursor: pointer; }
+.feed-map-card {
+  position: relative; margin: 18px 20px 0; width: calc(100% - 40px); border-radius: 20px; overflow: hidden;
+  box-shadow: 0 4px 16px rgba(35, 52, 43, 0.12); transition: transform 0.18s, box-shadow 0.18s;
+  /* El PNG trae un margen transparente grande (18.7% arriba, 10.1% abajo) que dejaba ver el fondo de la
+     página como espacio en blanco. Esta proporción es la del recorte real de la ilustración (sin ese
+     margen); junto con `object-fit: cover` de abajo, recorta justo ese sobrante en vez de mostrarlo. */
+  aspect-ratio: 1745 / 630;
+}
+.feed-map-card:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(35, 52, 43, 0.18); }
+.feed-map-card img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% 65%; }
+.feed-map-btn {
+  position: absolute; left: 26px; bottom: 22px; display: inline-flex; align-items: center; gap: 8px;
+  height: 44px; padding: 0 22px; border-radius: 999px; background: var(--g); color: #fff;
+  font-size: 14.5px; font-weight: 700; box-shadow: 0 4px 10px rgba(15, 82, 56, 0.35);
+  animation: feed-map-btn-pulse 1.8s ease-in-out infinite;
+}
+/* Late como un pulso para llamar la atención hacia el botón sin necesitar texto extra. */
+@keyframes feed-map-btn-pulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 4px 10px rgba(15, 82, 56, 0.35); }
+  50% { transform: scale(1.07); box-shadow: 0 6px 20px rgba(15, 82, 56, 0.55); }
+}
+
+/* ---------- "Apoya lo nuestro" (ilustración pendiente: banner-apoya-lo-nuestro.png) ---------- */
+.feed-support {
+  position: relative; overflow: hidden; margin: 18px 20px 0; padding: 24px 26px;
+  border-radius: 20px; background: linear-gradient(120deg, #123f2c, #1f6b46 65%, #2d7a3d);
+  color: #fff; text-align: center;
+}
+.feed-support strong {
+  display: inline-flex; align-items: center; gap: 8px; font-family: 'Kaushan Script', 'Montserrat', cursive;
+  font-size: 26px; font-weight: 400;
+}
+.feed-support p { margin-top: 4px; font-size: 13.5px; opacity: 0.9; }
+.feed-support .leaf { position: absolute; z-index: 0; opacity: 0.9; }
+.feed-support > div { position: relative; z-index: 1; }
+
+/* ---------- Secciones (marcas, otros servicios) ---------- */
+.feed-section { margin: 26px 20px 0; }
+.feed-section-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.feed-section h2 { font-family: 'Montserrat', sans-serif; font-size: 17px; font-weight: 700; color: var(--ink); margin-bottom: 12px; }
+.feed-section-head h2 { margin-bottom: 0; }
+.feed-see-all {
+  display: flex; align-items: center; gap: 2px; border: 0; background: none; font: inherit;
+  font-size: 13.5px; font-weight: 700; color: var(--g); cursor: pointer;
+}
+.feed-empty { padding: 10px 2px; font-size: 13.5px; color: var(--muted); }
+
+.feed-brand-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 12px; }
+.feed-brand {
+  display: flex; align-items: center; gap: 14px; padding: 14px 16px; border: 1px solid var(--line);
+  border-radius: 16px; background: var(--card); font: inherit; text-align: left; color: var(--ink);
+  cursor: pointer; transition: box-shadow 0.15s, transform 0.15s;
+}
+.feed-brand:hover { box-shadow: 0 6px 16px rgba(35, 52, 43, 0.12); transform: translateY(-1px); }
+.feed-brand-ico { flex: none; width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; }
+.feed-brand-info { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.feed-brand-info strong { font-size: 14.5px; font-weight: 700; color: #14392a; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.feed-brand-rating { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 700; color: var(--ink); }
+.feed-brand-rating.muted { color: var(--muted); font-weight: 600; }
+
+.feed-more-list { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.feed-more-item {
+  display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: 16px;
+  background: color-mix(in srgb, var(--tint) 16%, #fff); border: 1px solid color-mix(in srgb, var(--tint) 30%, var(--line));
+}
+.feed-more-ico { flex: none; width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; background: var(--tint); color: #fff; }
+.feed-more-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.feed-more-text strong { font-size: 14.5px; color: #14392a; }
+.feed-more-text span { font-size: 12.5px; color: var(--muted); }
+.feed-soon { flex: none; padding: 3px 10px; border-radius: 999px; background: rgba(255, 255, 255, 0.75); font-size: 11px; font-weight: 700; color: var(--muted); }
+
+/* ---------- Tablet y móvil ---------- */
+@media (max-width: 1023px) {
+  .home-feed { margin: 0; }
+  .feed-hero { padding: 24px 16px 16px; }
+  .feed-map-card, .feed-support, .feed-section { margin-left: 12px; margin-right: 12px; }
+  .feed-map-card { width: calc(100% - 24px); }
+  .feed-cats-wrap { margin-left: 4px; margin-right: 4px; }
+  .feed-cat-track { gap: 14px; }
+}
+
+@media (max-width: 480px) {
+  .feed-map-btn { left: 16px; bottom: 14px; height: 40px; padding: 0 16px; font-size: 13.5px; }
+  .feed-brand-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .feed-brand-info strong { font-size: 13.5px; }
+}

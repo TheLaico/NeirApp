@@ -1,0 +1,45 @@
+.live-summary { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+.live-layout { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 16px; align-items: start; }
+.live-map { position: relative; height: calc(100dvh - 250px); min-height: 420px; border-radius: 18px; overflow: hidden; border: 1px solid var(--line); background: #dfe8d3; }
+.live-map-canvas { position: absolute; inset: 0; }
+.live-empty { position: absolute; left: 50%; bottom: 18px; transform: translateX(-50%); margin: 0; padding: 8px 16px; border-radius: 999px; background: rgba(255, 255, 255, .92); font-size: 14px; font-weight: 700; color: var(--muted); box-shadow: 0 4px 14px rgba(35, 52, 43, .16); z-index: 2; }
+
+.live-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; max-height: calc(100dvh - 250px); min-height: 0; overflow-y: auto; }
+.live-item { display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px; border: 1.5px solid var(--line); border-radius: 14px; background: #fff; font: inherit; text-align: left; color: var(--ink); cursor: pointer; }
+.live-item:hover { border-color: #b9c9b3; }
+.live-item.selected { border-color: var(--g); box-shadow: 0 0 0 2px rgba(15, 82, 56, .15); }
+.live-item-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.live-item-text strong { overflow-wrap: anywhere; }
+.live-item-text small { font-size: 12.5px; color: var(--muted); }
+.live-dot { flex: none; width: 12px; height: 12px; border-radius: 50%; }
+.live-dot.free { background: #2f9d5b; }
+.live-dot.busy { background: #e8531c; }
+.live-dot.offline { background: #9aa79f; }
+
+/* Marcador del repartidor en el mapa. El elemento raíz (`.live-courier`) lo coloca MapLibre con `transform`, así que no lleva estilos
+   de escala ni transiciones (moverían el marcador al hacer zoom): el círculo visible es `.live-courier-dot`. */
+.live-courier { width: 38px; height: 38px; cursor: pointer; }
+.live-courier-dot { display: grid; place-items: center; width: 100%; height: 100%; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 3px 10px rgba(0, 0, 0, .35); transition: scale .15s; }
+.live-courier.free .live-courier-dot { background: #0f5238; }
+.live-courier.busy .live-courier-dot { background: #e8531c; }
+.live-courier.offline .live-courier-dot { background: #8b968f; opacity: .85; }
+.live-courier.selected { z-index: 5; }
+.live-courier.selected .live-courier-dot { scale: 1.25; }
+.live-courier-name { position: absolute; pointer-events: none; top: 100%; left: 50%; transform: translateX(-50%); margin-top: 3px; padding: 1px 7px; border-radius: 999px; background: rgba(255, 255, 255, .92); color: #23342b; font-size: 12px; font-weight: 800; white-space: nowrap; box-shadow: 0 1px 4px rgba(0, 0, 0, .25); }
+
+@media (max-width: 900px) {
+  .live-layout { grid-template-columns: minmax(0, 1fr); }
+  .live-map { height: 55dvh; }
+  .live-list { max-height: none; }
+}
+
+/* Tiendas y casa del repartidor elegido (mismo cuidado: la raíz la coloca MapLibre, lo visual va en el interior) */
+.live-dest { width: 34px; height: 34px; }
+.live-dest-dot { display: grid; place-items: center; width: 100%; height: 100%; border-radius: 50%; border: 3px solid #fff; color: #fff; font-size: 15px; box-shadow: 0 3px 10px rgba(0, 0, 0, .35); }
+.live-dest.store .live-dest-dot { background: #1d7da8; }
+.live-dest.store.done .live-dest-dot { background: #8b968f; }
+.live-dest.house .live-dest-dot { background: #7a3fa0; }
+.live-dest-label { position: absolute; pointer-events: none; top: 100%; left: 50%; transform: translateX(-50%); margin-top: 3px; padding: 1px 7px; border-radius: 999px; background: rgba(255, 255, 255, .94); color: #23342b; font-size: 12px; font-weight: 800; white-space: nowrap; box-shadow: 0 1px 4px rgba(0, 0, 0, .25); }
+.live-route { margin: 6px 0 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 2px; font-size: 13px; font-weight: 700; color: var(--ink); }
+.live-route .done { color: var(--muted); text-decoration: line-through; }
+.live-route .house { color: #7a3fa0; }

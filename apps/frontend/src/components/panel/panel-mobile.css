@@ -1,0 +1,83 @@
+/* Marco de celular y tableta (menos de 1100 px) de los paneles: el mismo diseño del escritorio, en una columna. */
+
+.mm { --g: #0f5238; --ink: #23342b; --muted: #6b7a70; --line: #dfe4d2; --card: rgba(255, 255, 255, .72); --bad: #b6533c; min-height: 100vh; min-height: 100dvh; background: #f6f5e7; color: var(--ink); font-family: 'Nunito', system-ui, sans-serif; }
+
+/* Barra superior */
+.mm-bar { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; gap: 4px; height: 64px; padding: 0 8px; background: rgba(246, 245, 231, .94); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); }
+.mm-logo { flex: 1; min-width: 0; height: 46px; object-fit: contain; object-position: left center; margin-left: 4px; }
+.mm-icon { position: relative; flex: none; display: grid; place-items: center; width: 44px; height: 44px; border: 0; border-radius: 12px; background: none; color: var(--g); cursor: pointer; }
+.mm-icon:hover:not(:disabled) { background: rgba(15, 82, 56, .08); }
+.mm-icon:disabled { opacity: .45; cursor: default; }
+.mm-dot { position: absolute; top: 9px; right: 9px; width: 10px; height: 10px; border-radius: 50%; background: #e8531c; box-shadow: 0 0 0 2px #f6f5e7; }
+.mm-badge { position: absolute; top: 3px; right: 1px; min-width: 18px; height: 18px; padding: 0 5px; display: grid; place-items: center; border-radius: 999px; background: #e8531c; color: #fff; font-size: 11px; font-weight: 800; line-height: 1; }
+.mm .user-menu.compact .user-btn { padding: 2px; }
+.mm .user-menu.compact .user-avatar { width: 42px; height: 42px; }
+.mm .user-dropdown { z-index: 30; width: min(260px, 80vw); }
+
+/* Buscador */
+.mm-search { display: flex; align-items: center; gap: 10px; max-width: 760px; height: 48px; margin: 12px auto 0; padding: 0 16px; border: 1.5px solid #c3cdb8; border-radius: 16px; background: rgba(255, 255, 255, .7); color: var(--g); width: calc(100% - 24px); }
+.mm-search:focus-within { border-color: var(--g); box-shadow: 0 0 0 3px rgba(15, 82, 56, .12); }
+.mm-search input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; font: inherit; font-size: 16px; color: var(--ink); }
+.mm-search input::placeholder { color: var(--muted); }
+
+/* Contenido: una columna, más ancha en tableta */
+.mm-main { display: flex; flex-direction: column; gap: 14px; max-width: 760px; margin: 0 auto; padding: 12px 12px 96px; }
+.mm-main > .md-page { max-width: none; }
+.mm-main .md-promo.inline { position: static; width: 100%; max-width: 440px; align-self: center; }
+
+/* Menú lateral que se abre con la hamburguesa */
+.mm-scrim { position: fixed; inset: 0; z-index: 1100; background: rgba(0, 0, 0, .45); }
+.mm-drawer { position: fixed; z-index: 1101; top: 0; bottom: 0; left: 0; width: min(300px, 86vw); display: flex; flex-direction: column; overflow: hidden; background: #f6f5e7; box-shadow: 8px 0 30px rgba(0, 0, 0, .3); }
+.mm-drawer-head { display: flex; align-items: center; justify-content: space-between; height: 72px; padding: 0 10px 0 16px; }
+.mm-drawer-head img { height: 54px; object-fit: contain; }
+.mm-nav { display: flex; flex-direction: column; gap: 4px; padding: 6px 0; }
+/* Botones propios (no `.side-item`): la app de clientes los convierte en barra inferior en pantallas chicas. */
+.mm-item { display: flex; flex-direction: row; align-items: center; gap: 16px; width: calc(100% - 18px); height: 50px; padding: 0 20px 0 24px; border: 0; border-radius: 0 999px 999px 0; background: none; color: var(--ink); font: inherit; font-size: 16px; font-weight: 500; text-align: left; cursor: pointer; transition: background .15s; }
+.mm-item:hover:not(:disabled) { background: rgba(15, 82, 56, .08); }
+.mm-item.active { background: var(--g); color: #fff; font-weight: 700; }
+.mm-item:disabled { opacity: .45; cursor: default; }
+.mm-ico { position: relative; display: grid; place-items: center; color: var(--g); }
+.mm-item.active .mm-ico { color: #fff; }
+.mm-item-badge { position: absolute; top: -7px; right: -9px; min-width: 17px; height: 17px; padding: 0 4px; display: grid; place-items: center; border-radius: 999px; background: #e8531c; color: #fff; font-size: 11px; font-weight: 700; line-height: 1; }
+.mm-art { position: relative; flex: 1; min-height: 0; }
+.mm-slogan { position: absolute; left: 50%; top: 18px; width: 62%; max-height: 40%; object-fit: contain; transform: translateX(-50%) rotate(-2deg); }
+.mm-footer { position: absolute; left: -22%; bottom: -3%; width: 118%; max-width: none; height: auto; pointer-events: none; }
+
+/* Las piezas del diseño de escritorio, adaptadas a pantallas pequeñas */
+@media (max-width: 1099px) {
+  .md-card { padding: 14px 14px; border-radius: 16px; }
+  .md-card-head h2 { font-size: 17px; }
+  .md-hero { min-height: 150px; border-radius: 18px; }
+  .md-hero-img { width: 100%; -webkit-mask-image: linear-gradient(to right, transparent 0, rgba(0, 0, 0, .5) 100%); mask-image: linear-gradient(to right, transparent 0, rgba(0, 0, 0, .5) 100%); }
+  .md-hero-body { gap: 14px; padding: 18px 16px; }
+  .md-hero-logo { width: 76px; height: 76px; border-width: 4px; }
+  .md-hero-logo svg { width: 34px; height: 34px; }
+  .md-hero h1 { font-size: 24px; }
+  .md-hero-place { margin-top: 4px; font-size: 15px; }
+  .md-hero-tag { margin-top: 6px; font-size: 14.5px; }
+  .md-orders button { grid-template-columns: auto minmax(0, 1fr) auto 18px; gap: 10px; }
+  .md-orders time { display: none; }
+  .md-products { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+}
+@media (max-width: 640px) {
+  .md-products { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .md-bubble { width: 46px; height: 46px; }
+  .md-bubble.sm { width: 40px; height: 40px; }
+  .md-today strong { font-size: 17px; }
+  .md-today small { font-size: 12px; }
+  .md-order-main strong { font-size: 15px; }
+  .md-order-main span { font-size: 13.5px; }
+  .md-pill { padding: 3px 10px; font-size: 12.5px; }
+  .md-card-head { flex-wrap: wrap; }
+  .md-hero-logo { width: 64px; height: 64px; }
+  .md-hero h1 { font-size: 21px; }
+}
+@media (max-width: 380px) {
+  .md-orders button { grid-template-columns: auto minmax(0, 1fr) auto; }
+  .md-orders .md-chev { display: none; }
+  .mm-logo { height: 40px; }
+}
+/* La tableta aprovecha el ancho: resumen y avisos lado a lado */
+@media (min-width: 700px) and (max-width: 1099px) {
+  .mm-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; align-items: start; }
+}

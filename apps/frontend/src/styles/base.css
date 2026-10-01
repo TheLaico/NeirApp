@@ -1,0 +1,25 @@
+/* Estilos globales: variables, reinicio y cuerpo de la página. */
+:root {
+  --bg: #eff2dd; /* verdoso claro, tomado del cielo del fondo de escritorio */
+  --green: #0f5238;
+  --orange: #d9541e;
+  --text: #2b3a33;
+  --muted: #7d8a83;
+}
+
+* { box-sizing: border-box; margin: 0; }
+
+body {
+  font-family: 'Nunito', system-ui, sans-serif;
+  background: #eceadb;
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Las páginas internas (inicio, favoritos…) ocupan todo el ancho, sin el marco de las pantallas de acceso. */
+body.is-home { padding: 0; min-height: 0; background: #F8F5ED; }
+
+/* Respeta reducción de movimiento */
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; }
+}

@@ -1,0 +1,46 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "api",
+      "runtimeExecutable": "apps/api/.venv/Scripts/python.exe",
+      "runtimeArgs": [
+        "-m",
+        "uvicorn",
+        "neirapp.main:app",
+        "--app-dir",
+        "apps/api/src",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "8000"
+      ],
+      "port": 8000
+    },
+    {
+      "name": "frontend",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--prefix",
+        "apps/frontend",
+        "--",
+        "--port",
+        "5174"
+      ],
+      "port": 5174
+    },
+    {
+      "name": "mobile-web",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "web",
+        "-w",
+        "@neirapp/mobile"
+      ],
+      "port": 8081
+    }
+  ]
+}
