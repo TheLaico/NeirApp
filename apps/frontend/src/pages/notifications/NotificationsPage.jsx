@@ -1,6 +1,8 @@
 import { Bell, BellOff, Bike, Check, CheckCircle2, Heart, Package, Sparkles, Store, X } from 'lucide-react';
 import PageShell from '../../components/layout/PageShell.jsx';
 import { useNotifications } from '../../features/notifications/NotificationsContext.jsx';
+import { SERVER_KINDS } from '../../features/notifications/kinds.js';
+import { useNavigate } from '../../lib/router.jsx';
 import { timeAgo } from '../../lib/time.js';
 import './notifications-page.css';
 
@@ -9,6 +11,7 @@ const ICONS = { welcome: Sparkles, favorite: Heart, store: Store, order: Package
 /** Página "Notificaciones". */
 export default function NotificationsPage({ user, onLogout }) {
   const { items, unreadCount, markRead, markAllRead, remove, clear } = useNotifications();
+  const navigate = useNavigate();
 
   return (
     <PageShell
@@ -35,22 +38,25 @@ export default function NotificationsPage({ user, onLogout }) {
             <div className="empty-state">
               <BellOff size={46} aria-hidden="true" />
               <p>No tienes notificaciones.</p>
-              <small>Aquí verás los avisos de tus pedidos y las novedades de NeirAPP.</small>
+              <small>Aquí verás los avisos de tus pedidos, tus citas con profesionales y las novedades de NeirAPP.</small>
             </div>
           </section>
         ) : (
           <ul className="notif-list">
             {items.map((n) => {
-              const Icon = ICONS[n.kind] ?? Bell;
+              const Icon = ICONS[n.kind] ?? SERVER_KINDS[n.kind]?.Icon ?? Bell;
               return (
                 <li key={n.id} className={`notif${n.read ? '' : ' unread'}`}>
                   <button
                     type="button"
                     className="notif-main"
-                    aria-label={`${n.title}${n.read ? '' : ' (sin leer)'}. Marcar como leída`}
-                    onClick={() => markRead(n.id)}
+                    aria-label={`${n.title}${n.read ? '' : ' (sin leer)'}. ${n.link ? 'Abrir' : 'Marcar como leída'}`}
+                    onClick={() => {
+                      markRead(n.id);
+                      if (n.link) navigate(n.link);
+                    }}
                   >
-                    <span className="notif-icon">
+                    <span className={`notif-icon${SERVER_KINDS[n.kind] ? ` ${SERVER_KINDS[n.kind].tone}` : ''}`}>
                       <Icon size={22} aria-hidden="true" />
                     </span>
                     <span className="notif-text">

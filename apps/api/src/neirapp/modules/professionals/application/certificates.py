@@ -4,6 +4,7 @@ from uuid import UUID
 from neirapp.modules.professionals.application.ports import (
     AccessPort,
     CertificateRepository,
+    NotificationRepository,
     ProfileRepository,
 )
 from neirapp.modules.professionals.domain.certificates import (
@@ -16,6 +17,7 @@ from neirapp.modules.professionals.domain.errors import (
     ProfileNotFound,
     TooManyCertificates,
 )
+from neirapp.modules.professionals.domain.notifications import certificate_reviewed
 from neirapp.shared.application.ports import Clock
 
 
@@ -95,16 +97,23 @@ class ListPendingCertificates:
 
 
 class ReviewCertificate:
-    def __init__(self, repo: CertificateRepository, clock: Clock) -> None:
+    """Aprueba o rechaza un certificado y le avisa al profesional."""
+
+    def __init__(
+        self, repo: CertificateRepository, notifications: NotificationRepository, clock: Clock
+    ) -> None:
         self._repo = repo
+        self._notifications = notifications
         self._clock = clock
 
     async def __call__(self, certificate_id: UUID, *, approve: bool, note: str) -> Certificate:
         certificate = await self._repo.get(certificate_id)
         if certificate is None:
             raise CertificateNotFound()
-        certificate.review(approve=approve, note=note, now=self._clock.now())
+        now = self._clock.now()
+        certificate.review(approve=approve, note=note, now=now)
         await self._repo.save(certificate)
+        await self._notifications.add(certificate_reviewed(certificate, now))
         return certificate
 
 

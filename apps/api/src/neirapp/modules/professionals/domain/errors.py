@@ -290,3 +290,11 @@ class InvalidRequestTransition(ConflictError):
     @classmethod
     def default_message(cls) -> str:
         return "Esta solicitud ya no se puede cambiar así."
+
+
+class NotificationNotFound(NotFoundError):
+    code = "notification_not_found"
+
+    @classmethod
+    def default_message(cls) -> str:
+        return "Notificación no encontrada."

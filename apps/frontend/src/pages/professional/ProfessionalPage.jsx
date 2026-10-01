@@ -4,6 +4,7 @@ import slogan from '../../assets/slogan.png';
 import PanelDesktop from '../../components/panel/PanelDesktop.jsx';
 import PanelMobile from '../../components/panel/PanelMobile.jsx';
 import { canAccessAdmin } from '../../config/roles.js';
+import { useNotifications } from '../../features/notifications/NotificationsContext.jsx';
 import { professionalsApi } from '../../features/professionals/api.js';
 import { displayName, useProfessionalProfile } from '../../features/professionals/profile.js';
 import { useNavigate } from '../../lib/router.jsx';
@@ -11,6 +12,7 @@ import { useMediaQuery } from '../../lib/useMediaQuery.js';
 import '../admin/admin.css';
 import CertificatesView from './CertificatesView.jsx';
 import GalleryView from './GalleryView.jsx';
+import NotificationsView from './NotificationsView.jsx';
 import HomeView from './HomeView.jsx';
 import ProfileView from './ProfileView.jsx';
 import ServicesView from './ServicesView.jsx';
@@ -27,7 +29,12 @@ const DESKTOP = '(min-width: 1100px)';
 export default function ProfessionalPage({ user, onLogout }) {
   const navigate = useNavigate();
   const desktop = useMediaQuery(DESKTOP);
-  const [view, setView] = useState('home');
+  // Se puede entrar directo a una sección: /profesional?seccion=requests (así llevan los avisos).
+  const [view, setView] = useState(() => {
+    const section = new URLSearchParams(window.location.search).get('seccion');
+    return NAV.some((n) => n.key === section) ? section : 'home';
+  });
+  const { serverUnread: unreadNotices, reload: reloadNotices } = useNotifications();
   const allowed = canAccessAdmin(user) || user.roles?.includes('professional');
   const mine = useProfessionalProfile(user);
   const profile = mine.profile;
@@ -87,6 +94,8 @@ export default function ProfessionalPage({ user, onLogout }) {
     );
   } else if (view === 'home') {
     content = <HomeView name={name} activity={activity} onGo={setView} onPlans={() => navigate('/profesional/planes')} />;
+  } else if (view === 'notifications') {
+    content = <NotificationsView onGo={setView} onNavigate={navigate} />;
   } else if (view === 'requests') {
     content = <RequestsView requests={requests} onChange={(list) => setRequests((r) => ({ ...r, list }))} />;
   } else if (view === 'certificates') {
@@ -115,10 +124,13 @@ export default function ProfessionalPage({ user, onLogout }) {
     user,
     profile: { name, image: profile?.photo, Icon: UserRound, roleLabel: 'Profesional' },
     nav: NAV,
-    badges: { requests: newRequests },
+    badges: { requests: newRequests, notifications: unreadNotices },
     view,
-    onSelect: setView,
-    bell: { count: newRequests, label: `Notificaciones${newRequests ? `, ${newRequests} solicitudes nuevas` : ''}`, onClick: () => setView(newRequests ? 'requests' : 'notifications') },
+    onSelect: (key) => {
+      setView(key);
+      if (key === 'notifications') reloadNotices();
+    },
+    bell: { count: unreadNotices, label: `Notificaciones${unreadNotices ? `, ${unreadNotices} sin leer` : ''}`, onClick: () => { setView('notifications'); reloadNotices(); } },
     slogan,
     menuEnabled: allowed,
     onLogout,

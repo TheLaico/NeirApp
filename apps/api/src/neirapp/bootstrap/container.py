@@ -141,6 +141,11 @@ from neirapp.modules.professionals.application.gallery import (
     ReorderGallery,
     SetGalleryCaption,
 )
+from neirapp.modules.professionals.application.notifications import (
+    DeleteNotification,
+    ListMyNotifications,
+    MarkNotificationRead,
+)
 from neirapp.modules.professionals.application.profiles import (
     GetMyProfile,
     GetPublicProfile,
@@ -164,6 +169,9 @@ from neirapp.modules.professionals.infrastructure.certificates import (
 )
 from neirapp.modules.professionals.infrastructure.gallery import SqlAlchemyGalleryRepository
 from neirapp.modules.professionals.infrastructure.identity_adapter import IdentityAccessAdapter
+from neirapp.modules.professionals.infrastructure.notifications import (
+    SqlAlchemyNotificationRepository,
+)
 from neirapp.modules.professionals.infrastructure.repositories import SqlAlchemyProfileRepository
 from neirapp.modules.professionals.infrastructure.services import SqlAlchemyServiceRepository
 from neirapp.modules.reviews.application.app import ReviewsApp
@@ -338,6 +346,7 @@ def build_professionals(
     gallery = SqlAlchemyGalleryRepository(session_factory)
     certificates = SqlAlchemyCertificateRepository(session_factory)
     appointments = SqlAlchemyAppointmentRepository(session_factory)
+    notifications = SqlAlchemyNotificationRepository(session_factory)
     access = IdentityAccessAdapter(identity)
     clock = clock or SystemClock()
     return ProfessionalsApp(
@@ -368,16 +377,19 @@ def build_professionals(
         update_certificate=UpdateCertificate(certificates, clock),
         delete_certificate=DeleteCertificate(certificates),
         list_pending_certificates=ListPendingCertificates(certificates, repo),
-        review_certificate=ReviewCertificate(certificates, clock),
+        review_certificate=ReviewCertificate(certificates, notifications, clock),
         list_public_certificates=ListPublicCertificates(certificates, access),
-        send_request=SendRequest(appointments, repo, services, access, clock),
+        send_request=SendRequest(appointments, repo, services, access, notifications, clock),
         list_received_requests=ListReceivedRequests(appointments),
-        schedule_request=ScheduleRequest(appointments, clock),
-        reject_request=RejectRequest(appointments, clock),
+        schedule_request=ScheduleRequest(appointments, repo, notifications, clock),
+        reject_request=RejectRequest(appointments, repo, notifications, clock),
         complete_request=CompleteRequest(appointments, clock),
-        cancel_by_professional=CancelByProfessional(appointments, clock),
+        cancel_by_professional=CancelByProfessional(appointments, repo, notifications, clock),
         list_sent_requests=ListSentRequests(appointments, repo),
-        cancel_by_customer=CancelByCustomer(appointments, clock),
+        cancel_by_customer=CancelByCustomer(appointments, notifications, clock),
+        list_my_notifications=ListMyNotifications(notifications),
+        mark_notification_read=MarkNotificationRead(notifications),
+        delete_notification=DeleteNotification(notifications),
     )
 
 

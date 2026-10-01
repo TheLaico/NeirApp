@@ -25,6 +25,9 @@ from neirapp.modules.media.presentation.router import router as media_router
 from neirapp.modules.ordering.presentation.router import router as ordering_router
 from neirapp.modules.ordering.presentation.ws_manager import ConnectionManager
 from neirapp.modules.pricing.presentation.router import router as pricing_router
+from neirapp.modules.professionals.presentation.notifications_router import (
+    router as notifications_router,
+)
 from neirapp.modules.professionals.presentation.router import router as professionals_router
 from neirapp.modules.reviews.presentation.router import router as reviews_router
 from neirapp.modules.stores.presentation.router import router as stores_router
@@ -94,6 +97,7 @@ def create_app(settings: Settings | None = None, clock: Clock | None = None) -> 
     app.include_router(pricing_router, prefix="/api/v1")
     app.include_router(leads_router, prefix="/api/v1")
     app.include_router(professionals_router, prefix="/api/v1")
+    app.include_router(notifications_router, prefix="/api/v1")
     app.include_router(dispatch_router, prefix="/api/v1")
     app.include_router(reviews_router, prefix="/api/v1")
     app.include_router(incidents_router, prefix="/api/v1")

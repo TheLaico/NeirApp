@@ -6,6 +6,7 @@ from neirapp.modules.professionals.domain.categories import Category, Subcategor
 from neirapp.modules.professionals.domain.certificates import Certificate
 from neirapp.modules.professionals.domain.entities import ProfessionalProfile
 from neirapp.modules.professionals.domain.gallery import GalleryImage
+from neirapp.modules.professionals.domain.notifications import Notification
 from neirapp.modules.professionals.domain.services import ProfessionalService
 
 
@@ -101,3 +102,23 @@ class AppointmentRepository(Protocol):
     async def get(self, request_id: UUID) -> AppointmentRequest | None: ...
 
     async def save(self, request: AppointmentRequest) -> None: ...
+
+
+class NotificationRepository(Protocol):
+    async def add(self, notification: Notification) -> None: ...
+
+    async def list_for(self, user_id: UUID, limit: int) -> list[Notification]:
+        """Las más recientes primero."""
+        ...
+
+    async def count_unread(self, user_id: UUID) -> int: ...
+
+    async def get(self, notification_id: UUID) -> Notification | None: ...
+
+    async def mark_read(self, user_id: UUID, notification_id: UUID | None) -> None:
+        """Marca una como leída, o todas las de esa persona si `notification_id` es None."""
+        ...
+
+    async def delete(self, user_id: UUID, notification_id: UUID | None) -> None:
+        """Borra una, o todas las de esa persona si `notification_id` es None."""
+        ...

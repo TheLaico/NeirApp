@@ -1,7 +1,23 @@
-import { createContext, useContext, useMemo } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { usePersistentState } from '../../lib/usePersistentState.js';
+import { notificationsApi } from './api.js';
 
-// Avisos de la app: los de bienvenida y los de cada avance de los pedidos (los agrega `OrderTracker`).
+// Avisos de la app. Hay dos fuentes y se muestran juntas, las más nuevas primero:
+//  - locales (en este navegador): bienvenida y avances de los pedidos (los agrega `OrderTracker`);
+//  - de la API: citas con profesionales y certificados. Se revisan cada minuto; su id empieza por "srv-"
+//    y traen `link`, a dónde lleva tocarlas.
+const POLL_MS = 60000;
+const fromServer = (n) => ({
+  id: `srv-${n.id}`,
+  serverId: n.id,
+  server: true,
+  kind: n.kind,
+  title: n.title,
+  body: n.body,
+  link: n.link,
+  createdAt: n.created_at,
+  read: n.is_read,
+});
 const seed = () => {
   const now = new Date().toISOString();
   return [
@@ -35,22 +51,63 @@ const seed = () => {
 const NotificationsContext = createContext(null);
 
 export function NotificationsProvider({ children }) {
-  const [items, setItems] = usePersistentState('neirapp.frontend.notifications', seed);
+  const [local, setLocal] = usePersistentState('neirapp.frontend.notifications', seed);
+  const [server, setServer] = useState([]);
 
-  const value = useMemo(
-    () => ({
+  const reload = useCallback(async () => {
+    try {
+      const inbox = await notificationsApi.inbox();
+      setServer(inbox.items.map(fromServer));
+    } catch {
+      // Sin conexión o API caída: se siguen mostrando los avisos que ya había.
+    }
+  }, []);
+
+  useEffect(() => {
+    reload();
+    const timer = setInterval(reload, POLL_MS);
+    return () => clearInterval(timer);
+  }, [reload]);
+
+  // Los cambios se ven al instante; si la API falla, la próxima revisión los corrige.
+  const patchServer = useCallback((update) => setServer((list) => update(list)), []);
+
+  const value = useMemo(() => {
+    const items = [...server, ...local].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    const isServer = (id) => id.startsWith('srv-');
+    const serverId = (id) => id.slice(4);
+    return {
       items,
       unreadCount: items.filter((n) => !n.read).length,
-      // Agrega un aviso (los más nuevos primero). Si ya existe uno con el mismo `id`, no lo repite. Se guardan los últimos 100.
+      // Solo los de la API (citas y certificados): los usa el panel del profesional.
+      serverItems: server,
+      serverUnread: server.filter((n) => !n.read).length,
+      reload,
+      // Agrega un aviso local (los más nuevos primero). Si ya existe uno con el mismo `id`, no lo repite. Se guardan los últimos 100.
       add: (notification) =>
-        setItems((list) => (list.some((n) => n.id === notification.id) ? list : [notification, ...list].slice(0, 100))),
-      markRead: (id) => setItems((list) => list.map((n) => (n.id === id ? { ...n, read: true } : n))),
-      markAllRead: () => setItems((list) => list.map((n) => ({ ...n, read: true }))),
-      remove: (id) => setItems((list) => list.filter((n) => n.id !== id)),
-      clear: () => setItems([]),
-    }),
-    [items, setItems],
-  );
+        setLocal((list) => (list.some((n) => n.id === notification.id) ? list : [notification, ...list].slice(0, 100))),
+      markRead: (id) => {
+        if (!isServer(id)) return setLocal((list) => list.map((n) => (n.id === id ? { ...n, read: true } : n)));
+        patchServer((list) => list.map((n) => (n.id === id ? { ...n, read: true } : n)));
+        notificationsApi.read(serverId(id)).catch(reload);
+      },
+      markAllRead: (onlyServer = false) => {
+        if (!onlyServer) setLocal((list) => list.map((n) => ({ ...n, read: true })));
+        patchServer((list) => list.map((n) => ({ ...n, read: true })));
+        notificationsApi.readAll().catch(reload);
+      },
+      remove: (id) => {
+        if (!isServer(id)) return setLocal((list) => list.filter((n) => n.id !== id));
+        patchServer((list) => list.filter((n) => n.id !== id));
+        notificationsApi.remove(serverId(id)).catch(reload);
+      },
+      clear: (onlyServer = false) => {
+        if (!onlyServer) setLocal([]);
+        patchServer(() => []);
+        notificationsApi.clear().catch(reload);
+      },
+    };
+  }, [local, setLocal, server, reload, patchServer]);
 
   return <NotificationsContext.Provider value={value}>{children}</NotificationsContext.Provider>;
 }

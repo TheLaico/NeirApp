@@ -5,6 +5,7 @@ from uuid import UUID
 from neirapp.modules.professionals.application.ports import (
     AccessPort,
     AppointmentRepository,
+    NotificationRepository,
     ProfileRepository,
     ServiceRepository,
 )
@@ -22,7 +23,18 @@ from neirapp.modules.professionals.domain.errors import (
     ProfileNotFound,
     TooManyPendingRequests,
 )
+from neirapp.modules.professionals.domain.notifications import (
+    request_cancelled,
+    request_received,
+    request_rejected,
+    request_scheduled,
+)
 from neirapp.shared.application.ports import Clock
+
+
+async def _professional_name(profiles: ProfileRepository, professional_id: UUID) -> str:
+    profile = await profiles.get(professional_id)
+    return profile.display_name if profile else "El profesional"
 
 
 class SendRequest:
@@ -34,12 +46,14 @@ class SendRequest:
         profiles: ProfileRepository,
         services: ServiceRepository,
         access: AccessPort,
+        notifications: NotificationRepository,
         clock: Clock,
     ) -> None:
         self._repo = repo
         self._profiles = profiles
         self._services = services
         self._access = access
+        self._notifications = notifications
         self._clock = clock
 
     async def __call__(
@@ -82,6 +96,7 @@ class SendRequest:
             now=self._clock.now(),
         )
         await self._repo.save(request)
+        await self._notifications.add(request_received(request, request.created_at))
         return request
 
 
@@ -103,22 +118,43 @@ class ListReceivedRequests:
 
 
 class ScheduleRequest:
-    def __init__(self, repo: AppointmentRepository, clock: Clock) -> None:
+    def __init__(
+        self,
+        repo: AppointmentRepository,
+        profiles: ProfileRepository,
+        notifications: NotificationRepository,
+        clock: Clock,
+    ) -> None:
         self._repo = repo
+        self._profiles = profiles
+        self._notifications = notifications
         self._clock = clock
 
     async def __call__(
         self, professional_id: UUID, request_id: UUID, when: datetime, note: str
     ) -> AppointmentRequest:
         request = await _received(self._repo, professional_id, request_id)
+        rescheduled = request.status is RequestStatus.SCHEDULED
         request.schedule(when, note, self._clock.now())
         await self._repo.save(request)
+        name = await _professional_name(self._profiles, professional_id)
+        await self._notifications.add(
+            request_scheduled(request, name, rescheduled=rescheduled, now=request.updated_at)
+        )
         return request
 
 
 class RejectRequest:
-    def __init__(self, repo: AppointmentRepository, clock: Clock) -> None:
+    def __init__(
+        self,
+        repo: AppointmentRepository,
+        profiles: ProfileRepository,
+        notifications: NotificationRepository,
+        clock: Clock,
+    ) -> None:
         self._repo = repo
+        self._profiles = profiles
+        self._notifications = notifications
         self._clock = clock
 
     async def __call__(
@@ -127,6 +163,8 @@ class RejectRequest:
         request = await _received(self._repo, professional_id, request_id)
         request.reject(note, self._clock.now())
         await self._repo.save(request)
+        name = await _professional_name(self._profiles, professional_id)
+        await self._notifications.add(request_rejected(request, name, request.updated_at))
         return request
 
 
@@ -143,8 +181,16 @@ class CompleteRequest:
 
 
 class CancelByProfessional:
-    def __init__(self, repo: AppointmentRepository, clock: Clock) -> None:
+    def __init__(
+        self,
+        repo: AppointmentRepository,
+        profiles: ProfileRepository,
+        notifications: NotificationRepository,
+        clock: Clock,
+    ) -> None:
         self._repo = repo
+        self._profiles = profiles
+        self._notifications = notifications
         self._clock = clock
 
     async def __call__(
@@ -153,6 +199,8 @@ class CancelByProfessional:
         request = await _received(self._repo, professional_id, request_id)
         request.cancel(by_customer=False, note=note, now=self._clock.now())
         await self._repo.save(request)
+        name = await _professional_name(self._profiles, professional_id)
+        await self._notifications.add(request_cancelled(request, name, request.updated_at))
         return request
 
 
@@ -176,8 +224,11 @@ class ListSentRequests:
 
 
 class CancelByCustomer:
-    def __init__(self, repo: AppointmentRepository, clock: Clock) -> None:
+    def __init__(
+        self, repo: AppointmentRepository, notifications: NotificationRepository, clock: Clock
+    ) -> None:
         self._repo = repo
+        self._notifications = notifications
         self._clock = clock
 
     async def __call__(self, customer_id: UUID, request_id: UUID, note: str) -> AppointmentRequest:
@@ -186,4 +237,5 @@ class CancelByCustomer:
             raise AppointmentRequestNotFound()
         request.cancel(by_customer=True, note=note, now=self._clock.now())
         await self._repo.save(request)
+        await self._notifications.add(request_cancelled(request, "", request.updated_at))
         return request

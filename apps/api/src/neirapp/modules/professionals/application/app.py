@@ -35,6 +35,11 @@ from neirapp.modules.professionals.application.gallery import (
     ReorderGallery,
     SetGalleryCaption,
 )
+from neirapp.modules.professionals.application.notifications import (
+    DeleteNotification,
+    ListMyNotifications,
+    MarkNotificationRead,
+)
 from neirapp.modules.professionals.application.profiles import (
     GetMyProfile,
     GetPublicProfile,
@@ -90,3 +95,6 @@ class ProfessionalsApp:
     cancel_by_professional: CancelByProfessional
     list_sent_requests: ListSentRequests
     cancel_by_customer: CancelByCustomer
+    list_my_notifications: ListMyNotifications
+    mark_notification_read: MarkNotificationRead
+    delete_notification: DeleteNotification

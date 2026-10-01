@@ -4,6 +4,7 @@ import httpx
 import pytest
 from fastapi import FastAPI
 
+from tests.conftest import FakeClock
 from tests.integration.test_leads_api import API, _admin, _bearer, _register
 
 PROFILE = {
@@ -824,3 +825,122 @@ class TestSolicitudes:
         )
 
         assert response.status_code == 422
+
+
+async def _inbox(client: httpx.AsyncClient, tokens: dict[str, Any]) -> dict[str, Any]:
+    response = await client.get(f"{API}/notifications", headers=_bearer(tokens))
+    assert response.status_code == 200, response.text
+    return response.json()  # type: ignore[no-any-return]
+
+
+class TestNotificaciones:
+    async def test_avisos_de_una_cita_a_cada_lado(
+        self, client: httpx.AsyncClient, app: FastAPI, clock: FakeClock
+    ) -> None:
+        admin = await _admin(client, app)
+        pro, pro_id = await _published(client, admin, "laura@correo.com")
+        customer = await _register(client, "cliente@correo.com")
+        request_id = (
+            await client.post(
+                f"{API}/professionals/{pro_id}/requests", json=REQUEST, headers=_bearer(customer)
+            )
+        ).json()["id"]
+
+        pro_inbox = await _inbox(client, pro)
+        assert pro_inbox["unread"] == 1
+        assert pro_inbox["items"][0]["kind"] == "request_new"
+        assert pro_inbox["items"][0]["link"] == "/profesional?seccion=requests"
+
+        await client.put(
+            f"{API}/professionals/me/requests/{request_id}/schedule",
+            json={"scheduled_at": "2030-01-10T15:00:00Z", "note": "Traer el carné"},
+            headers=_bearer(pro),
+        )
+        clock.advance(minutes=5)
+        await client.put(
+            f"{API}/professionals/me/requests/{request_id}/schedule",
+            json={"scheduled_at": "2030-01-11T15:00:00Z"},
+            headers=_bearer(pro),
+        )
+        customer_inbox = await _inbox(client, customer)
+        kinds = [n["kind"] for n in customer_inbox["items"]]
+        assert kinds == ["request_rescheduled", "request_scheduled"]
+        scheduled = customer_inbox["items"][1]
+        assert (
+            "Dra. Laura Torres te espera el jueves 10 de enero a las 10:00 a. m."
+            in scheduled["body"]
+        )
+        assert "Traer el carné" in scheduled["body"]
+
+        await client.put(
+            f"{API}/professionals/requests/{request_id}/cancel",
+            json={"note": "Ya me siento mejor"},
+            headers=_bearer(customer),
+        )
+        pro_inbox = await _inbox(client, pro)
+        assert pro_inbox["items"][0]["kind"] == "request_cancelled"
+        assert "Ya me siento mejor" in pro_inbox["items"][0]["body"]
+
+    async def test_aviso_de_certificado_revisado(
+        self, client: httpx.AsyncClient, app: FastAPI
+    ) -> None:
+        admin = await _admin(client, app)
+        pro, _ = await _published(client, admin, "laura@correo.com")
+        body = {"kind": "degree", "title": "Pediatra", "file_url": await _upload_pdf(client, pro)}
+        certificate_id = (
+            await client.post(
+                f"{API}/professionals/me/certificates", json=body, headers=_bearer(pro)
+            )
+        ).json()["id"]
+
+        await client.put(
+            f"{API}/professionals/certificates/{certificate_id}/review",
+            json={"approve": False, "note": "La foto está borrosa"},
+            headers=_bearer(admin),
+        )
+
+        latest = (await _inbox(client, pro))["items"][0]
+        assert latest["kind"] == "certificate_rejected"
+        assert "La foto está borrosa" in latest["body"]
+
+    async def test_leer_y_borrar(self, client: httpx.AsyncClient, app: FastAPI) -> None:
+        admin = await _admin(client, app)
+        pro, pro_id = await _published(client, admin, "laura@correo.com")
+        customer = await _register(client, "cliente@correo.com")
+        for _ in range(2):
+            await client.post(
+                f"{API}/professionals/{pro_id}/requests", json=REQUEST, headers=_bearer(customer)
+            )
+        first, second = (await _inbox(client, pro))["items"]
+
+        await client.put(f"{API}/notifications/{first['id']}/read", headers=_bearer(pro))
+        assert (await _inbox(client, pro))["unread"] == 1
+        await client.put(f"{API}/notifications/read", headers=_bearer(pro))
+        assert (await _inbox(client, pro))["unread"] == 0
+
+        await client.delete(f"{API}/notifications/{first['id']}", headers=_bearer(pro))
+        assert [n["id"] for n in (await _inbox(client, pro))["items"]] == [second["id"]]
+        await client.delete(f"{API}/notifications", headers=_bearer(pro))
+        assert (await _inbox(client, pro))["items"] == []
+
+    async def test_cada_quien_solo_toca_las_suyas(
+        self, client: httpx.AsyncClient, app: FastAPI
+    ) -> None:
+        admin = await _admin(client, app)
+        pro, pro_id = await _published(client, admin, "laura@correo.com")
+        customer = await _register(client, "cliente@correo.com")
+        await client.post(
+            f"{API}/professionals/{pro_id}/requests", json=REQUEST, headers=_bearer(customer)
+        )
+        notification_id = (await _inbox(client, pro))["items"][0]["id"]
+
+        read = await client.put(
+            f"{API}/notifications/{notification_id}/read", headers=_bearer(customer)
+        )
+        remove = await client.delete(
+            f"{API}/notifications/{notification_id}", headers=_bearer(customer)
+        )
+
+        assert read.status_code == 404 and remove.status_code == 404
+        assert (await _inbox(client, pro))["unread"] == 1
+        assert (await client.get(f"{API}/notifications")).status_code == 401

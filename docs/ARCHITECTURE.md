@@ -442,8 +442,14 @@ en `/profesional` → "Mi perfil" y queda publicado en `/profesionales`.
   `/profesionales/categoria` (directorio) y `/profesionales/perfil?id=` ("Ver perfil").
 - Los PDF y fotos subidos se sirven por URL con nombre aleatorio (no listable); quien tenga la
   URL puede abrirlos.
-- Pendiente: calificaciones de profesionales; notificaciones (certificado revisado, solicitud nueva o
-  respondida): hoy el panel del profesional revisa sus solicitudes cada minuto.
+- **Notificaciones** (`professionals_notification`, migración 0027; rutas en `/notifications`): se
+  crean solas al pasar algo — solicitud nueva o cancelada por el cliente (al profesional), cita
+  agendada, reprogramada, rechazada o cancelada por el profesional (al cliente), certificado
+  aprobado o rechazado (al profesional). Cada una trae `link` a la pantalla que corresponde. El
+  frontend las mezcla con los avisos locales (pedidos) en `NotificationsContext` y las revisa cada
+  minuto; el panel del profesional muestra solo estas.
+- Pendiente: calificaciones de profesionales; avisos en tiempo real (hoy se revisa cada minuto) y
+  por correo o push.
 
 ## Frontend
 
