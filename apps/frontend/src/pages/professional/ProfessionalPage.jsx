@@ -4,10 +4,12 @@ import slogan from '../../assets/slogan.png';
 import PanelDesktop from '../../components/panel/PanelDesktop.jsx';
 import PanelMobile from '../../components/panel/PanelMobile.jsx';
 import { canAccessAdmin } from '../../config/roles.js';
+import { displayName, useProfessionalProfile } from '../../features/professionals/profile.js';
 import { useNavigate } from '../../lib/router.jsx';
 import { useMediaQuery } from '../../lib/useMediaQuery.js';
 import '../admin/admin.css';
 import HomeView from './HomeView.jsx';
+import ProfileView from './ProfileView.jsx';
 import { NAV, SAMPLE_ACTIVITY, TABS } from './model.js';
 import './professional-panel.css';
 
@@ -22,7 +24,9 @@ export default function ProfessionalPage({ user, onLogout }) {
   const desktop = useMediaQuery(DESKTOP);
   const [view, setView] = useState('home');
   const allowed = canAccessAdmin(user) || user.roles?.includes('professional');
-  const activity = SAMPLE_ACTIVITY;
+  const [profile, setProfile] = useProfessionalProfile(user);
+  const name = displayName(profile) || user.name;
+  const activity = { ...SAMPLE_ACTIVITY, hasDescription: profile.description.trim().length >= 80 };
 
   let content;
   if (!allowed) {
@@ -37,7 +41,9 @@ export default function ProfessionalPage({ user, onLogout }) {
       </div>
     );
   } else if (view === 'home') {
-    content = <HomeView name={user.name} activity={activity} onGo={setView} onPlans={() => navigate('/profesional/planes')} />;
+    content = <HomeView name={name} activity={activity} onGo={setView} onPlans={() => navigate('/profesional/planes')} />;
+  } else if (view === 'profile') {
+    content = <ProfileView profile={profile} onSave={setProfile} />;
   } else {
     const section = NAV.find((n) => n.key === view);
     content = (
@@ -54,7 +60,7 @@ export default function ProfessionalPage({ user, onLogout }) {
 
   const shell = {
     user,
-    profile: { name: user.name, Icon: UserRound, roleLabel: 'Profesional' },
+    profile: { name, image: profile.photo, Icon: UserRound, roleLabel: 'Profesional' },
     nav: NAV,
     badges: { requests: activity.newRequests },
     view,

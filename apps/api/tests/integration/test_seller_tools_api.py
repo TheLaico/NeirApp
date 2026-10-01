@@ -98,6 +98,25 @@ class TestSubirImagenes:
         assert (await _upload(client, customer, PNG)).status_code == 403
         assert (await client.post(UPLOAD, content=PNG)).status_code == 401
 
+    async def test_un_profesional_autorizado_puede_subir_su_foto(
+        self, client: httpx.AsyncClient, app: FastAPI
+    ) -> None:
+        admin = await _admin_tokens(client, app)
+        await _register(client, "profesional@correo.com")
+        await client.post(
+            f"{API}/identity/admin/role-grants",
+            json={"email": "profesional@correo.com", "role": "professional"},
+            headers=_bearer(admin),
+        )
+        professional = (
+            await client.post(
+                f"{API}/identity/login",
+                json={"email": "profesional@correo.com", "password": "clave-segura-123"},
+            )
+        ).json()["tokens"]
+
+        assert (await _upload(client, professional, JPEG)).status_code == 201
+
     async def test_rechaza_lo_que_no_es_una_imagen(
         self, client: httpx.AsyncClient, app: FastAPI
     ) -> None:

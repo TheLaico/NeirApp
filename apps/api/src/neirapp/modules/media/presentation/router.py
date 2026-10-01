@@ -1,4 +1,4 @@
-"""Subida y entrega de imágenes (fotos de tienda y de producto).
+"""Subida y entrega de imágenes (fotos de tienda, de producto y del perfil de profesionales).
 
 El navegador manda el archivo como cuerpo crudo con su `Content-Type`
 (`fetch(url, { method: 'POST', headers: { 'Content-Type': file.type }, body: file })`). Se valida el
@@ -35,7 +35,10 @@ WEBP_QUALITY = 80
 MAX_PIXELS = 50_000_000
 _NAME = re.compile(r"^[0-9a-f]{32}\.(png|jpg|webp)$")
 
-RequireSeller = Annotated[User, Depends(require_roles(Role.STORE_STAFF, Role.ADMIN))]
+# Suben fotos quienes arman algo que ven los clientes: comerciantes, profesionales y el admin.
+RequireUploader = Annotated[
+    User, Depends(require_roles(Role.STORE_STAFF, Role.PROFESSIONAL, Role.ADMIN))
+]
 
 router = APIRouter(prefix="/uploads", tags=["media"])
 
@@ -102,7 +105,7 @@ def _directory(request: Request) -> Path:
 
 
 @router.post("/images", response_model=UploadedImage, status_code=201)
-async def upload_image(request: Request, _user: RequireSeller) -> UploadedImage:
+async def upload_image(request: Request, _user: RequireUploader) -> UploadedImage:
     """Sube una imagen (cuerpo crudo, máx. 10 MB), la reduce y devuelve su URL."""
     declared = request.headers.get("content-length")
     if declared and declared.isdigit() and int(declared) > MAX_IMAGE_BYTES:
