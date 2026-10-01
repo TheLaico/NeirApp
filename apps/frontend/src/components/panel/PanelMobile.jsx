@@ -12,8 +12,9 @@ import './panel-mobile.css';
  * Marco de celular y tableta de los paneles, con el mismo diseño del de escritorio: barra superior con menú de
  * hamburguesa, logo, campana y perfil; buscador; y un menú lateral con íconos sólidos, eslogan y paisaje.
  * Recibe las mismas propiedades que `PanelDesktop` (menos `right` y `promo`: en celular van dentro del contenido).
+ * Con `tabs` ([{ key, label, icon }]) cambia la hamburguesa por una barra de navegación fija abajo.
  */
-export default function PanelMobile({ user, profile, nav, badges = {}, view, onSelect, bell, search, slogan, onLogout, menuEnabled = true, children }) {
+export default function PanelMobile({ user, profile, nav, tabs, badges = {}, view, onSelect, bell, search, slogan, onLogout, menuEnabled = true, children }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const total = Object.values(badges).reduce((sum, n) => sum + (n || 0), 0);
 
@@ -36,12 +37,14 @@ export default function PanelMobile({ user, profile, nav, badges = {}, view, onS
   };
 
   return (
-    <div className="cr mm">
+    <div className={`cr mm${tabs ? ' has-tabs' : ''}`}>
       <header className="mm-bar">
-        <button type="button" className="mm-icon" aria-label="Abrir menú" aria-expanded={menuOpen} onClick={() => setMenuOpen(true)}>
-          <Menu size={26} aria-hidden="true" />
-          {total > 0 && <span className="mm-dot" aria-hidden="true" />}
-        </button>
+        {!tabs && (
+          <button type="button" className="mm-icon" aria-label="Abrir menú" aria-expanded={menuOpen} onClick={() => setMenuOpen(true)}>
+            <Menu size={26} aria-hidden="true" />
+            {total > 0 && <span className="mm-dot" aria-hidden="true" />}
+          </button>
+        )}
         <img className="mm-logo" src={logo} alt="NeirAPP" />
         {bell && (
           <button type="button" className="mm-icon mm-bell" aria-label={bell.label} disabled={!menuEnabled} onClick={bell.onClick}>
@@ -60,6 +63,20 @@ export default function PanelMobile({ user, profile, nav, badges = {}, view, onS
       )}
 
       <main className="mm-main">{children}</main>
+
+      {tabs && (
+        <nav className="mm-tabs" aria-label={`Panel de ${profile.roleLabel.toLowerCase()}`}>
+          {tabs.map(({ key, label, icon }) => (
+            <button key={key} type="button" className={`mm-tab${view === key ? ' active' : ''}`} aria-current={view === key ? 'page' : undefined} disabled={!menuEnabled} onClick={() => onSelect(key)}>
+              <span className="mm-ico">
+                <SolidIcon name={icon} size={24} />
+                {badges[key] > 0 && <span className="mm-item-badge">{badges[key]}</span>}
+              </span>
+              {label}
+            </button>
+          ))}
+        </nav>
+      )}
 
       {menuOpen && (
         <>

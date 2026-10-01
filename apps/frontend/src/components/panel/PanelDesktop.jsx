@@ -18,6 +18,7 @@ import './panel-desktop.css';
  *   profile  → { name, image, Icon, roleLabel } para el menú del perfil
  *   bell     → { count, onClick, label }
  *   search   → { placeholder, value, onChange }; omitirlo oculta el buscador
+ *   right    → omitirlo quita la columna derecha y el contenido ocupa todo el ancho
  */
 export default function PanelDesktop({ user, profile, nav, badges = {}, view, onSelect, bell, search, slogan, right, promo, onLogout, menuEnabled = true, children }) {
   useEffect(() => {
@@ -26,7 +27,7 @@ export default function PanelDesktop({ user, profile, nav, badges = {}, view, on
   }, []);
 
   return (
-    <div className="app md">
+    <div className={`app md${right ? '' : ' no-right'}`}>
       <div className="logo-cell">
         <img src={logo} alt="NeirAPP" />
       </div>
@@ -77,9 +78,11 @@ export default function PanelDesktop({ user, profile, nav, badges = {}, view, on
 
       <main className="md-main">{children}</main>
 
-      <aside className="md-right" aria-label="Resumen y avisos">
-        {right}
-      </aside>
+      {right && (
+        <aside className="md-right" aria-label="Resumen y avisos">
+          {right}
+        </aside>
+      )}
 
       {promo}
 

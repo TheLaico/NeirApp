@@ -81,3 +81,14 @@
 @media (min-width: 700px) and (max-width: 1099px) {
   .mm-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; align-items: start; }
 }
+
+/* Barra de navegación inferior fija (`tabs`): reemplaza la hamburguesa */
+.mm.has-tabs .mm-logo { margin-left: 8px; }
+.mm.has-tabs .mm-main { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
+.mm-tabs { position: fixed; z-index: 20; left: 0; right: 0; bottom: 0; display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; padding: 6px 6px calc(6px + env(safe-area-inset-bottom)); background: rgba(246, 245, 231, .96); backdrop-filter: blur(8px); border-top: 1px solid var(--line); box-shadow: 0 -4px 16px rgba(35, 52, 43, .06); }
+.mm-tab { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; min-height: 58px; padding: 4px 2px; border: 0; border-radius: 14px; background: none; color: var(--muted); font: inherit; font-size: 11.5px; font-weight: 600; white-space: nowrap; cursor: pointer; }
+.mm-tab .mm-ico { height: 30px; color: inherit; }
+.mm-tab:hover:not(:disabled) { color: var(--g); }
+.mm-tab.active { color: var(--g); font-weight: 800; }
+.mm-tab.active .mm-ico { display: grid; place-items: center; width: 56px; height: 30px; border-radius: 999px; background: rgba(15, 82, 56, .12); }
+.mm-tab:disabled { opacity: .45; cursor: default; }
