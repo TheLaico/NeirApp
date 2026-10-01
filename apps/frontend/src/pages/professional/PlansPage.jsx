@@ -11,9 +11,9 @@ const PLAN_ICONS = { Sprout, BriefcaseBusiness, Crown };
 
 // Hojas de cada tarjeta, en la esquina de su encabezado (se mecen al pasar el cursor).
 const CARD_LEAVES = {
-  basic: ['#5a9a4a', '#e8a92c'],
-  pro: ['#2d7a3d', '#e8a92c'],
-  premium: ['#e8a92c', '#2d7a3d'],
+  basic: ['#8cc56b', '#2d7a3d'],
+  pro: ['#5a9a4a', '#8cc56b'],
+  premium: ['#a8700c', '#fbe08a'],
 };
 
 /** Página "Planes para profesionales": los tres planes de suscripción lado a lado (en celular, uno debajo del otro). */
