@@ -37,7 +37,7 @@ export default function ProfessionalPage({ user, onLogout }) {
       </div>
     );
   } else if (view === 'home') {
-    content = <HomeView name={user.name} activity={activity} onGo={setView} />;
+    content = <HomeView name={user.name} activity={activity} onGo={setView} onPlans={() => navigate('/profesional/planes')} />;
   } else {
     const section = NAV.find((n) => n.key === view);
     content = (

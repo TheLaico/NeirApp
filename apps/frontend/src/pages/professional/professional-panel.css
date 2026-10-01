@@ -45,10 +45,13 @@
 .pro-relevant button:hover { background: #fff; box-shadow: 0 6px 14px rgba(35, 52, 43, .08); }
 
 /* 5. Crecimiento: discreto, al final */
-.pro-growth { display: flex; align-items: flex-start; gap: 14px; padding: 18px 20px; border: 1px dashed #c3cdb8; border-radius: 16px; background: rgba(232, 169, 44, .07); color: var(--g); }
-.pro-growth svg { flex: none; margin-top: 2px; }
-.pro-growth h2 { font-family: 'Montserrat', sans-serif; font-size: 16px; font-weight: 700; color: #14392a; }
-.pro-growth p { margin-top: 4px; font-size: 14.5px; line-height: 1.45; color: var(--muted); }
+.pro-growth { display: flex; align-items: center; gap: 14px; width: 100%; padding: 18px 20px; border: 1px dashed #c3cdb8; border-radius: 16px; background: rgba(232, 169, 44, .07); color: var(--g); font: inherit; text-align: left; cursor: pointer; }
+.pro-growth:hover { border-style: solid; background: rgba(232, 169, 44, .11); }
+.pro-growth > svg { flex: none; align-self: flex-start; margin-top: 2px; }
+.pro-growth-text { display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 4px; }
+.pro-growth-text strong { font-family: 'Montserrat', sans-serif; font-size: 16px; font-weight: 700; color: #14392a; }
+.pro-growth-text span { font-size: 14.5px; line-height: 1.45; color: var(--muted); }
+.pro-growth-link { flex: none; display: inline-flex; align-items: center; gap: 3px; font-size: 14px; font-weight: 700; white-space: nowrap; }
 
 /* Escritorio: espacio al final para que el paisaje de la esquina no tape la última tarjeta */
 .app.md .pro-home { padding: 4px 0 150px; }
@@ -74,4 +77,6 @@
   .pro-quick span:last-child { font-size: 13.5px; }
   .pro-quick-ico { width: 46px; height: 46px; border-radius: 14px; }
   .pro-relevant { grid-template-columns: 1fr; gap: 12px; }
+  .pro-growth { flex-wrap: wrap; }
+  .pro-growth-link { margin-left: 40px; }
 }

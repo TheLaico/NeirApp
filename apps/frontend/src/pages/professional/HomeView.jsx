@@ -6,7 +6,7 @@ import { QUICK_ACCESS, relevantItems } from './model.js';
 const RELEVANT_ICON = { requests: MessageCircle, tips: Lightbulb };
 
 /** Inicio del panel del profesional: bienvenida, estado del perfil, accesos rápidos, avisos y recursos. */
-export default function HomeView({ name, activity, onGo }) {
+export default function HomeView({ name, activity, onGo, onPlans }) {
   const relevant = relevantItems(activity);
 
   return (
@@ -93,13 +93,16 @@ export default function HomeView({ name, activity, onGo }) {
         )}
       </section>
 
-      <aside className="pro-growth">
+      <button type="button" className="pro-growth" onClick={onPlans}>
         <Sprout size={26} aria-hidden="true" />
-        <div>
-          <h2>Tu crecimiento también importa</h2>
-          <p>Conoce las herramientas y recursos que te ayudarán a hacer crecer tu presencia profesional en Neira.</p>
-        </div>
-      </aside>
+        <span className="pro-growth-text">
+          <strong>Tu crecimiento también importa</strong>
+          <span>Conoce las herramientas y recursos que te ayudarán a hacer crecer tu presencia profesional en Neira.</span>
+        </span>
+        <span className="pro-growth-link">
+          Ver planes <ChevronRight size={15} aria-hidden="true" />
+        </span>
+      </button>
     </div>
   );
 }

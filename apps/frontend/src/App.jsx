@@ -26,6 +26,7 @@ import MorePage from './pages/more/MorePage.jsx';
 import NotificationsPage from './pages/notifications/NotificationsPage.jsx';
 import OrdersPage from './pages/orders/OrdersPage.jsx';
 import PaymentsPage from './pages/payments/PaymentsPage.jsx';
+import PlansPage from './pages/professional/PlansPage.jsx';
 import ProfessionalPage from './pages/professional/ProfessionalPage.jsx';
 import ProfessionalsPage from './pages/professionals/ProfessionalsPage.jsx';
 import SubcategoryProfessionalsPage from './pages/professionals/SubcategoryProfessionalsPage.jsx';
@@ -54,6 +55,7 @@ const ROUTES = {
   '/repartidor': CourierPage,
   '/comercio': MerchantPage,
   '/profesional': ProfessionalPage,
+  '/profesional/planes': PlansPage,
   '/notificaciones': NotificationsPage,
   '/pagos': PaymentsPage,
   '/configuracion': SettingsPage,

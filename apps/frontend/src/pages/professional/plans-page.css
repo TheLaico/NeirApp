@@ -1,0 +1,61 @@
+/* Página "Planes para profesionales". */
+
+.plans { --g: #0f5238; --ink: #23342b; --muted: #6b7a70; --line: #dfe4d2; min-height: 100vh; min-height: 100dvh; padding: 24px 32px 48px; background: #f8f5ed; color: var(--ink); font-family: 'Nunito', system-ui, sans-serif; }
+
+/* 1. Encabezado */
+.plans-head { display: flex; align-items: center; gap: 28px; max-width: 1180px; margin: 0 auto 34px; }
+.plans-logo { flex: none; width: 170px; height: auto; }
+.plans-intro { flex: 1; min-width: 0; }
+.plans-intro h1 { font-family: 'Montserrat', sans-serif; font-size: clamp(28px, 3vw, 40px); font-weight: 800; line-height: 1.1; color: #14392a; }
+.plans-intro p { max-width: 560px; margin-top: 8px; font-size: 18px; line-height: 1.45; color: #3b4a42; }
+.plans-back { flex: none; align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; min-height: 42px; padding: 0 16px; border: 1.5px solid #b9c9b3; border-radius: 999px; background: none; color: var(--g); font: inherit; font-size: 14.5px; font-weight: 700; cursor: pointer; }
+.plans-back:hover { background: rgba(15, 82, 56, .06); }
+
+/* 2. Planes: tres columnas en escritorio */
+.plans-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; align-items: stretch; max-width: 1180px; margin: 0 auto; padding: 0; list-style: none; }
+.plans-grid > li { display: flex; }
+.plan { display: flex; flex-direction: column; width: 100%; padding: 26px 24px 24px; border: 1px solid var(--line); border-radius: 22px; background: #fff; box-shadow: 0 2px 10px rgba(35, 52, 43, .05); transition: box-shadow .15s, border-color .15s; }
+.plan.recommended { border: 2px solid var(--g); box-shadow: 0 14px 34px rgba(15, 82, 56, .16); transform: translateY(-10px); }
+.plan.chosen { border-color: #e8a92c; }
+.plan-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 28px; }
+.plan-tag { font-size: 13px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.plan-badge { display: inline-flex; align-items: center; gap: 5px; padding: 5px 12px; border-radius: 999px; background: #e8a92c; color: #fff; font-size: 13px; font-weight: 800; white-space: nowrap; }
+.plan h2 { margin-top: 6px; font-family: 'Montserrat', sans-serif; font-size: 26px; font-weight: 800; color: #14392a; }
+.plan-price { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.plan-price strong { font-family: 'Montserrat', sans-serif; font-size: 36px; font-weight: 800; color: var(--g); }
+.plan-price span { font-size: 15px; color: var(--muted); }
+.plan-summary { margin-top: 10px; font-size: 15.5px; line-height: 1.45; color: #3b4a42; }
+.plan hr { width: 100%; margin: 20px 0 16px; border: 0; border-top: 1px solid var(--line); }
+.plan h3 { font-size: 15.5px; font-weight: 800; color: #14392a; }
+.plan-features { flex: 1; display: flex; flex-direction: column; gap: 10px; margin: 12px 0 0; padding: 0; list-style: none; }
+.plan-features li { display: flex; align-items: flex-start; gap: 10px; font-size: 15px; line-height: 1.4; }
+.plan-features svg { flex: none; margin-top: 1px; padding: 2px; border-radius: 50%; background: #e1eedf; color: var(--g); }
+.plan-audience { display: flex; align-items: flex-start; gap: 10px; margin-top: 20px; padding: 14px 14px; border-radius: 14px; background: #f3f1e4; font-size: 14.5px; line-height: 1.45; color: #3b4a42; }
+.plan-audience svg { flex: none; margin-top: 1px; color: var(--g); }
+.plan.recommended .plan-audience { background: #e9f1e4; }
+.plan-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 52px; margin-top: 20px; border: 1.5px solid var(--g); border-radius: 999px; background: none; color: var(--g); font: inherit; font-size: 16.5px; font-weight: 800; cursor: pointer; transition: background .15s, color .15s; }
+.plan-btn:hover { background: rgba(15, 82, 56, .07); }
+.plan.recommended .plan-btn { background: var(--g); color: #fff; box-shadow: 0 6px 16px rgba(15, 82, 56, .25); }
+.plan.recommended .plan-btn:hover { background: #0b4430; }
+.plan.chosen .plan-btn { border-color: #e8a92c; background: #e8a92c; color: #fff; box-shadow: none; }
+.plan-btn:focus-visible, .plans-back:focus-visible { outline: 3px solid #e8a92c; outline-offset: 3px; }
+
+.plans-notice { max-width: 1180px; margin: 26px auto 0; padding: 14px 18px; border-radius: 14px; background: #e9f1e4; color: var(--g); font-size: 15.5px; text-align: center; }
+
+/* Tableta: dos columnas no caben bien con el recomendado al centro, así que se apilan antes */
+@media (max-width: 960px) {
+  .plans { padding: 16px 16px 40px; }
+  .plans-head { flex-wrap: wrap; gap: 14px 18px; margin-bottom: 24px; }
+  .plans-logo { width: 120px; }
+  .plans-back { margin-left: auto; align-self: center; }
+  .plans-intro { order: 1; flex-basis: 100%; }
+  .plans-intro p { font-size: 16px; }
+  .plans-grid { grid-template-columns: minmax(0, 520px); justify-content: center; gap: 18px; }
+  .plan.recommended { transform: none; }
+}
+@media (max-width: 420px) {
+  .plans-logo { width: 104px; }
+  .plans-back span, .plans-back { font-size: 13.5px; padding: 0 12px; }
+  .plan { padding: 22px 18px 20px; }
+  .plan-price strong { font-size: 32px; }
+}
