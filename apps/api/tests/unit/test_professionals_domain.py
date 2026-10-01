@@ -17,9 +17,17 @@ from neirapp.modules.professionals.domain.errors import (
     InvalidFullName,
     InvalidPhone,
     InvalidPhotoUrl,
+    InvalidServiceDuration,
+    InvalidServiceName,
+    InvalidServicePrice,
     InvalidTitle,
     NoModality,
     TextTooLong,
+)
+from neirapp.modules.professionals.domain.services import (
+    PriceKind,
+    ProfessionalService,
+    ServiceData,
 )
 
 NOW = datetime(2026, 10, 1, 12, 0, tzinfo=UTC)
@@ -98,3 +106,38 @@ class TestActualizarPerfil:
 )
 def test_normaliza_celulares(raw: str, expected: str) -> None:
     assert normalize_mobile(raw) == expected
+
+
+class TestServicios:
+    def _create(self, **change: object) -> ProfessionalService:
+        data = replace(
+            ServiceData(name="Consulta general", price_kind=PriceKind.FIXED, price_cop=80_000),
+            **change,  # type: ignore[arg-type]
+        )
+        return ProfessionalService.create(uuid4(), data, 0, NOW)
+
+    def test_crea_un_servicio_con_precio(self) -> None:
+        service = self._create(name="  Consulta   general ", duration_minutes=30)
+        assert service.name == "Consulta general"
+        assert service.price_cop == 80_000
+        assert service.duration_minutes == 30
+
+    def test_a_convenir_no_guarda_precio(self) -> None:
+        service = self._create(price_kind=PriceKind.QUOTE, price_cop=50_000)
+        assert service.price_cop is None
+
+    @pytest.mark.parametrize(
+        ("change", "error"),
+        [
+            ({"name": "ab"}, InvalidServiceName),
+            ({"price_cop": None}, InvalidServicePrice),
+            ({"price_cop": 500}, InvalidServicePrice),
+            ({"price_kind": PriceKind.FROM, "price_cop": 60_000_000}, InvalidServicePrice),
+            ({"duration_minutes": 2}, InvalidServiceDuration),
+            ({"duration_minutes": 13 * 60}, InvalidServiceDuration),
+            ({"description": "x" * 301}, TextTooLong),
+        ],
+    )
+    def test_rechaza_datos_invalidos(self, change: dict[str, object], error: type) -> None:
+        with pytest.raises(error):
+            self._create(**change)

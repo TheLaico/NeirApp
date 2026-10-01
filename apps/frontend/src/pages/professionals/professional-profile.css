@@ -53,3 +53,14 @@
   .pp-tags, .pp-hero h1, .pp-meta { justify-content: center; }
   .pp-card { padding: 16px 18px; }
 }
+
+/* Servicios con su precio de referencia */
+.pp-services { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; }
+.pp-services li { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 12px 0; }
+.pp-services li + li { border-top: 1px solid var(--line, #dfe4d2); }
+.pp-services strong { font-size: 15.5px; color: #14392a; }
+.pp-services p { margin-top: 3px; font-size: 14px; line-height: 1.45; color: #3b4a42; }
+.pp-services small { display: flex; width: fit-content; align-items: center; gap: 4px; margin-top: 4px; font-size: 12.5px; color: var(--muted, #6b7a70); }
+.pp-service-price { flex: none; font-family: 'Montserrat', sans-serif; font-size: 15.5px; font-weight: 800; color: #0f5238; white-space: nowrap; }
+.pp-service-price.quote { font-family: inherit; font-size: 13.5px; font-weight: 700; color: #8a6510; }
+.pp-services-note { margin-top: 6px; font-size: 12.5px; color: var(--muted, #6b7a70); }

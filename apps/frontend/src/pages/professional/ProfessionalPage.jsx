@@ -10,6 +10,7 @@ import { useMediaQuery } from '../../lib/useMediaQuery.js';
 import '../admin/admin.css';
 import HomeView from './HomeView.jsx';
 import ProfileView from './ProfileView.jsx';
+import ServicesView from './ServicesView.jsx';
 import { NAV, SAMPLE_ACTIVITY, TABS } from './model.js';
 import './professional-panel.css';
 
@@ -56,6 +57,8 @@ export default function ProfessionalPage({ user, onLogout }) {
     );
   } else if (view === 'home') {
     content = <HomeView name={name} activity={activity} onGo={setView} onPlans={() => navigate('/profesional/planes')} />;
+  } else if (view === 'services') {
+    content = <ServicesView onGoProfile={() => setView('profile')} />;
   } else if (view === 'profile') {
     content = <ProfileView profile={profile} published={mine.exists} onSave={mine.save} />;
   } else {

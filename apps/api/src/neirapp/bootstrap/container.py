@@ -121,9 +121,17 @@ from neirapp.modules.professionals.application.profiles import (
     SaveMyProfile,
     SetFeatured,
 )
+from neirapp.modules.professionals.application.services import (
+    AddService,
+    DeleteService,
+    ListMyServices,
+    ListPublicServices,
+    UpdateService,
+)
 from neirapp.modules.professionals.infrastructure.categories import SqlAlchemyCategoryRepository
 from neirapp.modules.professionals.infrastructure.identity_adapter import IdentityAccessAdapter
 from neirapp.modules.professionals.infrastructure.repositories import SqlAlchemyProfileRepository
+from neirapp.modules.professionals.infrastructure.services import SqlAlchemyServiceRepository
 from neirapp.modules.reviews.application.app import ReviewsApp
 from neirapp.modules.reviews.application.reviews import (
     CreateReview,
@@ -292,10 +300,12 @@ def build_professionals(
 ) -> ProfessionalsApp:
     repo = SqlAlchemyProfileRepository(session_factory)
     categories = SqlAlchemyCategoryRepository(session_factory)
+    services = SqlAlchemyServiceRepository(session_factory)
     access = IdentityAccessAdapter(identity)
+    clock = clock or SystemClock()
     return ProfessionalsApp(
         get_my_profile=GetMyProfile(repo),
-        save_my_profile=SaveMyProfile(repo, categories, clock or SystemClock()),
+        save_my_profile=SaveMyProfile(repo, categories, clock),
         list_directory=ListDirectory(repo, access),
         get_public_profile=GetPublicProfile(repo, access),
         set_featured=SetFeatured(repo),
@@ -305,6 +315,11 @@ def build_professionals(
         add_subcategory=AddSubcategory(categories),
         set_subcategory_color=SetSubcategoryColor(categories),
         delete_subcategory=DeleteSubcategory(categories, repo),
+        list_my_services=ListMyServices(services),
+        add_service=AddService(services, clock),
+        update_service=UpdateService(services, clock),
+        delete_service=DeleteService(services),
+        list_public_services=ListPublicServices(services, access),
     )
 
 

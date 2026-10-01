@@ -307,3 +307,108 @@ class TestCategorias:
             )
             assert response.status_code == 422
             assert response.json()["code"] == "invalid_category"
+
+
+SERVICE = {
+    "name": "Consulta pediátrica",
+    "description": "Control de crecimiento y desarrollo.",
+    "price_kind": "fixed",
+    "price_cop": 80000,
+    "duration_minutes": 30,
+}
+
+
+class TestServicios:
+    async def test_el_profesional_gestiona_sus_servicios(
+        self, client: httpx.AsyncClient, app: FastAPI
+    ) -> None:
+        admin = await _admin(client, app)
+        pro = await _professional(client, admin, "laura@correo.com")
+        url = f"{API}/professionals/me/services"
+
+        first = await client.post(url, json=SERVICE, headers=_bearer(pro))
+        assert first.status_code == 201, first.text
+        second = await client.post(
+            url,
+            json={"name": "Visita a domicilio", "price_kind": "quote", "price_cop": 1},
+            headers=_bearer(pro),
+        )
+        assert second.json()["price_cop"] is None
+
+        service_id = first.json()["id"]
+        edited = await client.put(
+            f"{url}/{service_id}",
+            json={**SERVICE, "price_kind": "from", "price_cop": 70000, "is_active": False},
+            headers=_bearer(pro),
+        )
+        assert edited.status_code == 200, edited.text
+        assert edited.json()["price_kind"] == "from" and edited.json()["is_active"] is False
+
+        mine = (await client.get(url, headers=_bearer(pro))).json()
+        assert [s["name"] for s in mine] == ["Consulta pediátrica", "Visita a domicilio"]
+
+        deleted = await client.delete(f"{url}/{service_id}", headers=_bearer(pro))
+        assert deleted.status_code == 204
+        assert len((await client.get(url, headers=_bearer(pro))).json()) == 1
+
+    async def test_valida_el_precio(self, client: httpx.AsyncClient, app: FastAPI) -> None:
+        admin = await _admin(client, app)
+        pro = await _professional(client, admin, "laura@correo.com")
+
+        response = await client.post(
+            f"{API}/professionals/me/services",
+            json={**SERVICE, "price_cop": None},
+            headers=_bearer(pro),
+        )
+
+        assert response.status_code == 422
+        assert response.json()["code"] == "invalid_service_price"
+
+    async def test_no_toca_servicios_de_otro_profesional(
+        self, client: httpx.AsyncClient, app: FastAPI
+    ) -> None:
+        admin = await _admin(client, app)
+        laura = await _professional(client, admin, "laura@correo.com")
+        carlos = await _professional(client, admin, "carlos@correo.com")
+        service_id = (
+            await client.post(
+                f"{API}/professionals/me/services", json=SERVICE, headers=_bearer(laura)
+            )
+        ).json()["id"]
+
+        for method in ("PUT", "DELETE"):
+            response = await client.request(
+                method,
+                f"{API}/professionals/me/services/{service_id}",
+                json=SERVICE if method == "PUT" else None,
+                headers=_bearer(carlos),
+            )
+            assert response.status_code == 404
+
+    async def test_los_clientes_ven_solo_los_visibles(
+        self, client: httpx.AsyncClient, app: FastAPI
+    ) -> None:
+        admin = await _admin(client, app)
+        pro = await _professional(client, admin, "laura@correo.com")
+        user_id = (
+            await client.put(f"{API}/professionals/me", json=PROFILE, headers=_bearer(pro))
+        ).json()["user_id"]
+        url = f"{API}/professionals/me/services"
+        await client.post(url, json=SERVICE, headers=_bearer(pro))
+        await client.post(
+            url,
+            json={**SERVICE, "name": "Servicio oculto", "is_active": False},
+            headers=_bearer(pro),
+        )
+
+        public = await client.get(f"{API}/professionals/{user_id}/services")
+
+        assert public.status_code == 200
+        assert [s["name"] for s in public.json()] == ["Consulta pediátrica"]
+
+    async def test_solo_profesionales(self, client: httpx.AsyncClient) -> None:
+        customer = await _register(client, "cliente@correo.com")
+        response = await client.post(
+            f"{API}/professionals/me/services", json=SERVICE, headers=_bearer(customer)
+        )
+        assert response.status_code == 403

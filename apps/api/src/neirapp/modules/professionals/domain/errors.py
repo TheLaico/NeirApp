@@ -130,3 +130,43 @@ class CategoryInUse(ConflictError):
             "Hay profesionales con perfil en esta categoría. "
             "Pídeles que la cambien antes de borrarla."
         )
+
+
+class InvalidServiceName(ValidationError):
+    code = "invalid_service_name"
+
+    @classmethod
+    def default_message(cls) -> str:
+        return "Escribe el nombre del servicio (entre 3 y 80 caracteres)."
+
+
+class InvalidServicePrice(ValidationError):
+    code = "invalid_service_price"
+
+    @classmethod
+    def default_message(cls) -> str:
+        return "Escribe un precio entre $1.000 y $50.000.000, o elige “A convenir”."
+
+
+class InvalidServiceDuration(ValidationError):
+    code = "invalid_service_duration"
+
+    @classmethod
+    def default_message(cls) -> str:
+        return "La duración debe estar entre 5 minutos y 12 horas."
+
+
+class TooManyServices(ValidationError):
+    code = "too_many_services"
+
+    @classmethod
+    def default_message(cls) -> str:
+        return "Puedes tener hasta 30 servicios. Borra alguno para agregar otro."
+
+
+class ServiceNotFound(NotFoundError):
+    code = "service_not_found"
+
+    @classmethod
+    def default_message(cls) -> str:
+        return "Servicio no encontrado."

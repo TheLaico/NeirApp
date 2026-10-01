@@ -4,6 +4,7 @@ import PageShell from '../../components/layout/PageShell.jsx';
 import { professionalsApi } from '../../features/professionals/api.js';
 import { CATEGORY_ICONS, DEFAULT_SUBCATEGORY_COLOR, useProfessionalCategories } from '../../features/professionals/categories.js';
 import { telLink, toCard, whatsappLink } from '../../features/professionals/directory.js';
+import { durationLabel, fromApi as serviceFromApi, priceLabel } from '../../features/professionals/services.js';
 import { useNavigate } from '../../lib/router.jsx';
 import './professional-profile.css';
 import './subcategory-page.css'; // botones de contacto, estado y "Volver" compartidos con el listado
@@ -24,6 +25,7 @@ export default function ProfessionalProfilePage({ user, onLogout }) {
   const navigate = useNavigate();
   const [id] = useState(() => new URLSearchParams(window.location.search).get('id'));
   const [state, setState] = useState({ profile: null, loading: true, error: '' });
+  const [services, setServices] = useState([]);
   const { categories } = useProfessionalCategories();
 
   useEffect(() => {
@@ -32,6 +34,11 @@ export default function ProfessionalProfilePage({ user, onLogout }) {
       .get(id)
       .then((p) => alive && setState({ profile: p, loading: false, error: '' }))
       .catch((err) => alive && setState({ profile: null, loading: false, error: err.status === 404 || err.status === 422 ? 'Este perfil ya no está disponible.' : err.message }));
+    // Los servicios son un extra: si fallan, el perfil se ve igual, sin esa sección.
+    professionalsApi
+      .services(id)
+      .then((list) => alive && setServices(list.map(serviceFromApi)))
+      .catch(() => {});
     return () => {
       alive = false;
     };
@@ -122,6 +129,29 @@ export default function ProfessionalProfilePage({ user, onLogout }) {
                 <section className="pp-card">
                   <h2>Sobre {p.full_name.split(' ')[0]}</h2>
                   <p className="pp-description">{p.description}</p>
+                </section>
+              )}
+
+              {services.length > 0 && (
+                <section className="pp-card">
+                  <h2>Servicios</h2>
+                  <ul className="pp-services">
+                    {services.map((sv) => (
+                      <li key={sv.id}>
+                        <div>
+                          <strong>{sv.name}</strong>
+                          {sv.description && <p>{sv.description}</p>}
+                          {sv.duration && (
+                            <small>
+                              <Clock size={13} aria-hidden="true" /> {durationLabel(sv.duration)}
+                            </small>
+                          )}
+                        </div>
+                        <span className={`pp-service-price${sv.priceKind === 'quote' ? ' quote' : ''}`}>{priceLabel(sv)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="pp-services-note">Precios de referencia. Confírmalos con el profesional.</p>
                 </section>
               )}
 

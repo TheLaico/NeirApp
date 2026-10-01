@@ -15,6 +15,13 @@ from neirapp.modules.professionals.application.profiles import (
     SaveMyProfile,
     SetFeatured,
 )
+from neirapp.modules.professionals.application.services import (
+    AddService,
+    DeleteService,
+    ListMyServices,
+    ListPublicServices,
+    UpdateService,
+)
 
 
 @dataclass(frozen=True)
@@ -30,3 +37,8 @@ class ProfessionalsApp:
     add_subcategory: AddSubcategory
     set_subcategory_color: SetSubcategoryColor
     delete_subcategory: DeleteSubcategory
+    list_my_services: ListMyServices
+    add_service: AddService
+    update_service: UpdateService
+    delete_service: DeleteService
+    list_public_services: ListPublicServices

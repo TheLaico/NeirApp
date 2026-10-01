@@ -414,7 +414,11 @@ en `/profesional` → "Mi perfil" y queda publicado en `/profesionales`.
   y borra desde "Gestión de profesionales". El id sale del nombre ("Enfermería" -> `enfermeria`).
   No se puede borrar una categoría o especialidad que use algún perfil (`409 category_in_use`), y un
   perfil solo se guarda con un área/especialidad que exista.
-- **Endpoints**: `GET/PUT /professionals/me` (profesional o admin), `GET /professionals`,
+- **Servicios** (`professionals_service`, migración 0023): lo que ofrece cada profesional ("Mis
+  servicios"), con precio fijo, "desde" o "a convenir", duración opcional y si está visible. Hasta
+  30 por profesional; los clientes solo ven los visibles, en "Ver perfil".
+- **Endpoints**: `GET/PUT /professionals/me` y `GET/POST/PUT/DELETE /professionals/me/services…`
+  (profesional o admin), `GET /professionals/{user_id}/services`, `GET /professionals`,
   `GET /professionals/{user_id}`, `GET /professionals/categories` (públicos);
   `PUT /professionals/{user_id}/featured` y `POST/DELETE /professionals/categories…` (admin).
 - En el frontend: `/profesional` (panel del profesional), `/profesionales` y

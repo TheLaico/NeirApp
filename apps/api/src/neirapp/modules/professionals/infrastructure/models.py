@@ -61,3 +61,20 @@ class SubcategoryModel(Base):
     label: Mapped[str] = mapped_column(String(60))
     color: Mapped[str] = mapped_column(String(7))
     position: Mapped[int] = mapped_column()
+
+
+class ServiceModel(Base):
+    __tablename__ = "professionals_service"
+
+    id: Mapped[UUID] = mapped_column(Uuid, primary_key=True)
+    # Dueño (identity_users.id), sin foreign key: no acopla el esquema entre módulos.
+    user_id: Mapped[UUID] = mapped_column(Uuid, index=True)
+    name: Mapped[str] = mapped_column(String(80))
+    description: Mapped[str] = mapped_column(String(300), default="")
+    price_kind: Mapped[str] = mapped_column(String(10))
+    price_cop: Mapped[int | None] = mapped_column(default=None)
+    duration_minutes: Mapped[int | None] = mapped_column(default=None)
+    is_active: Mapped[bool] = mapped_column(default=True)
+    position: Mapped[int] = mapped_column()
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime)
+    updated_at: Mapped[datetime] = mapped_column(UTCDateTime)

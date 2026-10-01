@@ -15,6 +15,12 @@ from neirapp.modules.professionals.domain.entities import (
     ProfessionalProfile,
     ProfileData,
 )
+from neirapp.modules.professionals.domain.services import (
+    MAX_SERVICE_DESCRIPTION,
+    PriceKind,
+    ProfessionalService,
+    ServiceData,
+)
 from neirapp.modules.professionals.presentation.dependencies import ProfessionalsDep
 
 RequireProfessional = Annotated[User, Depends(require_roles(Role.PROFESSIONAL, Role.ADMIN))]
@@ -131,6 +137,78 @@ async def save_my_profile(
 ) -> ProfileResponse:
     """Crea o actualiza el perfil. Se publica en el directorio mientras la cuenta tenga acceso."""
     return ProfileResponse.from_domain(await app.save_my_profile(user.id, body.to_data()))
+
+
+class ServiceRequest(BaseModel):
+    name: str = Field(max_length=200)
+    description: str = Field(default="", max_length=MAX_SERVICE_DESCRIPTION * 2)
+    price_kind: PriceKind = PriceKind.QUOTE
+    price_cop: int | None = None
+    duration_minutes: int | None = None
+    is_active: bool = True
+
+    def to_data(self) -> ServiceData:
+        return ServiceData(
+            name=self.name,
+            description=self.description,
+            price_kind=self.price_kind,
+            price_cop=self.price_cop,
+            duration_minutes=self.duration_minutes,
+            is_active=self.is_active,
+        )
+
+
+class ServiceResponse(BaseModel):
+    id: UUID
+    name: str
+    description: str
+    price_kind: PriceKind
+    price_cop: int | None
+    duration_minutes: int | None
+    is_active: bool
+
+    @classmethod
+    def from_domain(cls, s: ProfessionalService) -> "ServiceResponse":
+        return cls(
+            id=s.id,
+            name=s.name,
+            description=s.description,
+            price_kind=s.price_kind,
+            price_cop=s.price_cop,
+            duration_minutes=s.duration_minutes,
+            is_active=s.is_active,
+        )
+
+
+@router.get("/me/services", response_model=list[ServiceResponse])
+async def list_my_services(
+    user: RequireProfessional, app: ProfessionalsDep
+) -> list[ServiceResponse]:
+    """Todos los servicios del profesional, también los ocultos."""
+    return [ServiceResponse.from_domain(s) for s in await app.list_my_services(user.id)]
+
+
+@router.post("/me/services", response_model=ServiceResponse, status_code=201)
+async def add_service(
+    body: ServiceRequest, user: RequireProfessional, app: ProfessionalsDep
+) -> ServiceResponse:
+    return ServiceResponse.from_domain(await app.add_service(user.id, body.to_data()))
+
+
+@router.put("/me/services/{service_id}", response_model=ServiceResponse)
+async def update_service(
+    service_id: UUID, body: ServiceRequest, user: RequireProfessional, app: ProfessionalsDep
+) -> ServiceResponse:
+    service = await app.update_service(user.id, service_id, body.to_data())
+    return ServiceResponse.from_domain(service)
+
+
+@router.delete("/me/services/{service_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_service(
+    service_id: UUID, user: RequireProfessional, app: ProfessionalsDep
+) -> Response:
+    await app.delete_service(user.id, service_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.get("", response_model=list[ProfileResponse])
@@ -259,3 +337,9 @@ async def set_featured(
 ) -> ProfileResponse:
     profile = await app.set_featured(user_id, is_featured=body.is_featured)
     return ProfileResponse.from_domain(profile)
+
+
+@router.get("/{user_id}/services", response_model=list[ServiceResponse])
+async def list_public_services(user_id: UUID, app: ProfessionalsDep) -> list[ServiceResponse]:
+    """Servicios visibles de un profesional (para su página de perfil)."""
+    return [ServiceResponse.from_domain(s) for s in await app.list_public_services(user_id)]

@@ -3,6 +3,7 @@ from uuid import UUID
 
 from neirapp.modules.professionals.domain.categories import Category, Subcategory
 from neirapp.modules.professionals.domain.entities import ProfessionalProfile
+from neirapp.modules.professionals.domain.services import ProfessionalService
 
 
 class ProfileRepository(Protocol):
@@ -37,3 +38,17 @@ class CategoryRepository(Protocol):
     async def update_subcategory(self, category_id: str, sub: Subcategory) -> None: ...
 
     async def delete_subcategory(self, category_id: str, subcategory_id: str) -> None: ...
+
+
+class ServiceRepository(Protocol):
+    async def list_for(self, user_id: UUID) -> list[ProfessionalService]:
+        """Los servicios de un profesional, en el orden en que los agregó."""
+        ...
+
+    async def get(self, service_id: UUID) -> ProfessionalService | None: ...
+
+    async def save(self, service: ProfessionalService) -> None:
+        """Crea o reemplaza el servicio."""
+        ...
+
+    async def delete(self, service_id: UUID) -> None: ...

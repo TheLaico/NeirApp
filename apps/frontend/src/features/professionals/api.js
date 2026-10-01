@@ -11,6 +11,11 @@ const query = (params) => {
 export const professionalsApi = {
   mine: () => authRequest(`${API}/me`),
   saveMine: (body) => authRequest(`${API}/me`, { method: 'PUT', body }),
+  myServices: () => authRequest(`${API}/me/services`),
+  addService: (body) => authRequest(`${API}/me/services`, { method: 'POST', body }),
+  updateService: (id, body) => authRequest(`${API}/me/services/${id}`, { method: 'PUT', body }),
+  deleteService: (id) => authRequest(`${API}/me/services/${id}`, { method: 'DELETE' }),
+  services: (userId) => authRequest(`${API}/${userId}/services`),
   get: (userId) => authRequest(`${API}/${userId}`),
   list: ({ categoryId, subcategoryId } = {}) => authRequest(`${API}${query({ category_id: categoryId, subcategory_id: subcategoryId })}`),
   categories: () => authRequest(`${API}/categories`),
