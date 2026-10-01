@@ -409,10 +409,17 @@ en `/profesional` → "Mi perfil" y queda publicado en `/profesionales`.
   **siguen** teniendo el rol: si el admin lo quita, el perfil deja de verse (se pregunta a `identity`
   por su fachada a través de `AccessPort`). Orden: destacados, luego disponibles, luego los
   actualizados más recientemente.
+- **Categorías** (`professionals_category` y `professionals_subcategory`): las áreas y
+  especialidades del directorio. La migración 0022 carga las 10 iniciales; el admin crea, recolorea
+  y borra desde "Gestión de profesionales". El id sale del nombre ("Enfermería" -> `enfermeria`).
+  No se puede borrar una categoría o especialidad que use algún perfil (`409 category_in_use`), y un
+  perfil solo se guarda con un área/especialidad que exista.
 - **Endpoints**: `GET/PUT /professionals/me` (profesional o admin), `GET /professionals`,
-  `GET /professionals/{user_id}` (públicos), `PUT /professionals/{user_id}/featured` (admin).
-- Pendiente: las categorías y subcategorías siguen en `localStorage` del navegador del admin (el
-  perfil guarda sus ids, pero la API no valida que existan); calificaciones de profesionales.
+  `GET /professionals/{user_id}`, `GET /professionals/categories` (públicos);
+  `PUT /professionals/{user_id}/featured` y `POST/DELETE /professionals/categories…` (admin).
+- En el frontend: `/profesional` (panel del profesional), `/profesionales` y
+  `/profesionales/categoria` (directorio) y `/profesionales/perfil?id=` ("Ver perfil").
+- Pendiente: calificaciones de profesionales; galería y certificados.
 
 ## Frontend
 

@@ -28,6 +28,7 @@ import OrdersPage from './pages/orders/OrdersPage.jsx';
 import PaymentsPage from './pages/payments/PaymentsPage.jsx';
 import PlansPage from './pages/professional/PlansPage.jsx';
 import ProfessionalPage from './pages/professional/ProfessionalPage.jsx';
+import ProfessionalProfilePage from './pages/professionals/ProfessionalProfilePage.jsx';
 import ProfessionalsPage from './pages/professionals/ProfessionalsPage.jsx';
 import SubcategoryProfessionalsPage from './pages/professionals/SubcategoryProfessionalsPage.jsx';
 import RegisterPage from './pages/register/RegisterPage.jsx';
@@ -41,6 +42,7 @@ const ROUTES = {
   '/mas': MorePage,
   '/profesionales': ProfessionalsPage,
   '/profesionales/categoria': SubcategoryProfessionalsPage,
+  '/profesionales/perfil': ProfessionalProfilePage,
   '/favoritos': FavoritesPage,
   '/pedidos': OrdersPage,
   '/checkout': CheckoutPage,

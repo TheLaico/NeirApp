@@ -10,7 +10,7 @@ import { DESCRIPTION_MAX, MODALITIES, TITLES, displayName, fieldForError, missin
  * queda publicado. `published` dice si ya lo estaba antes de esta edición.
  */
 export default function ProfileView({ profile, published, onSave }) {
-  const [categories] = useProfessionalCategories();
+  const { categories } = useProfessionalCategories();
   const [draft, setDraft] = useState(profile);
   const [errors, setErrors] = useState({});
   const [saved, setSaved] = useState(false);

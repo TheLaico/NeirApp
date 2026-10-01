@@ -1,6 +1,7 @@
 from typing import Any
 
 import httpx
+import pytest
 from fastapi import FastAPI
 
 from tests.integration.test_leads_api import API, _admin, _bearer, _register
@@ -21,6 +22,19 @@ PROFILE = {
     "modalities": {"office": True, "home": True, "online": False},
     "is_available": True,
 }
+
+
+@pytest.fixture(autouse=True)
+async def _categorias(app: FastAPI) -> None:
+    """Las áreas que usan los perfiles de estas pruebas (en la app real las carga la migración)."""
+    pro = app.state.professionals
+    for label, icon, subs in [
+        ("Medicina", "Stethoscope", ["Medicina general", "Pediatría"]),
+        ("Derecho", "Scale", ["Derecho civil"]),
+    ]:
+        category = await pro.create_category(label, icon, "#b6533c")
+        for sub in subs:
+            await pro.add_subcategory(category.id, sub, "#b6533c")
 
 
 async def _grant(client: httpx.AsyncClient, admin: dict[str, Any], email: str) -> None:
@@ -183,3 +197,113 @@ class TestDirectorio:
 
         assert (await client.get(f"{API}/professionals")).json() == []
         assert (await client.get(f"{API}/professionals/{user_id}")).status_code == 404
+
+
+class TestCategorias:
+    async def test_cualquiera_ve_las_categorias_con_sus_especialidades(
+        self, client: httpx.AsyncClient
+    ) -> None:
+        response = await client.get(f"{API}/professionals/categories")
+
+        assert response.status_code == 200
+        medicina = response.json()[0]
+        assert medicina["id"] == "medicina"
+        assert [s["id"] for s in medicina["subcategories"]] == ["medicina-general", "pediatria"]
+
+    async def test_el_admin_crea_y_borra_categorias_y_especialidades(
+        self, client: httpx.AsyncClient, app: FastAPI
+    ) -> None:
+        admin = await _admin(client, app)
+
+        created = await client.post(
+            f"{API}/professionals/categories",
+            json={"label": "  Enfermería ", "icon": "Stethoscope", "color": "#1D8A9C"},
+            headers=_bearer(admin),
+        )
+        assert created.status_code == 201, created.text
+        assert created.json() == {
+            "id": "enfermeria",
+            "label": "Enfermería",
+            "icon": "Stethoscope",
+            "color": "#1d8a9c",
+            "subcategories": [],
+        }
+        sub = await client.post(
+            f"{API}/professionals/categories/enfermeria/subcategories",
+            json={"label": "Cuidado en casa", "color": "#1d8a9c"},
+            headers=_bearer(admin),
+        )
+        assert sub.json()["id"] == "cuidado-en-casa"
+        recolored = await client.put(
+            f"{API}/professionals/categories/enfermeria/subcategories/cuidado-en-casa/color",
+            json={"color": "#e8a92c"},
+            headers=_bearer(admin),
+        )
+        assert recolored.json()["color"] == "#e8a92c"
+
+        # Un nombre repetido recibe otro id en vez de pisar el existente.
+        again = await client.post(
+            f"{API}/professionals/categories",
+            json={"label": "Enfermería", "icon": "Cog", "color": "#000000"},
+            headers=_bearer(admin),
+        )
+        assert again.json()["id"] == "enfermeria-2"
+
+        deleted = await client.delete(
+            f"{API}/professionals/categories/enfermeria", headers=_bearer(admin)
+        )
+        assert deleted.status_code == 204
+        ids = [c["id"] for c in (await client.get(f"{API}/professionals/categories")).json()]
+        assert ids == ["medicina", "derecho", "enfermeria-2"]
+
+    async def test_valida_nombre_icono_y_color(
+        self, client: httpx.AsyncClient, app: FastAPI
+    ) -> None:
+        admin = await _admin(client, app)
+        for body, code in [
+            ({"label": "x", "icon": "Cog", "color": "#000000"}, "invalid_category_label"),
+            ({"label": "Arte", "icon": "Rocket", "color": "#000000"}, "invalid_icon"),
+            ({"label": "Arte", "icon": "Cog", "color": "rojo"}, "invalid_color"),
+        ]:
+            response = await client.post(
+                f"{API}/professionals/categories", json=body, headers=_bearer(admin)
+            )
+            assert response.status_code == 422
+            assert response.json()["code"] == code
+
+    async def test_solo_el_admin_las_gestiona(self, client: httpx.AsyncClient) -> None:
+        customer = await _register(client, "cliente@correo.com")
+        body = {"label": "Arte", "icon": "Cog", "color": "#000000"}
+
+        response = await client.post(
+            f"{API}/professionals/categories", json=body, headers=_bearer(customer)
+        )
+
+        assert response.status_code == 403
+
+    async def test_no_se_borra_una_categoria_que_usan_perfiles(
+        self, client: httpx.AsyncClient, app: FastAPI
+    ) -> None:
+        admin = await _admin(client, app)
+        pro = await _professional(client, admin, "laura@correo.com")
+        await client.put(f"{API}/professionals/me", json=PROFILE, headers=_bearer(pro))
+
+        for path in ("medicina", "medicina/subcategories/pediatria"):
+            response = await client.delete(
+                f"{API}/professionals/categories/{path}", headers=_bearer(admin)
+            )
+            assert response.status_code == 409
+            assert response.json()["code"] == "category_in_use"
+
+    async def test_el_perfil_solo_acepta_categorias_que_existen(
+        self, client: httpx.AsyncClient, app: FastAPI
+    ) -> None:
+        admin = await _admin(client, app)
+        pro = await _professional(client, admin, "laura@correo.com")
+
+        for change in ({"category_id": "astrologia"}, {"subcategory_id": "derecho-civil"}):
+            response = await client.put(
+                f"{API}/professionals/me", json={**PROFILE, **change}, headers=_bearer(pro)
+            )
+            assert response.status_code == 422
+            assert response.json()["code"] == "invalid_category"

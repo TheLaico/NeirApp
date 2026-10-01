@@ -20,7 +20,7 @@ const CATEGORY_IMAGES = Object.fromEntries(
  * desde su panel. El orden lo da la API: destacados primero, luego los disponibles.
  */
 export default function SubcategoryProfessionalsPage({ user, onLogout }) {
-  const [categories] = useProfessionalCategories();
+  const { categories, loading: categoriesLoading } = useProfessionalCategories();
   const navigate = useNavigate();
   // La ruta es fija (/profesionales/categoria) y el destino real va en la query (?cat=&sub=), como el
   // `?tienda=` del mapa. El router de esta app solo reacciona a cambios de *pathname*, así que estos IDs
@@ -53,7 +53,7 @@ export default function SubcategoryProfessionalsPage({ user, onLogout }) {
             <ArrowLeft size={18} aria-hidden="true" />
             Volver a Profesionales
           </button>
-          <p className="a-empty">No encontramos esa categoría.</p>
+          <p className="a-empty">{categoriesLoading ? 'Cargando…' : 'No encontramos esa categoría.'}</p>
         </div>
       </PageShell>
     );
@@ -145,7 +145,7 @@ export default function SubcategoryProfessionalsPage({ user, onLogout }) {
                     <MessageCircle size={15} aria-hidden="true" />
                     WhatsApp
                   </a>
-                  <button type="button" className="subcat-btn ghost" title="Próximamente">
+                  <button type="button" className="subcat-btn ghost" onClick={() => navigate(`/profesionales/perfil?id=${pro.id}`)}>
                     Ver perfil
                   </button>
                 </div>

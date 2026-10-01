@@ -2,12 +2,13 @@ from datetime import datetime
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Response, status
 from pydantic import BaseModel, Field
 
 from neirapp.modules.identity.domain.entities import Role, User
 from neirapp.modules.identity.presentation.dependencies import require_roles
 from neirapp.modules.professionals.application.profiles import DirectoryFilter
+from neirapp.modules.professionals.domain.categories import Category, Subcategory
 from neirapp.modules.professionals.domain.entities import (
     MAX_DESCRIPTION,
     Modalities,
@@ -143,6 +144,108 @@ async def list_directory(
         DirectoryFilter(category_id=category_id, subcategory_id=subcategory_id)
     )
     return [ProfileResponse.from_domain(p) for p in profiles]
+
+
+class SubcategoryResponse(BaseModel):
+    id: str
+    label: str
+    color: str
+
+    @classmethod
+    def from_domain(cls, s: Subcategory) -> "SubcategoryResponse":
+        return cls(id=s.id, label=s.label, color=s.color)
+
+
+class CategoryResponse(BaseModel):
+    id: str
+    label: str
+    icon: str
+    color: str
+    subcategories: list[SubcategoryResponse]
+
+    @classmethod
+    def from_domain(cls, c: Category) -> "CategoryResponse":
+        return cls(
+            id=c.id,
+            label=c.label,
+            icon=c.icon,
+            color=c.color,
+            subcategories=[SubcategoryResponse.from_domain(s) for s in c.subcategories],
+        )
+
+
+class CategoryRequest(BaseModel):
+    label: str = Field(max_length=200)
+    icon: str = Field(max_length=40)
+    color: str = Field(max_length=20)
+
+
+class SubcategoryRequest(BaseModel):
+    label: str = Field(max_length=200)
+    color: str = Field(max_length=20)
+
+
+class ColorRequest(BaseModel):
+    color: str = Field(max_length=20)
+
+
+# Las rutas de categorías van antes de "/{user_id}" para que "categories" no se tome como un id.
+@router.get("/categories", response_model=list[CategoryResponse])
+async def list_categories(app: ProfessionalsDep) -> list[CategoryResponse]:
+    """Áreas y especialidades del directorio, en el orden en que se crearon."""
+    return [CategoryResponse.from_domain(c) for c in await app.list_categories()]
+
+
+@router.post("/categories", response_model=CategoryResponse, status_code=201)
+async def create_category(
+    body: CategoryRequest, _admin: RequireAdmin, app: ProfessionalsDep
+) -> CategoryResponse:
+    category = await app.create_category(body.label, body.icon, body.color)
+    return CategoryResponse.from_domain(category)
+
+
+@router.delete("/categories/{category_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_category(
+    category_id: str, _admin: RequireAdmin, app: ProfessionalsDep
+) -> Response:
+    await app.delete_category(category_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.post(
+    "/categories/{category_id}/subcategories", response_model=SubcategoryResponse, status_code=201
+)
+async def add_subcategory(
+    category_id: str, body: SubcategoryRequest, _admin: RequireAdmin, app: ProfessionalsDep
+) -> SubcategoryResponse:
+    sub = await app.add_subcategory(category_id, body.label, body.color)
+    return SubcategoryResponse.from_domain(sub)
+
+
+@router.put(
+    "/categories/{category_id}/subcategories/{subcategory_id}/color",
+    response_model=SubcategoryResponse,
+)
+async def set_subcategory_color(
+    category_id: str,
+    subcategory_id: str,
+    body: ColorRequest,
+    _admin: RequireAdmin,
+    app: ProfessionalsDep,
+) -> SubcategoryResponse:
+    sub = await app.set_subcategory_color(category_id, subcategory_id, body.color)
+    return SubcategoryResponse.from_domain(sub)
+
+
+@router.delete(
+    "/categories/{category_id}/subcategories/{subcategory_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def delete_subcategory(
+    category_id: str, subcategory_id: str, _admin: RequireAdmin, app: ProfessionalsDep
+) -> Response:
+    await app.delete_subcategory(category_id, subcategory_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.get("/{user_id}", response_model=ProfileResponse)

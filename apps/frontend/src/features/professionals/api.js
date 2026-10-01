@@ -11,7 +11,15 @@ const query = (params) => {
 export const professionalsApi = {
   mine: () => authRequest(`${API}/me`),
   saveMine: (body) => authRequest(`${API}/me`, { method: 'PUT', body }),
+  get: (userId) => authRequest(`${API}/${userId}`),
   list: ({ categoryId, subcategoryId } = {}) => authRequest(`${API}${query({ category_id: categoryId, subcategory_id: subcategoryId })}`),
+  categories: () => authRequest(`${API}/categories`),
   // Solo administrador.
+  createCategory: (body) => authRequest(`${API}/categories`, { method: 'POST', body }),
+  deleteCategory: (id) => authRequest(`${API}/categories/${id}`, { method: 'DELETE' }),
+  addSubcategory: (categoryId, body) => authRequest(`${API}/categories/${categoryId}/subcategories`, { method: 'POST', body }),
+  setSubcategoryColor: (categoryId, subId, color) =>
+    authRequest(`${API}/categories/${categoryId}/subcategories/${subId}/color`, { method: 'PUT', body: { color } }),
+  deleteSubcategory: (categoryId, subId) => authRequest(`${API}/categories/${categoryId}/subcategories/${subId}`, { method: 'DELETE' }),
   setFeatured: (userId, isFeatured) => authRequest(`${API}/${userId}/featured`, { method: 'PUT', body: { is_featured: isFeatured } }),
 };

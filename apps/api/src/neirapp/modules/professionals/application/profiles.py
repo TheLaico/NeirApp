@@ -1,9 +1,13 @@
 from dataclasses import dataclass
 from uuid import UUID
 
-from neirapp.modules.professionals.application.ports import AccessPort, ProfileRepository
+from neirapp.modules.professionals.application.ports import (
+    AccessPort,
+    CategoryRepository,
+    ProfileRepository,
+)
 from neirapp.modules.professionals.domain.entities import ProfessionalProfile, ProfileData
-from neirapp.modules.professionals.domain.errors import ProfileNotFound
+from neirapp.modules.professionals.domain.errors import InvalidCategory, ProfileNotFound
 from neirapp.shared.application.ports import Clock
 
 
@@ -21,11 +25,19 @@ class GetMyProfile:
 class SaveMyProfile:
     """Crea el perfil la primera vez y lo reemplaza las siguientes."""
 
-    def __init__(self, repo: ProfileRepository, clock: Clock) -> None:
+    def __init__(
+        self, repo: ProfileRepository, categories: CategoryRepository, clock: Clock
+    ) -> None:
         self._repo = repo
+        self._categories = categories
         self._clock = clock
 
     async def __call__(self, user_id: UUID, data: ProfileData) -> ProfessionalProfile:
+        # El área y la especialidad deben existir hoy en el catálogo que gestiona el admin.
+        category = await self._categories.get(data.category_id.strip())
+        sub_id = data.subcategory_id.strip()
+        if category is None or (sub_id and category.find(sub_id) is None):
+            raise InvalidCategory()
         now = self._clock.now()
         profile = await self._repo.get(user_id)
         if profile is None:

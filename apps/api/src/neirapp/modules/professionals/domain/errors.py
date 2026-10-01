@@ -1,4 +1,4 @@
-from neirapp.shared.domain.errors import NotFoundError, ValidationError
+from neirapp.shared.domain.errors import ConflictError, NotFoundError, ValidationError
 
 
 class InvalidFullName(ValidationError):
@@ -79,3 +79,54 @@ class ProfileNotFound(NotFoundError):
     @classmethod
     def default_message(cls) -> str:
         return "Todavía no has creado tu perfil profesional."
+
+
+class InvalidCategoryLabel(ValidationError):
+    code = "invalid_category_label"
+
+    @classmethod
+    def default_message(cls) -> str:
+        return "Escribe un nombre de entre 2 y 60 caracteres."
+
+
+class InvalidIcon(ValidationError):
+    code = "invalid_icon"
+
+    @classmethod
+    def default_message(cls) -> str:
+        return "Elige un ícono de la lista."
+
+
+class InvalidColor(ValidationError):
+    code = "invalid_color"
+
+    @classmethod
+    def default_message(cls) -> str:
+        return "El color debe ser un código como #0f5238."
+
+
+class CategoryNotFound(NotFoundError):
+    code = "category_not_found"
+
+    @classmethod
+    def default_message(cls) -> str:
+        return "Categoría no encontrada."
+
+
+class SubcategoryNotFound(NotFoundError):
+    code = "subcategory_not_found"
+
+    @classmethod
+    def default_message(cls) -> str:
+        return "Subcategoría no encontrada."
+
+
+class CategoryInUse(ConflictError):
+    code = "category_in_use"
+
+    @classmethod
+    def default_message(cls) -> str:
+        return (
+            "Hay profesionales con perfil en esta categoría. "
+            "Pídeles que la cambien antes de borrarla."
+        )

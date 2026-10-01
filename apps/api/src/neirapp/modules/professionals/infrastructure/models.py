@@ -1,8 +1,8 @@
 from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import String, Text, Uuid
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import ForeignKey, String, Text, Uuid
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from neirapp.shared.infrastructure.db import Base, UTCDateTime
 
@@ -32,3 +32,32 @@ class ProfessionalProfileModel(Base):
     is_featured: Mapped[bool] = mapped_column(default=False)
     created_at: Mapped[datetime] = mapped_column(UTCDateTime)
     updated_at: Mapped[datetime] = mapped_column(UTCDateTime)
+
+
+class CategoryModel(Base):
+    __tablename__ = "professionals_category"
+
+    id: Mapped[str] = mapped_column(String(60), primary_key=True)
+    label: Mapped[str] = mapped_column(String(60))
+    icon: Mapped[str] = mapped_column(String(30))
+    color: Mapped[str] = mapped_column(String(7))
+    position: Mapped[int] = mapped_column()
+
+    subcategories: Mapped[list["SubcategoryModel"]] = relationship(
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+        lazy="selectin",
+        order_by="SubcategoryModel.position",
+    )
+
+
+class SubcategoryModel(Base):
+    __tablename__ = "professionals_subcategory"
+
+    category_id: Mapped[str] = mapped_column(
+        ForeignKey("professionals_category.id", ondelete="CASCADE"), primary_key=True
+    )
+    id: Mapped[str] = mapped_column(String(60), primary_key=True)
+    label: Mapped[str] = mapped_column(String(60))
+    color: Mapped[str] = mapped_column(String(7))
+    position: Mapped[int] = mapped_column()

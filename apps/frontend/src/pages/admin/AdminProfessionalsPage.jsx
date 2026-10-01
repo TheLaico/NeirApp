@@ -1,18 +1,10 @@
 import { Loader2, Plus, Trash2, UserPlus } from 'lucide-react';
 import { useState } from 'react';
-import { CATEGORY_ICONS, DEFAULT_SUBCATEGORY_COLOR, ICON_NAMES, slugify, useProfessionalCategories } from '../../features/professionals/categories.js';
+import { CATEGORY_ICONS, DEFAULT_SUBCATEGORY_COLOR, ICON_NAMES, useProfessionalCategories } from '../../features/professionals/categories.js';
 import { professionalsApi } from '../../features/professionals/api.js';
 import { useProfessionalDirectory } from '../../features/professionals/directory.js';
 import { useRoleGrants } from '../../features/roles/api.js';
 import AdminLayout from './AdminLayout.jsx';
-
-// Evita ids repetidos si dos categorías/subcategorías terminan con el mismo nombre (o el mismo slug).
-function uniqueId(base, taken) {
-  if (!taken.has(base)) return base;
-  let n = 2;
-  while (taken.has(`${base}-${n}`)) n += 1;
-  return `${base}-${n}`;
-}
 
 // "Medicina · Pediatría" con los nombres de las categorías (en el perfil solo se guardan sus ids).
 function categoryLabel(categories, pro) {
@@ -26,9 +18,8 @@ function categoryLabel(categories, pro) {
 const PROFESSIONAL_ROLE = 'professional';
 
 /**
- * Panel de administrador: acceso de profesionales (por correo) y categorías/subcategorías que se
- * muestran en /profesionales. El acceso pasa por la API real (como en "Roles"); las categorías todavía
- * no tienen backend, así que se guardan en localStorage (ver features/professionals/categories.js).
+ * Panel de administrador: acceso de profesionales (por correo), destacados y categorías/subcategorías que
+ * se muestran en /profesionales. Todo pasa por la API: lo que cambie aquí lo ven todos al instante.
  */
 export default function AdminProfessionalsPage({ user, onLogout }) {
   const { grants, status: grantsStatus, error: grantsError, grant, revoke } = useRoleGrants();
@@ -82,69 +73,71 @@ export default function AdminProfessionalsPage({ user, onLogout }) {
     }
   };
 
-  const [categories, setCategories] = useProfessionalCategories();
+  const { categories, loading: categoriesLoading, error: categoriesError, reload: reloadCategories } = useProfessionalCategories();
   const [label, setLabel] = useState('');
   const [icon, setIcon] = useState(ICON_NAMES[0]);
   const [color, setColor] = useState('#0f5238');
   const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
   const [expandedId, setExpandedId] = useState(null);
   const [subLabel, setSubLabel] = useState('');
   const [subColor, setSubColor] = useState(DEFAULT_SUBCATEGORY_COLOR);
+  const [subError, setSubError] = useState('');
 
-  const onAddCategory = (e) => {
+  // Corre un cambio contra la API y vuelve a pedir la lista; el mensaje de error queda en `onError`.
+  const run = async (action, onError) => {
+    onError('');
+    setBusy(true);
+    try {
+      await action();
+      await reloadCategories();
+      return true;
+    } catch (err) {
+      onError(err.message);
+      return false;
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const onAddCategory = async (e) => {
     e.preventDefault();
-    setError('');
     const clean = label.trim();
     if (!clean) {
       setError('Escribe el nombre de la categoría.');
       return;
     }
-    const id = uniqueId(slugify(clean) || 'categoria', new Set(categories.map((c) => c.id)));
-    setCategories([...categories, { id, label: clean, icon, color, subcategories: [] }]);
-    setLabel('');
+    if (await run(() => professionalsApi.createCategory({ label: clean, icon, color }), setError)) setLabel('');
   };
 
-  const onDeleteCategory = (cat) => {
+  const onDeleteCategory = async (cat) => {
     if (!window.confirm(`¿Eliminar la categoría "${cat.label}" y sus subcategorías?`)) return;
-    setCategories(categories.filter((c) => c.id !== cat.id));
-    if (expandedId === cat.id) setExpandedId(null);
+    if (await run(() => professionalsApi.deleteCategory(cat.id), setError) && expandedId === cat.id) setExpandedId(null);
   };
 
   const toggleExpand = (id) => {
     setExpandedId((current) => (current === id ? null : id));
     setSubLabel('');
+    setSubError('');
     // Arranca sugiriendo el color de la categoría; el admin puede cambiarlo antes de agregar.
     setSubColor(categories.find((c) => c.id === id)?.color ?? DEFAULT_SUBCATEGORY_COLOR);
   };
 
-  const onAddSub = (e, catId) => {
+  const onAddSub = async (e, catId) => {
     e.preventDefault();
     const clean = subLabel.trim();
     if (!clean) return;
-    setCategories(
-      categories.map((c) => {
-        if (c.id !== catId) return c;
-        const id = uniqueId(slugify(clean) || 'subcategoria', new Set(c.subcategories.map((s) => s.id)));
-        return { ...c, subcategories: [...c.subcategories, { id, label: clean, color: subColor }] };
-      }),
-    );
-    setSubLabel('');
+    if (await run(() => professionalsApi.addSubcategory(catId, { label: clean, color: subColor }), setSubError)) setSubLabel('');
   };
 
   const onDeleteSub = (catId, sub) => {
-    setCategories(
-      categories.map((c) => (c.id === catId ? { ...c, subcategories: c.subcategories.filter((s) => s.id !== sub.id) } : c)),
-    );
+    if (!window.confirm(`¿Eliminar la subcategoría "${sub.label}"?`)) return;
+    run(() => professionalsApi.deleteSubcategory(catId, sub.id), setSubError);
   };
 
+  // El selector de color cambia muchas veces mientras se arrastra: se guarda una vez, al cerrarlo (onBlur).
   const onChangeSubColor = (catId, subId, nextColor) => {
-    setCategories(
-      categories.map((c) =>
-        c.id === catId
-          ? { ...c, subcategories: c.subcategories.map((s) => (s.id === subId ? { ...s, color: nextColor } : s)) }
-          : c,
-      ),
-    );
+    run(() => professionalsApi.setSubcategoryColor(catId, subId, nextColor), setSubError);
   };
 
   return (
@@ -297,7 +290,7 @@ export default function AdminProfessionalsPage({ user, onLogout }) {
           </p>
         )}
         <div className="a-form-actions">
-          <button type="submit" className="a-btn primary">
+          <button type="submit" className="a-btn primary" disabled={busy}>
             <Plus size={18} aria-hidden="true" />
             Agregar categoría
           </button>
@@ -306,7 +299,13 @@ export default function AdminProfessionalsPage({ user, onLogout }) {
 
       <section className="a-card">
         <h2>Categorías ({categories.length})</h2>
-        {categories.length === 0 && <p className="a-empty">Todavía no hay categorías.</p>}
+        {categoriesError && (
+          <p className="a-err" role="alert">
+            {categoriesError}
+          </p>
+        )}
+        {categoriesLoading && <p className="a-empty">Cargando…</p>}
+        {!categoriesLoading && categories.length === 0 && <p className="a-empty">Todavía no hay categorías.</p>}
         {categories.length > 0 && (
           <ul className="a-store-list">
             {categories.map((cat) => {
@@ -359,11 +358,16 @@ export default function AdminProfessionalsPage({ user, onLogout }) {
                             onChange={(e) => setSubColor(e.target.value)}
                           />
                         </div>
-                        <button type="submit" className="a-btn primary">
+                        <button type="submit" className="a-btn primary" disabled={busy}>
                           <Plus size={16} aria-hidden="true" />
                           Agregar
                         </button>
                       </form>
+                      {subError && (
+                        <p className="a-err" role="alert">
+                          {subError}
+                        </p>
+                      )}
                       {cat.subcategories.length === 0 ? (
                         <p className="a-empty">Sin subcategorías todavía.</p>
                       ) : (
@@ -374,8 +378,9 @@ export default function AdminProfessionalsPage({ user, onLogout }) {
                                 type="color"
                                 className="a-sub-color"
                                 aria-label={`Color de ${sub.label}`}
-                                value={sub.color ?? DEFAULT_SUBCATEGORY_COLOR}
-                                onChange={(e) => onChangeSubColor(cat.id, sub.id, e.target.value)}
+                                key={sub.color}
+                                defaultValue={sub.color ?? DEFAULT_SUBCATEGORY_COLOR}
+                                onBlur={(e) => e.target.value !== sub.color && onChangeSubColor(cat.id, sub.id, e.target.value)}
                               />
                               <div>
                                 <strong>{sub.label}</strong>

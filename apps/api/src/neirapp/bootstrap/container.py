@@ -106,6 +106,14 @@ from neirapp.modules.pricing.application.app import PricingApp
 from neirapp.modules.pricing.application.pricing import GetDeliveryPricing, UpdateDeliveryPricing
 from neirapp.modules.pricing.infrastructure.store import SqlAlchemyPricingStore
 from neirapp.modules.professionals.application.app import ProfessionalsApp
+from neirapp.modules.professionals.application.categories import (
+    AddSubcategory,
+    CreateCategory,
+    DeleteCategory,
+    DeleteSubcategory,
+    ListCategories,
+    SetSubcategoryColor,
+)
 from neirapp.modules.professionals.application.profiles import (
     GetMyProfile,
     GetPublicProfile,
@@ -113,6 +121,7 @@ from neirapp.modules.professionals.application.profiles import (
     SaveMyProfile,
     SetFeatured,
 )
+from neirapp.modules.professionals.infrastructure.categories import SqlAlchemyCategoryRepository
 from neirapp.modules.professionals.infrastructure.identity_adapter import IdentityAccessAdapter
 from neirapp.modules.professionals.infrastructure.repositories import SqlAlchemyProfileRepository
 from neirapp.modules.reviews.application.app import ReviewsApp
@@ -282,13 +291,20 @@ def build_professionals(
     session_factory: async_sessionmaker[Any], identity: IdentityApp, clock: Clock | None = None
 ) -> ProfessionalsApp:
     repo = SqlAlchemyProfileRepository(session_factory)
+    categories = SqlAlchemyCategoryRepository(session_factory)
     access = IdentityAccessAdapter(identity)
     return ProfessionalsApp(
         get_my_profile=GetMyProfile(repo),
-        save_my_profile=SaveMyProfile(repo, clock or SystemClock()),
+        save_my_profile=SaveMyProfile(repo, categories, clock or SystemClock()),
         list_directory=ListDirectory(repo, access),
         get_public_profile=GetPublicProfile(repo, access),
         set_featured=SetFeatured(repo),
+        list_categories=ListCategories(categories),
+        create_category=CreateCategory(categories),
+        delete_category=DeleteCategory(categories, repo),
+        add_subcategory=AddSubcategory(categories),
+        set_subcategory_color=SetSubcategoryColor(categories),
+        delete_subcategory=DeleteSubcategory(categories, repo),
     )
 
 

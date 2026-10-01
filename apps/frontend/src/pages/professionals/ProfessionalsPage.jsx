@@ -21,7 +21,7 @@ const SEARCH_EXAMPLES = [
  * es la portada con la búsqueda y las categorías, listas para cuando exista el directorio).
  */
 export default function ProfessionalsPage({ user, onLogout }) {
-  const [categories] = useProfessionalCategories();
+  const { categories } = useProfessionalCategories();
   const [navQuery, setNavQuery] = useState('');
   const [search, setSearch] = useState('');
   const [placeholder, setPlaceholder] = useState('Buscar por profesión, nombre o especialidad...');
