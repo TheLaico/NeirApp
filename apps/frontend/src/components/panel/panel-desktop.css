@@ -118,3 +118,7 @@
   .md-promo:not(.inline) { width: min(310px, calc(var(--panel-w) - 40px)); }
   .md-right { padding-bottom: 170px; }
 }
+
+/* Sin columna derecha (`right` omitido): el contenido central ocupa ese espacio */
+.app.md.no-right { --panel-w: 0px; }
+.app.md.no-right .md-main { padding-right: 34px; }

@@ -1,0 +1,77 @@
+/* Panel del profesional: inicio con bienvenida, estado del perfil, accesos rápidos, avisos y recursos. */
+
+.pro-home { display: flex; flex-direction: column; gap: 26px; width: 100%; max-width: 1180px; padding-bottom: 12px; }
+
+/* 1. Bienvenida: lo más importante de la pantalla */
+.pro-hero { position: relative; flex: none; display: flex; align-items: center; min-height: 270px; overflow: hidden; border: 1px solid var(--line); border-radius: 24px; background: linear-gradient(100deg, #f8f5ed 0%, #eef2e0 55%, #e2ebcf 100%); box-shadow: 0 2px 10px rgba(35, 52, 43, .06); }
+.pro-hero-art { position: absolute; right: -2%; bottom: -6%; height: 118%; width: auto; max-width: none; pointer-events: none; -webkit-mask-image: linear-gradient(to right, transparent 32%, #000 52%); mask-image: linear-gradient(to right, transparent 32%, #000 52%); }
+.pro-hero-body { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 12px; max-width: 56%; padding: 38px 44px; }
+.pro-hero h1 { font-family: 'Montserrat', sans-serif; font-size: clamp(30px, 3vw, 44px); font-weight: 800; line-height: 1.08; color: #14392a; }
+.pro-hero p { font-size: 18px; color: #3b4a42; }
+.pro-cta { display: inline-flex; align-items: center; gap: 10px; min-height: 54px; margin-top: 8px; padding: 0 28px; border: 0; border-radius: 999px; background: var(--g); color: #fff; font: inherit; font-size: 17px; font-weight: 800; cursor: pointer; box-shadow: 0 6px 16px rgba(15, 82, 56, .28); transition: transform .15s, background .15s; }
+.pro-cta:hover { background: #0b4430; transform: translateY(-1px); }
+.pro-cta:focus-visible { outline: 3px solid #e8a92c; outline-offset: 3px; }
+
+/* 2. Estado del perfil */
+.pro-status { display: flex; align-items: center; gap: 18px; width: 100%; padding: 18px 22px; border: 1px solid var(--line); border-radius: 18px; background: rgba(255, 255, 255, .78); font: inherit; color: var(--ink); text-align: left; cursor: pointer; transition: box-shadow .15s, border-color .15s; }
+.pro-status:hover { border-color: #c3cdb8; box-shadow: 0 6px 16px rgba(35, 52, 43, .1); }
+.pro-status-text { display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 3px; }
+.pro-status-text strong { font-family: 'Montserrat', sans-serif; font-size: 18px; color: #14392a; }
+.pro-status-text span { font-size: 15px; color: var(--muted); }
+.pro-live { display: inline-flex; align-items: center; gap: 7px; padding: 5px 14px; border-radius: 999px; background: #e1eedf; color: var(--g); font-size: 14px; font-weight: 800; white-space: nowrap; }
+.pro-live i { width: 9px; height: 9px; border-radius: 50%; background: #2d9a4f; box-shadow: 0 0 0 3px rgba(45, 154, 79, .2); }
+.pro-chev { flex: none; color: var(--g); }
+
+/* Títulos de sección */
+.pro-title { margin-bottom: 14px; font-family: 'Montserrat', sans-serif; font-size: 20px; font-weight: 700; color: #14392a; }
+.pro-title-row { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+
+/* 3. Accesos rápidos: cuatro en fila en escritorio */
+.pro-quick { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; list-style: none; margin: 0; padding: 0; }
+.pro-quick li { display: flex; }
+.pro-quick button { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; width: 100%; padding: 20px 18px; border: 1px solid var(--line); border-radius: 18px; background: #fff; font: inherit; color: var(--ink); text-align: left; cursor: pointer; transition: box-shadow .15s, transform .15s; }
+.pro-quick button:hover { transform: translateY(-2px); box-shadow: 0 8px 18px rgba(35, 52, 43, .12); }
+.pro-quick strong { margin-top: 4px; font-size: 16.5px; color: #14392a; }
+.pro-quick span:last-child { font-size: 14px; line-height: 1.4; color: var(--muted); }
+.pro-quick-ico { display: grid; place-items: center; width: 52px; height: 52px; border-radius: 16px; color: #fff; background: var(--g); }
+.pro-quick-ico.gold { background: #e8a92c; }
+.pro-quick-ico.blue { background: #2c5f8a; }
+.pro-quick-ico.terra { background: #b6533c; }
+
+/* 4. Lo más relevante */
+.pro-relevant { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; list-style: none; margin: 0; padding: 0; }
+.pro-relevant li { display: flex; }
+.pro-relevant button { display: flex; align-items: center; gap: 14px; width: 100%; padding: 16px 16px; border: 1px solid var(--line); border-radius: 16px; background: rgba(255, 255, 255, .78); font: inherit; color: var(--ink); text-align: left; cursor: pointer; }
+.pro-relevant button:hover { background: #fff; box-shadow: 0 6px 14px rgba(35, 52, 43, .08); }
+
+/* 5. Crecimiento: discreto, al final */
+.pro-growth { display: flex; align-items: flex-start; gap: 14px; padding: 18px 20px; border: 1px dashed #c3cdb8; border-radius: 16px; background: rgba(232, 169, 44, .07); color: var(--g); }
+.pro-growth svg { flex: none; margin-top: 2px; }
+.pro-growth h2 { font-family: 'Montserrat', sans-serif; font-size: 16px; font-weight: 700; color: #14392a; }
+.pro-growth p { margin-top: 4px; font-size: 14.5px; line-height: 1.45; color: var(--muted); }
+
+/* Escritorio: espacio al final para que el paisaje de la esquina no tape la última tarjeta */
+.app.md .pro-home { padding: 4px 0 150px; }
+
+/* Celular y tableta */
+@media (max-width: 1099px) {
+  .pro-home { gap: 22px; }
+  .pro-hero { flex-direction: column; align-items: stretch; min-height: 0; border-radius: 20px; }
+  .pro-hero-art { position: relative; order: -1; right: auto; bottom: auto; align-self: flex-end; width: 100%; height: auto; margin: -14% -6% -6% 0; -webkit-mask-image: linear-gradient(to bottom, #000 60%, transparent 98%); mask-image: linear-gradient(to bottom, #000 60%, transparent 98%); }
+  .pro-hero-body { max-width: none; gap: 10px; padding: 0 20px 22px; }
+  .pro-hero h1 { font-size: clamp(26px, 7.4vw, 34px); }
+  .pro-hero p { font-size: 16px; }
+  .pro-cta { width: 100%; justify-content: center; min-height: 52px; }
+  .pro-status { gap: 14px; padding: 16px; }
+  .pro-status .md-bubble { width: 46px; height: 46px; }
+  .pro-status-text strong { font-size: 16.5px; }
+  .pro-status-text span { font-size: 14px; }
+  .pro-live { display: none; }
+  .pro-title { font-size: 18px; margin-bottom: 12px; }
+  .pro-quick { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .pro-quick button { padding: 16px 14px; min-height: 150px; }
+  .pro-quick strong { font-size: 15.5px; }
+  .pro-quick span:last-child { font-size: 13.5px; }
+  .pro-quick-ico { width: 46px; height: 46px; border-radius: 14px; }
+  .pro-relevant { grid-template-columns: 1fr; gap: 12px; }
+}
