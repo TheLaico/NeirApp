@@ -323,3 +323,58 @@
   .gl-caption { padding: 6px 6px 0; }
   .gl-caption input { font-size: 13px; }
 }
+
+/* ---------- Certificados ---------- */
+.ct { display: flex; flex-direction: column; gap: 16px; width: 100%; max-width: 900px; padding-bottom: 150px; }
+.ct-summary { display: flex; flex-wrap: wrap; gap: 8px; }
+.ct-chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; font-size: 13.5px; font-weight: 800; }
+.ct-chip.verified { background: #e1eedf; color: var(--g); }
+.ct-chip.pending { background: #fbeec8; color: #8a6510; }
+.ct-chip.rejected { background: #f9e3dc; color: #9b3d28; }
+
+.ct-list { display: flex; flex-direction: column; gap: 12px; margin: 0; padding: 0; list-style: none; }
+.ct-item { display: flex; align-items: flex-start; gap: 14px; padding: 16px 18px; border: 1px solid var(--line); border-radius: 16px; background: #fff; }
+.ct-item.verified { border-left: 5px solid #2d9a4f; }
+.ct-item.pending { border-left: 5px solid #e8a92c; }
+.ct-item.rejected { border-left: 5px solid #b6533c; }
+.ct-ico { flex: none; display: grid; place-items: center; width: 48px; height: 48px; border-radius: 14px; background: #e1eedf; color: var(--g); }
+.ct-main { flex: 1; min-width: 0; }
+.ct-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.ct-top strong { font-size: 16.5px; color: #14392a; }
+.ct-status { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 999px; font-size: 12.5px; font-weight: 800; white-space: nowrap; }
+.ct-status.verified { background: #e1eedf; color: #1f7a3c; }
+.ct-status.pending { background: #fbeec8; color: #8a6510; }
+.ct-status.rejected { background: #f9e3dc; color: #9b3d28; }
+.ct-kind { margin-top: 3px; font-size: 14px; color: #3b4a42; }
+.ct-help { margin-top: 6px; font-size: 13px; color: var(--muted); }
+.ct-note { margin-top: 8px; padding: 8px 12px; border-radius: 10px; background: #fbefe9; color: #7c3320; font-size: 13.5px; line-height: 1.45; }
+.ct-links { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; margin-top: 8px; font-size: 13.5px; }
+.ct-links a { display: inline-flex; align-items: center; gap: 5px; color: var(--g); font-weight: 700; }
+.ct-warn { padding: 8px 12px; border-radius: 10px; background: #fbeec8; color: #7a5a10; font-size: 13.5px; }
+
+.ct-kinds { display: flex; flex-wrap: wrap; gap: 8px; }
+.ct-kinds button { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 14px; border: 1.5px solid #c3cdb8; border-radius: 999px; background: #fff; color: var(--ink); font: inherit; font-size: 13.5px; font-weight: 700; cursor: pointer; }
+.ct-kinds button:hover { border-color: var(--g); }
+.ct-kinds button.on { border-color: var(--g); background: var(--g); color: #fff; }
+.ct-row { grid-template-columns: minmax(0, 1fr) 140px; align-items: start; }
+.ct-file { display: flex; flex-direction: column; gap: 6px; }
+.ct-file-label { font-size: 14px; font-weight: 700; }
+.ct-file-box { display: flex; align-items: center; gap: 14px; padding: 12px 14px; border: 1.5px dashed #b9c9b3; border-radius: 14px; background: #f6f5e7; }
+.ct-file-box.has { border-style: solid; border-color: #c3cdb8; background: #fff; }
+.ct-file-box.bad { border-color: #b6533c; }
+.ct-file-box img { flex: none; width: 64px; height: 64px; border-radius: 10px; object-fit: cover; }
+.ct-file-ico { flex: none; display: grid; place-items: center; width: 64px; height: 64px; border-radius: 10px; background: #e1eedf; color: var(--g); }
+.ct-file-text { display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 2px; }
+.ct-file-text strong { overflow: hidden; font-size: 14.5px; color: #14392a; text-overflow: ellipsis; white-space: nowrap; }
+.ct-file-text small { font-size: 12.5px; color: var(--muted); }
+.ct-file-text a { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 700; color: var(--g); }
+.ct-file-box .cr-btn { flex: none; width: auto; min-width: 0; }
+
+@media (max-width: 1099px) { .ct { padding-bottom: 20px; } }
+@media (max-width: 640px) {
+  .ct-item { flex-wrap: wrap; padding: 14px; }
+  .ct-item .sv-item-actions { width: 100%; justify-content: flex-end; border-top: 1px solid var(--line); padding-top: 8px; }
+  .ct-row { grid-template-columns: 1fr; }
+  .ct-file-box { flex-wrap: wrap; }
+  .ct-file-box .cr-btn { width: 100%; }
+}

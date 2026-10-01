@@ -7,8 +7,17 @@ from pydantic import BaseModel, Field
 
 from neirapp.modules.identity.domain.entities import Role, User
 from neirapp.modules.identity.presentation.dependencies import require_roles
+from neirapp.modules.professionals.application.certificates import PendingCertificate
 from neirapp.modules.professionals.application.profiles import DirectoryFilter
 from neirapp.modules.professionals.domain.categories import Category, Subcategory
+from neirapp.modules.professionals.domain.certificates import (
+    MAX_ISSUER,
+    MAX_TITLE,
+    Certificate,
+    CertificateData,
+    CertificateKind,
+    CertificateStatus,
+)
 from neirapp.modules.professionals.domain.entities import (
     MAX_DESCRIPTION,
     Modalities,
@@ -277,6 +286,140 @@ async def delete_gallery_image(
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
+class CertificateRequest(BaseModel):
+    kind: CertificateKind
+    title: str = Field(max_length=MAX_TITLE * 2)
+    issuer: str = Field(default="", max_length=MAX_ISSUER * 2)
+    year: int | None = None
+    file_url: str = Field(max_length=400)
+    show_on_profile: bool = True
+
+    def to_data(self) -> CertificateData:
+        return CertificateData(
+            kind=self.kind,
+            title=self.title,
+            issuer=self.issuer,
+            year=self.year,
+            file_url=self.file_url,
+            show_on_profile=self.show_on_profile,
+        )
+
+
+class ReviewRequest(BaseModel):
+    approve: bool
+    note: str = Field(default="", max_length=400)
+
+
+class CertificateResponse(BaseModel):
+    id: UUID
+    kind: CertificateKind
+    title: str
+    issuer: str
+    year: int | None
+    file_url: str
+    show_on_profile: bool
+    status: CertificateStatus
+    review_note: str
+    updated_at: datetime
+
+    @classmethod
+    def from_domain(cls, c: Certificate) -> "CertificateResponse":
+        return cls(
+            id=c.id,
+            kind=c.kind,
+            title=c.title,
+            issuer=c.issuer,
+            year=c.year,
+            file_url=c.file_url,
+            show_on_profile=c.show_on_profile,
+            status=c.status,
+            review_note=c.review_note,
+            updated_at=c.updated_at,
+        )
+
+
+class PublicCertificateResponse(BaseModel):
+    """Lo que ven los clientes: sin notas de revisión ni estado (solo salen los verificados)."""
+
+    id: UUID
+    kind: CertificateKind
+    title: str
+    issuer: str
+    year: int | None
+    file_url: str
+
+    @classmethod
+    def from_domain(cls, c: Certificate) -> "PublicCertificateResponse":
+        return cls(
+            id=c.id, kind=c.kind, title=c.title, issuer=c.issuer, year=c.year, file_url=c.file_url
+        )
+
+
+class PendingCertificateResponse(CertificateResponse):
+    user_id: UUID
+    professional_name: str
+
+    @classmethod
+    def from_pending(cls, p: PendingCertificate) -> "PendingCertificateResponse":
+        base = CertificateResponse.from_domain(p.certificate)
+        return cls(
+            **base.model_dump(),
+            user_id=p.certificate.user_id,
+            professional_name=p.professional_name,
+        )
+
+
+@router.get("/me/certificates", response_model=list[CertificateResponse])
+async def list_my_certificates(
+    user: RequireProfessional, app: ProfessionalsDep
+) -> list[CertificateResponse]:
+    return [CertificateResponse.from_domain(c) for c in await app.list_my_certificates(user.id)]
+
+
+@router.post("/me/certificates", response_model=CertificateResponse, status_code=201)
+async def add_certificate(
+    body: CertificateRequest, user: RequireProfessional, app: ProfessionalsDep
+) -> CertificateResponse:
+    """Agrega un certificado (el archivo se sube antes a /uploads/documents o /uploads/images)."""
+    return CertificateResponse.from_domain(await app.add_certificate(user.id, body.to_data()))
+
+
+@router.put("/me/certificates/{certificate_id}", response_model=CertificateResponse)
+async def update_certificate(
+    certificate_id: UUID, body: CertificateRequest, user: RequireProfessional, app: ProfessionalsDep
+) -> CertificateResponse:
+    certificate = await app.update_certificate(user.id, certificate_id, body.to_data())
+    return CertificateResponse.from_domain(certificate)
+
+
+@router.delete("/me/certificates/{certificate_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_certificate(
+    certificate_id: UUID, user: RequireProfessional, app: ProfessionalsDep
+) -> Response:
+    await app.delete_certificate(user.id, certificate_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+# Antes que "/{user_id}" para que "certificates" no se tome como un id.
+@router.get("/certificates/pending", response_model=list[PendingCertificateResponse])
+async def list_pending_certificates(
+    _admin: RequireAdmin, app: ProfessionalsDep
+) -> list[PendingCertificateResponse]:
+    """Certificados por revisar, los más antiguos primero (solo admin)."""
+    return [
+        PendingCertificateResponse.from_pending(p) for p in await app.list_pending_certificates()
+    ]
+
+
+@router.put("/certificates/{certificate_id}/review", response_model=CertificateResponse)
+async def review_certificate(
+    certificate_id: UUID, body: ReviewRequest, _admin: RequireAdmin, app: ProfessionalsDep
+) -> CertificateResponse:
+    """Aprueba o rechaza (con el motivo) un certificado (solo admin)."""
+    certificate = await app.review_certificate(certificate_id, approve=body.approve, note=body.note)
+    return CertificateResponse.from_domain(certificate)
+
+
 @router.get("", response_model=list[ProfileResponse])
 async def list_directory(
     app: ProfessionalsDep,
@@ -415,3 +558,14 @@ async def list_public_services(user_id: UUID, app: ProfessionalsDep) -> list[Ser
 async def list_public_gallery(user_id: UUID, app: ProfessionalsDep) -> list[GalleryImageResponse]:
     """Galería de un profesional (para su página de perfil)."""
     return [GalleryImageResponse.from_domain(i) for i in await app.list_public_gallery(user_id)]
+
+
+@router.get("/{user_id}/certificates", response_model=list[PublicCertificateResponse])
+async def list_public_certificates(
+    user_id: UUID, app: ProfessionalsDep
+) -> list[PublicCertificateResponse]:
+    """Certificados verificados que el profesional muestra en su perfil."""
+    return [
+        PublicCertificateResponse.from_domain(c)
+        for c in await app.list_public_certificates(user_id)
+    ]

@@ -149,3 +149,16 @@
 .a-editor-block { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 14px; border: 1.5px solid var(--line); border-radius: 14px; background: #fbfaef; }
 .a-editor-block.col { flex-direction: column; align-items: stretch; }
 .a-editor-block small { display: block; margin-top: 2px; font-size: 12.5px; color: var(--muted); }
+
+/* Revisión de certificados de profesionales */
+.a-count { display: inline-grid; place-items: center; min-width: 24px; height: 24px; margin-left: 6px; padding: 0 7px; border-radius: 999px; background: #e8531c; color: #fff; font-size: 13px; font-weight: 800; vertical-align: middle; }
+.a-cert .a-store-row { flex-wrap: wrap; }
+.a-cert a.a-btn { text-decoration: none; }
+.a-btn.danger { border: 0; background: #b6533c; color: #fff; }
+.a-btn.danger-ghost { border: 1.5px solid #e2b7a9; background: none; color: #9b3d28; }
+.a-btn.danger-ghost:hover { background: #f9e3dc; }
+.a-reject { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px; padding: 0 12px 12px 64px; }
+.a-reject label { flex-basis: 100%; font-size: 13px; font-weight: 700; color: #7c3320; }
+.a-reject input { flex: 1; min-width: 200px; height: 42px; padding: 0 12px; border: 1.5px solid #e2b7a9; border-radius: 10px; font: inherit; font-size: 14.5px; }
+.a-reject input:focus { outline: none; border-color: #b6533c; box-shadow: 0 0 0 3px rgba(182, 83, 60, .15); }
+@media (max-width: 640px) { .a-reject { padding-left: 12px; } }

@@ -45,3 +45,28 @@ export async function uploadImage(file) {
   if (!res.ok) throw new Error(data.detail || 'No se pudo subir la foto.');
   return data.url;
 }
+
+const MAX_DOCUMENT_BYTES = 10 * 1024 * 1024;
+
+/** Sube un PDF (certificados de profesionales) y devuelve su URL (`/api/v1/uploads/documents/…`). */
+export async function uploadDocument(file) {
+  if (file.type !== 'application/pdf') throw new Error('Elige un archivo PDF.');
+  if (file.size > MAX_DOCUMENT_BYTES) throw new Error('El documento pesa demasiado (máximo 10 MB).');
+  await authRequest('/api/v1/identity/me'); // renueva el token si venció (ver uploadImage)
+  let res;
+  try {
+    res = await fetch('/api/v1/uploads/documents', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/pdf', Authorization: `Bearer ${getAccessToken()}` },
+      body: file,
+    });
+  } catch {
+    throw new Error('No se pudo subir el documento. Revisa tu conexión.');
+  }
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.detail || 'No se pudo subir el documento.');
+  return data.url;
+}
+
+/** Sube un certificado: PDF tal cual, o foto (se reduce como cualquier imagen). */
+export const uploadCertificateFile = (file) => (file.type === 'application/pdf' ? uploadDocument(file) : uploadImage(file));

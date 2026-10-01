@@ -5,6 +5,7 @@ import { professionalsApi } from '../../features/professionals/api.js';
 import { useProfessionalDirectory } from '../../features/professionals/directory.js';
 import { useRoleGrants } from '../../features/roles/api.js';
 import AdminLayout from './AdminLayout.jsx';
+import CertificateReview from './CertificateReview.jsx';
 
 // "Medicina · Pediatría" con los nombres de las categorías (en el perfil solo se guardan sus ids).
 function categoryLabel(categories, pro) {
@@ -213,6 +214,8 @@ export default function AdminProfessionalsPage({ user, onLogout }) {
           </ul>
         )}
       </section>
+
+      <CertificateReview onReviewed={directory.reload} />
 
       <section className="a-card">
         <h2>Destacados</h2>

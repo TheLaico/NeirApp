@@ -5,6 +5,7 @@ import PageShell from '../../components/layout/PageShell.jsx';
 import { professionalsApi } from '../../features/professionals/api.js';
 import { CATEGORY_ICONS, DEFAULT_SUBCATEGORY_COLOR, useProfessionalCategories } from '../../features/professionals/categories.js';
 import { telLink, toCard, whatsappLink } from '../../features/professionals/directory.js';
+import { isPdf, issuerLine, kindOf } from '../../features/professionals/certificates.js';
 import { durationLabel, fromApi as serviceFromApi, priceLabel } from '../../features/professionals/services.js';
 import { useNavigate } from '../../lib/router.jsx';
 import './professional-profile.css';
@@ -31,6 +32,7 @@ export default function ProfessionalProfilePage({ user, onLogout }) {
   const [state, setState] = useState({ profile: null, loading: true, error: '' });
   const [services, setServices] = useState([]);
   const [gallery, setGallery] = useState([]);
+  const [certificates, setCertificates] = useState([]);
   const [viewer, setViewer] = useState(null);
   const { categories } = useProfessionalCategories();
 
@@ -48,6 +50,10 @@ export default function ProfessionalProfilePage({ user, onLogout }) {
     professionalsApi
       .gallery(id)
       .then((list) => alive && setGallery(list))
+      .catch(() => {});
+    professionalsApi
+      .certificates(id)
+      .then((list) => alive && setCertificates(list))
       .catch(() => {});
     return () => {
       alive = false;
@@ -100,7 +106,12 @@ export default function ProfessionalProfilePage({ user, onLogout }) {
                     </span>
                   </div>
                   <h1>
-                    {card.name} <BadgeCheck size={22} className="pp-verified" aria-label="Profesional verificado por NeirAPP" />
+                    {card.name}
+                    {certificates.length > 0 && (
+                      <span className="pp-verified-tag" title="NeirAPP revisó sus certificados">
+                        <BadgeCheck size={18} aria-hidden="true" /> Verificado
+                      </span>
+                    )}
                   </h1>
                   <p className="pp-specialty">{[category?.label, sub?.label].filter(Boolean).join(' · ')}</p>
                   {p.headline && <p className="pp-headline">{p.headline}</p>}
@@ -154,6 +165,34 @@ export default function ProfessionalProfilePage({ user, onLogout }) {
                             <img src={image.url} alt="" loading="lazy" />
                             {more > 0 && <span className="pp-gallery-more">+{more}</span>}
                           </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </section>
+              )}
+
+              {certificates.length > 0 && (
+                <section className="pp-card">
+                  <h2>Formación y certificados</h2>
+                  <ul className="pp-certs">
+                    {certificates.map((c) => {
+                      const { Icon, label } = kindOf(c.kind);
+                      return (
+                        <li key={c.id}>
+                          <span className="pp-cert-ico">
+                            <Icon size={20} aria-hidden="true" />
+                          </span>
+                          <div>
+                            <strong>{c.title}</strong>
+                            <p>{[label, issuerLine(c)].filter(Boolean).join(' · ')}</p>
+                            <span className="pp-cert-ok">
+                              <BadgeCheck size={14} aria-hidden="true" /> Verificado por NeirAPP
+                            </span>
+                          </div>
+                          <a href={c.file_url} target="_blank" rel="noreferrer">
+                            Ver {isPdf(c.file_url) ? 'PDF' : 'documento'}
+                          </a>
                         </li>
                       );
                     })}

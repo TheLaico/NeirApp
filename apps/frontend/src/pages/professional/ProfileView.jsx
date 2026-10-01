@@ -1,4 +1,4 @@
-import { BadgeCheck, CheckCircle2, ChevronRight, Globe, Loader2, MapPin, MessageCircle, Phone, Sparkles, User } from 'lucide-react';
+import { CheckCircle2, ChevronRight, Globe, Loader2, MapPin, MessageCircle, Phone, Sparkles, User } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import ImagePicker from '../../components/mobile/ImagePicker.jsx';
 import { useProfessionalCategories } from '../../features/professionals/categories.js';
@@ -202,7 +202,6 @@ export default function ProfileView({ profile, published, onSave }) {
               <div className="pf-avatar">{draft.photo ? <img src={draft.photo} alt="" /> : <User size={34} aria-hidden="true" />}</div>
               <h3>
                 {displayName(draft) || 'Tu nombre'}
-                <BadgeCheck size={18} aria-hidden="true" className="pf-verified" />
               </h3>
               <span className={`pf-status${draft.available ? ' on' : ''}`}>
                 <i aria-hidden="true" />

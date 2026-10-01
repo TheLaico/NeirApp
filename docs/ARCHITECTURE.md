@@ -420,13 +420,22 @@ en `/profesional` → "Mi perfil" y queda publicado en `/profesionales`.
 - **Galería** (`professionals_gallery_image`, migración 0024): hasta 30 fotos por profesional, cada
   una con pie de foto y en el orden que él elige (la primera es la portada). Solo se aceptan fotos
   subidas a la app (`POST /uploads/images`): el frontend sube el archivo y luego agrega su URL.
-- **Endpoints**: `GET/PUT /professionals/me`, `…/me/services…` y `…/me/gallery…` (profesional o
-  admin); `GET /professionals/{user_id}/services` y `…/{user_id}/gallery`, `GET /professionals`,
+- **Certificados** (`professionals_certificate`, migración 0025): título, tarjeta profesional,
+  especialización, curso u otro, con archivo PDF (`POST /uploads/documents`) o foto. Quedan "en
+  revisión" hasta que el admin los aprueba o los rechaza con un motivo; si el profesional cambia lo
+  revisado, vuelven a revisión. Los clientes solo ven los verificados que él decide mostrar, y el
+  sello "Verificado" del perfil sale solo si tiene alguno. Hasta 20 por profesional.
+- **Endpoints**: `GET/PUT /professionals/me`, `…/me/services…`, `…/me/gallery…` y
+  `…/me/certificates…` (profesional o admin); `GET /professionals/certificates/pending` y
+  `PUT /professionals/certificates/{id}/review` (admin); `GET /professionals/{user_id}/services`,
+  `…/gallery` y `…/certificates`, `GET /professionals`,
   `GET /professionals/{user_id}`, `GET /professionals/categories` (públicos);
   `PUT /professionals/{user_id}/featured` y `POST/DELETE /professionals/categories…` (admin).
 - En el frontend: `/profesional` (panel del profesional), `/profesionales` y
   `/profesionales/categoria` (directorio) y `/profesionales/perfil?id=` ("Ver perfil").
-- Pendiente: calificaciones de profesionales; certificados.
+- Los PDF y fotos subidos se sirven por URL con nombre aleatorio (no listable); quien tenga la
+  URL puede abrirlos.
+- Pendiente: calificaciones de profesionales; avisar al profesional cuando se revise un certificado.
 
 ## Frontend
 

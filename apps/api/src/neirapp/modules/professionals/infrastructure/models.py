@@ -89,3 +89,21 @@ class GalleryImageModel(Base):
     caption: Mapped[str] = mapped_column(String(140), default="")
     position: Mapped[int] = mapped_column()
     created_at: Mapped[datetime] = mapped_column(UTCDateTime)
+
+
+class CertificateModel(Base):
+    __tablename__ = "professionals_certificate"
+
+    id: Mapped[UUID] = mapped_column(Uuid, primary_key=True)
+    user_id: Mapped[UUID] = mapped_column(Uuid, index=True)
+    kind: Mapped[str] = mapped_column(String(20))
+    title: Mapped[str] = mapped_column(String(100))
+    issuer: Mapped[str] = mapped_column(String(100), default="")
+    year: Mapped[int | None] = mapped_column(default=None)
+    file_url: Mapped[str] = mapped_column(String(300))
+    show_on_profile: Mapped[bool] = mapped_column(default=True)
+    status: Mapped[str] = mapped_column(String(10), index=True)
+    review_note: Mapped[str] = mapped_column(String(200), default="")
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime)
+    updated_at: Mapped[datetime] = mapped_column(UTCDateTime)
+    reviewed_at: Mapped[datetime | None] = mapped_column(UTCDateTime, default=None)

@@ -512,3 +512,140 @@ class TestGaleria:
 
         assert public.status_code == 200
         assert [i["caption"] for i in public.json()] == ["Mi consultorio"]
+
+
+PDF_BYTES = b"%PDF-1.4\n1 0 obj << /Type /Catalog >> endobj\ntrailer << >>\n%%EOF\n"
+
+
+async def _upload_pdf(client: httpx.AsyncClient, tokens: dict[str, Any]) -> str:
+    response = await client.post(
+        f"{API}/uploads/documents",
+        content=PDF_BYTES,
+        headers={**_bearer(tokens), "Content-Type": "application/pdf"},
+    )
+    assert response.status_code == 201, response.text
+    return response.json()["url"]  # type: ignore[no-any-return]
+
+
+class TestDocumentos:
+    async def test_sube_y_entrega_un_pdf(self, client: httpx.AsyncClient, app: FastAPI) -> None:
+        admin = await _admin(client, app)
+        pro = await _professional(client, admin, "laura@correo.com")
+
+        url = await _upload_pdf(client, pro)
+
+        served = await client.get(url)
+        assert served.status_code == 200
+        assert served.headers["content-type"] == "application/pdf"
+        assert served.headers["x-content-type-options"] == "nosniff"
+        assert served.content == PDF_BYTES
+
+    async def test_rechaza_lo_que_no_es_pdf(self, client: httpx.AsyncClient, app: FastAPI) -> None:
+        admin = await _admin(client, app)
+        pro = await _professional(client, admin, "laura@correo.com")
+
+        for body in (b"<html><script>alert(1)</script></html>", b"%PDF-1.4 sin cierre"):
+            response = await client.post(
+                f"{API}/uploads/documents", content=body, headers=_bearer(pro)
+            )
+            assert response.status_code == 422
+            assert response.json()["code"] == "invalid_document"
+
+    async def test_solo_profesionales_suben_documentos(self, client: httpx.AsyncClient) -> None:
+        customer = await _register(client, "cliente@correo.com")
+        response = await client.post(
+            f"{API}/uploads/documents", content=PDF_BYTES, headers=_bearer(customer)
+        )
+        assert response.status_code == 403
+
+    async def test_no_entrega_rutas_inventadas(self, client: httpx.AsyncClient) -> None:
+        for name in ("../../etc/passwd", "a" * 32 + ".exe", "noexiste" * 4 + ".pdf"):
+            response = await client.get(f"{API}/uploads/documents/{name}")
+            assert response.status_code == 404
+
+
+class TestCertificados:
+    async def test_flujo_de_revision(self, client: httpx.AsyncClient, app: FastAPI) -> None:
+        admin = await _admin(client, app)
+        pro = await _professional(client, admin, "laura@correo.com")
+        user_id = (
+            await client.put(f"{API}/professionals/me", json=PROFILE, headers=_bearer(pro))
+        ).json()["user_id"]
+        body = {
+            "kind": "license",
+            "title": "Tarjeta profesional",
+            "issuer": "Ministerio de Salud",
+            "year": 2016,
+            "file_url": await _upload_pdf(client, pro),
+        }
+
+        created = await client.post(
+            f"{API}/professionals/me/certificates", json=body, headers=_bearer(pro)
+        )
+        assert created.status_code == 201, created.text
+        assert created.json()["status"] == "pending"
+        certificate_id = created.json()["id"]
+        public = f"{API}/professionals/{user_id}/certificates"
+        assert (await client.get(public)).json() == []  # en revisión: no se ve
+
+        pending = (
+            await client.get(f"{API}/professionals/certificates/pending", headers=_bearer(admin))
+        ).json()
+        assert [(p["title"], p["professional_name"]) for p in pending] == [
+            ("Tarjeta profesional", "Dra. Laura Torres")
+        ]
+
+        rejected = await client.put(
+            f"{API}/professionals/certificates/{certificate_id}/review",
+            json={"approve": False, "note": "El documento se ve borroso"},
+            headers=_bearer(admin),
+        )
+        assert rejected.json()["status"] == "rejected"
+        mine = (
+            await client.get(f"{API}/professionals/me/certificates", headers=_bearer(pro))
+        ).json()
+        assert mine[0]["review_note"] == "El documento se ve borroso"
+
+        # Lo corrige con otro archivo: vuelve a revisión y el admin lo aprueba.
+        fixed = await client.put(
+            f"{API}/professionals/me/certificates/{certificate_id}",
+            json={**body, "file_url": await _upload_pdf(client, pro)},
+            headers=_bearer(pro),
+        )
+        assert fixed.json()["status"] == "pending"
+        await client.put(
+            f"{API}/professionals/certificates/{certificate_id}/review",
+            json={"approve": True},
+            headers=_bearer(admin),
+        )
+
+        shown = (await client.get(public)).json()
+        assert [c["title"] for c in shown] == ["Tarjeta profesional"]
+        assert "review_note" not in shown[0] and "status" not in shown[0]
+
+    async def test_solo_el_admin_revisa(self, client: httpx.AsyncClient, app: FastAPI) -> None:
+        admin = await _admin(client, app)
+        pro = await _professional(client, admin, "laura@correo.com")
+
+        assert (
+            await client.get(f"{API}/professionals/certificates/pending", headers=_bearer(pro))
+        ).status_code == 403
+
+    async def test_no_toca_certificados_de_otro(
+        self, client: httpx.AsyncClient, app: FastAPI
+    ) -> None:
+        admin = await _admin(client, app)
+        laura = await _professional(client, admin, "laura@correo.com")
+        carlos = await _professional(client, admin, "carlos@correo.com")
+        body = {"kind": "degree", "title": "Pediatra", "file_url": await _upload_pdf(client, laura)}
+        certificate_id = (
+            await client.post(
+                f"{API}/professionals/me/certificates", json=body, headers=_bearer(laura)
+            )
+        ).json()["id"]
+
+        response = await client.delete(
+            f"{API}/professionals/me/certificates/{certificate_id}", headers=_bearer(carlos)
+        )
+
+        assert response.status_code == 404

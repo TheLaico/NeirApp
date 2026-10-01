@@ -1,4 +1,5 @@
-"""Subida y entrega de imágenes (fotos de tienda, de producto y del perfil de profesionales).
+"""Subida y entrega de imágenes (fotos de tienda, de producto y de profesionales) y de
+documentos PDF (certificados de profesionales).
 
 El navegador manda el archivo como cuerpo crudo con su `Content-Type`
 (`fetch(url, { method: 'POST', headers: { 'Content-Type': file.type }, body: file })`). Se valida el
@@ -34,6 +35,8 @@ MAX_SIDE = 1200
 WEBP_QUALITY = 80
 MAX_PIXELS = 50_000_000
 _NAME = re.compile(r"^[0-9a-f]{32}\.(png|jpg|webp)$")
+MAX_DOCUMENT_BYTES = 10 * 1024 * 1024
+_DOCUMENT_NAME = re.compile(r"^[0-9a-f]{32}\.pdf$")
 
 # Suben fotos quienes arman algo que ven los clientes: comerciantes, profesionales y el admin.
 RequireUploader = Annotated[
@@ -65,6 +68,34 @@ class ImageNotFound(NotFoundError):
     @classmethod
     def default_message(cls) -> str:
         return "Imagen no encontrada."
+
+
+class InvalidDocument(ValidationError):
+    code = "invalid_document"
+
+    @classmethod
+    def default_message(cls) -> str:
+        return "El archivo no es un PDF válido."
+
+
+class DocumentTooLarge(ValidationError):
+    code = "document_too_large"
+
+    @classmethod
+    def default_message(cls) -> str:
+        return "El documento pesa demasiado. El máximo es 10 MB."
+
+
+class DocumentNotFound(NotFoundError):
+    code = "document_not_found"
+
+    @classmethod
+    def default_message(cls) -> str:
+        return "Documento no encontrado."
+
+
+# Solo los profesionales suben documentos (sus certificados); el admin, para pruebas y soporte.
+RequireDocumentUploader = Annotated[User, Depends(require_roles(Role.PROFESSIONAL, Role.ADMIN))]
 
 
 class UploadedImage(BaseModel):
@@ -136,3 +167,48 @@ async def get_image(name: str, request: Request) -> FileResponse:
         raise ImageNotFound()
     # Los nombres son aleatorios e inmutables: se pueden cachear sin miedo.
     return FileResponse(path, headers={"Cache-Control": "public, max-age=31536000, immutable"})
+
+
+async def _read_body(request: Request, limit: int, too_large: type[ValidationError]) -> bytes:
+    declared = request.headers.get("content-length")
+    if declared and declared.isdigit() and int(declared) > limit:
+        raise too_large()
+    data = bytearray()
+    async for chunk in request.stream():
+        data.extend(chunk)
+        if len(data) > limit:
+            raise too_large()
+    return bytes(data)
+
+
+@router.post("/documents", response_model=UploadedImage, status_code=201)
+async def upload_document(request: Request, _user: RequireDocumentUploader) -> UploadedImage:
+    """Sube un PDF (cuerpo crudo, máx. 10 MB) y devuelve su URL. Se valida la firma y el cierre del
+    archivo, no el `Content-Type`; se guarda con un nombre aleatorio."""
+    data = await _read_body(request, MAX_DOCUMENT_BYTES, DocumentTooLarge)
+    if not data.startswith(b"%PDF-") or b"%%EOF" not in data[-2048:]:
+        raise InvalidDocument()
+    directory = _directory(request) / "documents"
+    directory.mkdir(parents=True, exist_ok=True)
+    name = f"{uuid4().hex}.pdf"
+    await asyncio.to_thread((directory / name).write_bytes, data)
+    return UploadedImage(url=f"/api/v1/uploads/documents/{name}")
+
+
+@router.get("/documents/{name}")
+async def get_document(name: str, request: Request) -> FileResponse:
+    """Entrega un PDF subido, para verlo en el navegador. El nombre se valida por patrón."""
+    if not _DOCUMENT_NAME.match(name):
+        raise DocumentNotFound()
+    path = _directory(request) / "documents" / name
+    if not path.is_file():
+        raise DocumentNotFound()
+    return FileResponse(
+        path,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": 'inline; filename="certificado.pdf"',
+            "X-Content-Type-Options": "nosniff",
+            "Cache-Control": "private, max-age=3600",
+        },
+    )

@@ -202,3 +202,51 @@ class GalleryImageNotFound(NotFoundError):
     @classmethod
     def default_message(cls) -> str:
         return "Imagen no encontrada."
+
+
+class InvalidCertificateTitle(ValidationError):
+    code = "invalid_certificate_title"
+
+    @classmethod
+    def default_message(cls) -> str:
+        return "Escribe el nombre del título o certificado (entre 3 y 100 caracteres)."
+
+
+class InvalidCertificateYear(ValidationError):
+    code = "invalid_certificate_year"
+
+    @classmethod
+    def default_message(cls) -> str:
+        return "Escribe un año válido, por ejemplo 2018."
+
+
+class InvalidCertificateFile(ValidationError):
+    code = "invalid_certificate_file"
+
+    @classmethod
+    def default_message(cls) -> str:
+        return "Adjunta el certificado como PDF o foto, subido desde la app."
+
+
+class TooManyCertificates(ValidationError):
+    code = "too_many_certificates"
+
+    @classmethod
+    def default_message(cls) -> str:
+        return "Puedes tener hasta 20 certificados. Borra alguno para agregar otro."
+
+
+class CertificateNotFound(NotFoundError):
+    code = "certificate_not_found"
+
+    @classmethod
+    def default_message(cls) -> str:
+        return "Certificado no encontrado."
+
+
+class MissingReviewNote(ValidationError):
+    code = "missing_review_note"
+
+    @classmethod
+    def default_message(cls) -> str:
+        return "Cuéntale al profesional por qué no se aprobó (entre 5 y 200 caracteres)."

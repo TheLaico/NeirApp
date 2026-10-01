@@ -9,6 +9,7 @@ import { displayName, useProfessionalProfile } from '../../features/professional
 import { useNavigate } from '../../lib/router.jsx';
 import { useMediaQuery } from '../../lib/useMediaQuery.js';
 import '../admin/admin.css';
+import CertificatesView from './CertificatesView.jsx';
 import GalleryView from './GalleryView.jsx';
 import HomeView from './HomeView.jsx';
 import ProfileView from './ProfileView.jsx';
@@ -68,6 +69,8 @@ export default function ProfessionalPage({ user, onLogout }) {
     );
   } else if (view === 'home') {
     content = <HomeView name={name} activity={activity} onGo={setView} onPlans={() => navigate('/profesional/planes')} />;
+  } else if (view === 'certificates') {
+    content = <CertificatesView />;
   } else if (view === 'gallery') {
     content = <GalleryView onCountChange={setImages} />;
   } else if (view === 'services') {

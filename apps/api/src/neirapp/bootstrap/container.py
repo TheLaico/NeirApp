@@ -114,6 +114,15 @@ from neirapp.modules.professionals.application.categories import (
     ListCategories,
     SetSubcategoryColor,
 )
+from neirapp.modules.professionals.application.certificates import (
+    AddCertificate,
+    DeleteCertificate,
+    ListMyCertificates,
+    ListPendingCertificates,
+    ListPublicCertificates,
+    ReviewCertificate,
+    UpdateCertificate,
+)
 from neirapp.modules.professionals.application.gallery import (
     AddGalleryImage,
     DeleteGalleryImage,
@@ -137,6 +146,9 @@ from neirapp.modules.professionals.application.services import (
     UpdateService,
 )
 from neirapp.modules.professionals.infrastructure.categories import SqlAlchemyCategoryRepository
+from neirapp.modules.professionals.infrastructure.certificates import (
+    SqlAlchemyCertificateRepository,
+)
 from neirapp.modules.professionals.infrastructure.gallery import SqlAlchemyGalleryRepository
 from neirapp.modules.professionals.infrastructure.identity_adapter import IdentityAccessAdapter
 from neirapp.modules.professionals.infrastructure.repositories import SqlAlchemyProfileRepository
@@ -311,6 +323,7 @@ def build_professionals(
     categories = SqlAlchemyCategoryRepository(session_factory)
     services = SqlAlchemyServiceRepository(session_factory)
     gallery = SqlAlchemyGalleryRepository(session_factory)
+    certificates = SqlAlchemyCertificateRepository(session_factory)
     access = IdentityAccessAdapter(identity)
     clock = clock or SystemClock()
     return ProfessionalsApp(
@@ -336,6 +349,13 @@ def build_professionals(
         reorder_gallery=ReorderGallery(gallery),
         delete_gallery_image=DeleteGalleryImage(gallery),
         list_public_gallery=ListPublicGallery(gallery, access),
+        list_my_certificates=ListMyCertificates(certificates),
+        add_certificate=AddCertificate(certificates, clock),
+        update_certificate=UpdateCertificate(certificates, clock),
+        delete_certificate=DeleteCertificate(certificates),
+        list_pending_certificates=ListPendingCertificates(certificates, repo),
+        review_certificate=ReviewCertificate(certificates, clock),
+        list_public_certificates=ListPublicCertificates(certificates, access),
     )
 
 

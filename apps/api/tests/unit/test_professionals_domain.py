@@ -4,6 +4,12 @@ from uuid import uuid4
 
 import pytest
 
+from neirapp.modules.professionals.domain.certificates import (
+    Certificate,
+    CertificateData,
+    CertificateKind,
+    CertificateStatus,
+)
 from neirapp.modules.professionals.domain.entities import (
     Modalities,
     ProfessionalProfile,
@@ -12,6 +18,9 @@ from neirapp.modules.professionals.domain.entities import (
 )
 from neirapp.modules.professionals.domain.errors import (
     InvalidCategory,
+    InvalidCertificateFile,
+    InvalidCertificateTitle,
+    InvalidCertificateYear,
     InvalidContactEmail,
     InvalidExperience,
     InvalidFullName,
@@ -21,6 +30,7 @@ from neirapp.modules.professionals.domain.errors import (
     InvalidServiceName,
     InvalidServicePrice,
     InvalidTitle,
+    MissingReviewNote,
     NoModality,
     TextTooLong,
 )
@@ -141,3 +151,68 @@ class TestServicios:
     def test_rechaza_datos_invalidos(self, change: dict[str, object], error: type) -> None:
         with pytest.raises(error):
             self._create(**change)
+
+
+PDF = "/api/v1/uploads/documents/" + "a" * 32 + ".pdf"
+
+
+class TestCertificados:
+    def _create(self, **change: object) -> Certificate:
+        data = replace(
+            CertificateData(kind=CertificateKind.DEGREE, title="Médico cirujano", file_url=PDF),
+            **change,  # type: ignore[arg-type]
+        )
+        return Certificate.create(uuid4(), data, NOW)
+
+    def test_arranca_en_revision_y_no_es_publico(self) -> None:
+        certificate = self._create(issuer="  Universidad   de Caldas ", year=2015)
+        assert certificate.issuer == "Universidad de Caldas"
+        assert certificate.status is CertificateStatus.PENDING
+        assert certificate.is_public is False
+
+    @pytest.mark.parametrize(
+        ("change", "error"),
+        [
+            ({"title": "ab"}, InvalidCertificateTitle),
+            ({"year": 1900}, InvalidCertificateYear),
+            ({"year": 2030}, InvalidCertificateYear),
+            ({"file_url": "https://otro-sitio.com/titulo.pdf"}, InvalidCertificateFile),
+            ({"file_url": "/api/v1/uploads/documents/../secreto.pdf"}, InvalidCertificateFile),
+        ],
+    )
+    def test_rechaza_datos_invalidos(self, change: dict[str, object], error: type) -> None:
+        with pytest.raises(error):
+            self._create(**change)
+
+    def test_aprobado_y_visible_es_publico(self) -> None:
+        certificate = self._create()
+        certificate.review(approve=True, note="", now=NOW)
+        assert certificate.is_public is True
+
+    def test_rechazar_exige_motivo(self) -> None:
+        certificate = self._create()
+        with pytest.raises(MissingReviewNote):
+            certificate.review(approve=False, note="no", now=NOW)
+        certificate.review(approve=False, note="El documento está borroso", now=NOW)
+        assert certificate.status is CertificateStatus.REJECTED
+
+    def test_editar_lo_revisado_vuelve_a_revision(self) -> None:
+        certificate = self._create()
+        certificate.review(approve=True, note="", now=NOW)
+
+        certificate.update(
+            CertificateData(
+                kind=CertificateKind.DEGREE,
+                title="Médico cirujano",
+                file_url=PDF,
+                show_on_profile=False,
+            ),
+            NOW,
+        )
+        assert certificate.status is CertificateStatus.VERIFIED  # solo cambió la visibilidad
+
+        certificate.update(
+            CertificateData(kind=CertificateKind.DEGREE, title="Médica cirujana", file_url=PDF),
+            NOW,
+        )
+        assert certificate.status is CertificateStatus.PENDING

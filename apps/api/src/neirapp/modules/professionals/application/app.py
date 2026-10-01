@@ -8,6 +8,15 @@ from neirapp.modules.professionals.application.categories import (
     ListCategories,
     SetSubcategoryColor,
 )
+from neirapp.modules.professionals.application.certificates import (
+    AddCertificate,
+    DeleteCertificate,
+    ListMyCertificates,
+    ListPendingCertificates,
+    ListPublicCertificates,
+    ReviewCertificate,
+    UpdateCertificate,
+)
 from neirapp.modules.professionals.application.gallery import (
     AddGalleryImage,
     DeleteGalleryImage,
@@ -56,3 +65,10 @@ class ProfessionalsApp:
     reorder_gallery: ReorderGallery
     delete_gallery_image: DeleteGalleryImage
     list_public_gallery: ListPublicGallery
+    list_my_certificates: ListMyCertificates
+    add_certificate: AddCertificate
+    update_certificate: UpdateCertificate
+    delete_certificate: DeleteCertificate
+    list_pending_certificates: ListPendingCertificates
+    review_certificate: ReviewCertificate
+    list_public_certificates: ListPublicCertificates

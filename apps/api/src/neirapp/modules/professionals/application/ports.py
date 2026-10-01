@@ -2,6 +2,7 @@ from typing import Protocol
 from uuid import UUID
 
 from neirapp.modules.professionals.domain.categories import Category, Subcategory
+from neirapp.modules.professionals.domain.certificates import Certificate
 from neirapp.modules.professionals.domain.entities import ProfessionalProfile
 from neirapp.modules.professionals.domain.gallery import GalleryImage
 from neirapp.modules.professionals.domain.services import ProfessionalService
@@ -69,3 +70,19 @@ class GalleryRepository(Protocol):
     async def set_positions(self, positions: dict[UUID, int]) -> None: ...
 
     async def delete(self, image_id: UUID) -> None: ...
+
+
+class CertificateRepository(Protocol):
+    async def list_for(self, user_id: UUID) -> list[Certificate]:
+        """Los certificados de un profesional, los más recientes primero."""
+        ...
+
+    async def list_pending(self) -> list[Certificate]:
+        """Los que esperan revisión, los más antiguos primero."""
+        ...
+
+    async def get(self, certificate_id: UUID) -> Certificate | None: ...
+
+    async def save(self, certificate: Certificate) -> None: ...
+
+    async def delete(self, certificate_id: UUID) -> None: ...
