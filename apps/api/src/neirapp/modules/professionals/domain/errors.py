@@ -250,3 +250,43 @@ class MissingReviewNote(ValidationError):
     @classmethod
     def default_message(cls) -> str:
         return "Cuéntale al profesional por qué no se aprobó (entre 5 y 200 caracteres)."
+
+
+class InvalidAppointmentRequest(ValidationError):
+    code = "invalid_appointment_request"
+
+    @classmethod
+    def default_message(cls) -> str:
+        return "Revisa los datos de la solicitud."
+
+
+class CannotRequestYourself(ValidationError):
+    code = "cannot_request_yourself"
+
+    @classmethod
+    def default_message(cls) -> str:
+        return "No puedes pedirte una cita a ti mismo."
+
+
+class TooManyPendingRequests(ValidationError):
+    code = "too_many_pending_requests"
+
+    @classmethod
+    def default_message(cls) -> str:
+        return "Ya tienes 3 solicitudes esperando respuesta de este profesional."
+
+
+class AppointmentRequestNotFound(NotFoundError):
+    code = "appointment_request_not_found"
+
+    @classmethod
+    def default_message(cls) -> str:
+        return "Solicitud no encontrada."
+
+
+class InvalidRequestTransition(ConflictError):
+    code = "invalid_request_transition"
+
+    @classmethod
+    def default_message(cls) -> str:
+        return "Esta solicitud ya no se puede cambiar así."

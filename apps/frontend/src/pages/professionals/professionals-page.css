@@ -140,3 +140,6 @@
 }
 .pros-sub-list button:hover { box-shadow: 0 4px 12px rgba(35, 52, 43, .1); transform: translateY(-1px); }
 .pros-sub-dot { flex: none; width: 10px; height: 10px; border-radius: 50%; }
+
+.pros-my-requests { display: inline-flex; align-items: center; gap: 6px; margin-top: 12px; padding: 8px 14px; border: 1.5px solid rgba(15, 82, 56, .35); border-radius: 999px; background: rgba(255, 255, 255, .75); color: #0f5238; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
+.pros-my-requests:hover { background: #fff; }

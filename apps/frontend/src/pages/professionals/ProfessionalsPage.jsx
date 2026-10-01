@@ -1,4 +1,4 @@
-import { Mic, Search, X } from 'lucide-react';
+import { CalendarCheck, Mic, Search, X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import PageShell from '../../components/layout/PageShell.jsx';
 import { CATEGORY_ICONS, DEFAULT_SUBCATEGORY_COLOR, useProfessionalCategories } from '../../features/professionals/categories.js';
@@ -22,6 +22,7 @@ const SEARCH_EXAMPLES = [
  */
 export default function ProfessionalsPage({ user, onLogout }) {
   const { categories } = useProfessionalCategories();
+  const navigate = useNavigate();
   const [navQuery, setNavQuery] = useState('');
   const [search, setSearch] = useState('');
   const [placeholder, setPlaceholder] = useState('Buscar por profesión, nombre o especialidad...');
@@ -103,6 +104,9 @@ export default function ProfessionalsPage({ user, onLogout }) {
               Conecta con profesionales de confianza de diferentes áreas. Revisa su información, especialidades y
               contáctalos de forma rápida y sencilla.
             </p>
+            <button type="button" className="pros-my-requests" onClick={() => navigate('/profesionales/mis-solicitudes')}>
+              <CalendarCheck size={16} aria-hidden="true" /> Mis solicitudes de cita
+            </button>
           </div>
         </section>
 

@@ -1,5 +1,5 @@
-// Datos del panel del profesional. Todavía no hay backend de perfiles ni de solicitudes de contacto,
-// así que la actividad es de ejemplo; cuando exista, `relevantItems` recibe la actividad real.
+// Datos del panel del profesional: menús, accesos rápidos y las tarjetas de "Lo más relevante", que se arman
+// con su actividad real (solicitudes nuevas, descripción y fotos).
 
 export const NAV = [
   { key: 'home', label: 'Inicio', icon: 'home' },
@@ -27,8 +27,6 @@ export const QUICK_ACCESS = [
   { key: 'certificates', title: 'Certificados', text: 'Sube y gestiona tus documentos.', icon: 'award', tone: 'terra' },
 ];
 
-export const SAMPLE_ACTIVITY = { newRequests: 3, hasDescription: false, images: 0 };
-
 /**
  * Tarjetas de "Lo más relevante para ti", según la actividad del profesional: solicitudes nuevas si hay,
  * y consejos para el perfil mientras le falte descripción o imágenes.
@@ -40,8 +38,8 @@ export function relevantItems({ newRequests = 0, hasDescription = false, images 
       id: 'requests',
       kind: 'requests',
       go: 'requests',
-      title: 'Nuevas solicitudes de contacto',
-      text: `Tienes ${newRequests} ${newRequests === 1 ? 'mensaje' : 'mensajes'} de personas interesadas en tus servicios.`,
+      title: 'Nuevas solicitudes de cita',
+      text: `Tienes ${newRequests} ${newRequests === 1 ? 'solicitud' : 'solicitudes'} de personas interesadas en tus servicios. Respóndelas pronto.`,
     });
   }
   if (!hasDescription || images === 0) {

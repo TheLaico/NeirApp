@@ -1,6 +1,7 @@
 from typing import Protocol
 from uuid import UUID
 
+from neirapp.modules.professionals.domain.appointments import AppointmentRequest
 from neirapp.modules.professionals.domain.categories import Category, Subcategory
 from neirapp.modules.professionals.domain.certificates import Certificate
 from neirapp.modules.professionals.domain.entities import ProfessionalProfile
@@ -86,3 +87,17 @@ class CertificateRepository(Protocol):
     async def save(self, certificate: Certificate) -> None: ...
 
     async def delete(self, certificate_id: UUID) -> None: ...
+
+
+class AppointmentRepository(Protocol):
+    async def list_for_professional(self, professional_id: UUID) -> list[AppointmentRequest]:
+        """Las solicitudes que recibió, las más recientes primero."""
+        ...
+
+    async def list_for_customer(self, customer_id: UUID) -> list[AppointmentRequest]:
+        """Las que envió una persona, las más recientes primero."""
+        ...
+
+    async def get(self, request_id: UUID) -> AppointmentRequest | None: ...
+
+    async def save(self, request: AppointmentRequest) -> None: ...

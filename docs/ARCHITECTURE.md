@@ -425,8 +425,15 @@ en `/profesional` → "Mi perfil" y queda publicado en `/profesionales`.
   revisión" hasta que el admin los aprueba o los rechaza con un motivo; si el profesional cambia lo
   revisado, vuelven a revisión. Los clientes solo ven los verificados que él decide mostrar, y el
   sello "Verificado" del perfil sale solo si tiene alguno. Hasta 20 por profesional.
-- **Endpoints**: `GET/PUT /professionals/me`, `…/me/services…`, `…/me/gallery…` y
-  `…/me/certificates…` (profesional o admin); `GET /professionals/certificates/pending` y
+- **Solicitudes de cita** (`professionals_appointment_request`, migración 0026): cualquier persona
+  con sesión le pide una cita a un profesional publicado (servicio, modalidad que él ofrezca, día y
+  franja preferidos, mensaje y celular; dirección si es a domicilio). Máximo 3 pendientes por
+  persona y profesional. El profesional la agenda (fecha y hora, reprogramable), la rechaza, la
+  cancela o la marca como atendida; la persona la ve en `/profesionales/mis-solicitudes` y puede
+  cancelarla mientras esté abierta.
+- **Endpoints**: `GET/PUT /professionals/me`, `…/me/services…`, `…/me/gallery…`,
+  `…/me/certificates…` y `…/me/requests…` (profesional o admin); `POST /professionals/{id}/requests`,
+  `GET /professionals/requests/mine` y `PUT /professionals/requests/{id}/cancel` (con sesión); `GET /professionals/certificates/pending` y
   `PUT /professionals/certificates/{id}/review` (admin); `GET /professionals/{user_id}/services`,
   `…/gallery` y `…/certificates`, `GET /professionals`,
   `GET /professionals/{user_id}`, `GET /professionals/categories` (públicos);
@@ -435,7 +442,8 @@ en `/profesional` → "Mi perfil" y queda publicado en `/profesionales`.
   `/profesionales/categoria` (directorio) y `/profesionales/perfil?id=` ("Ver perfil").
 - Los PDF y fotos subidos se sirven por URL con nombre aleatorio (no listable); quien tenga la
   URL puede abrirlos.
-- Pendiente: calificaciones de profesionales; avisar al profesional cuando se revise un certificado.
+- Pendiente: calificaciones de profesionales; notificaciones (certificado revisado, solicitud nueva o
+  respondida): hoy el panel del profesional revisa sus solicitudes cada minuto.
 
 ## Frontend
 

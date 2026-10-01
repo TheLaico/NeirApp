@@ -1,14 +1,25 @@
-from datetime import datetime
+from datetime import date, datetime
 from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, Response, status
-from pydantic import BaseModel, Field
+from pydantic import AwareDatetime, BaseModel, Field
 
 from neirapp.modules.identity.domain.entities import Role, User
-from neirapp.modules.identity.presentation.dependencies import require_roles
+from neirapp.modules.identity.presentation.dependencies import CurrentUser, require_roles
+from neirapp.modules.professionals.application.appointments import SentRequest
 from neirapp.modules.professionals.application.certificates import PendingCertificate
 from neirapp.modules.professionals.application.profiles import DirectoryFilter
+from neirapp.modules.professionals.domain.appointments import (
+    MAX_ADDRESS,
+    MAX_MESSAGE,
+    MAX_NOTE,
+    AppointmentRequest,
+    Modality,
+    RequestData,
+    RequestStatus,
+    TimeSlot,
+)
 from neirapp.modules.professionals.domain.categories import Category, Subcategory
 from neirapp.modules.professionals.domain.certificates import (
     MAX_ISSUER,
@@ -420,6 +431,140 @@ async def review_certificate(
     return CertificateResponse.from_domain(certificate)
 
 
+class AppointmentRequestBody(BaseModel):
+    modality: Modality
+    message: str = Field(max_length=MAX_MESSAGE * 2)
+    phone: str = Field(max_length=40)
+    preferred_date: date | None = None
+    preferred_time: TimeSlot = TimeSlot.ANY
+    address: str = Field(default="", max_length=MAX_ADDRESS * 2)
+    service_id: UUID | None = None
+
+    def to_data(self) -> RequestData:
+        return RequestData(
+            modality=self.modality,
+            message=self.message,
+            phone=self.phone,
+            preferred_date=self.preferred_date,
+            preferred_time=self.preferred_time,
+            address=self.address,
+            service_id=self.service_id,
+        )
+
+
+class ScheduleBody(BaseModel):
+    scheduled_at: AwareDatetime
+    note: str = Field(default="", max_length=MAX_NOTE * 2)
+
+
+class NoteBody(BaseModel):
+    note: str = Field(default="", max_length=MAX_NOTE * 2)
+
+
+class AppointmentResponse(BaseModel):
+    id: UUID
+    professional_id: UUID
+    customer_name: str
+    customer_phone: str
+    modality: Modality
+    preferred_date: date | None
+    preferred_time: TimeSlot
+    message: str
+    address: str
+    service_name: str
+    status: RequestStatus
+    scheduled_at: datetime | None
+    note: str
+    cancelled_by_customer: bool
+    created_at: datetime
+
+    @classmethod
+    def from_domain(cls, r: AppointmentRequest) -> "AppointmentResponse":
+        return cls(
+            id=r.id,
+            professional_id=r.professional_id,
+            customer_name=r.customer_name,
+            customer_phone=r.customer_phone,
+            modality=r.modality,
+            preferred_date=r.preferred_date,
+            preferred_time=r.preferred_time,
+            message=r.message,
+            address=r.address,
+            service_name=r.service_name,
+            status=r.status,
+            scheduled_at=r.scheduled_at,
+            note=r.note,
+            cancelled_by_customer=r.cancelled_by_customer,
+            created_at=r.created_at,
+        )
+
+
+class SentRequestResponse(AppointmentResponse):
+    professional_name: str
+
+    @classmethod
+    def from_sent(cls, sent: SentRequest) -> "SentRequestResponse":
+        return cls(
+            **AppointmentResponse.from_domain(sent.request).model_dump(),
+            professional_name=sent.professional_name,
+        )
+
+
+@router.get("/me/requests", response_model=list[AppointmentResponse])
+async def list_received_requests(
+    user: RequireProfessional, app: ProfessionalsDep
+) -> list[AppointmentResponse]:
+    """Solicitudes de cita que recibió el profesional, las más recientes primero."""
+    return [AppointmentResponse.from_domain(r) for r in await app.list_received_requests(user.id)]
+
+
+@router.put("/me/requests/{request_id}/schedule", response_model=AppointmentResponse)
+async def schedule_request(
+    request_id: UUID, body: ScheduleBody, user: RequireProfessional, app: ProfessionalsDep
+) -> AppointmentResponse:
+    """Acepta la solicitud (o reprograma la cita) para una fecha y hora."""
+    request = await app.schedule_request(user.id, request_id, body.scheduled_at, body.note)
+    return AppointmentResponse.from_domain(request)
+
+
+@router.put("/me/requests/{request_id}/reject", response_model=AppointmentResponse)
+async def reject_request(
+    request_id: UUID, body: NoteBody, user: RequireProfessional, app: ProfessionalsDep
+) -> AppointmentResponse:
+    request = await app.reject_request(user.id, request_id, body.note)
+    return AppointmentResponse.from_domain(request)
+
+
+@router.put("/me/requests/{request_id}/complete", response_model=AppointmentResponse)
+async def complete_request(
+    request_id: UUID, user: RequireProfessional, app: ProfessionalsDep
+) -> AppointmentResponse:
+    return AppointmentResponse.from_domain(await app.complete_request(user.id, request_id))
+
+
+@router.put("/me/requests/{request_id}/cancel", response_model=AppointmentResponse)
+async def cancel_request_as_professional(
+    request_id: UUID, body: NoteBody, user: RequireProfessional, app: ProfessionalsDep
+) -> AppointmentResponse:
+    request = await app.cancel_by_professional(user.id, request_id, body.note)
+    return AppointmentResponse.from_domain(request)
+
+
+# Antes que "/{user_id}" para que "requests" no se tome como un id.
+@router.get("/requests/mine", response_model=list[SentRequestResponse])
+async def list_sent_requests(user: CurrentUser, app: ProfessionalsDep) -> list[SentRequestResponse]:
+    """Solicitudes de cita que envió quien inició sesión, con el nombre del profesional."""
+    return [SentRequestResponse.from_sent(s) for s in await app.list_sent_requests(user.id)]
+
+
+@router.put("/requests/{request_id}/cancel", response_model=AppointmentResponse)
+async def cancel_request_as_customer(
+    request_id: UUID, body: NoteBody, user: CurrentUser, app: ProfessionalsDep
+) -> AppointmentResponse:
+    request = await app.cancel_by_customer(user.id, request_id, body.note)
+    return AppointmentResponse.from_domain(request)
+
+
 @router.get("", response_model=list[ProfileResponse])
 async def list_directory(
     app: ProfessionalsDep,
@@ -569,3 +714,12 @@ async def list_public_certificates(
         PublicCertificateResponse.from_domain(c)
         for c in await app.list_public_certificates(user_id)
     ]
+
+
+@router.post("/{user_id}/requests", response_model=AppointmentResponse, status_code=201)
+async def send_request(
+    user_id: UUID, body: AppointmentRequestBody, user: CurrentUser, app: ProfessionalsDep
+) -> AppointmentResponse:
+    """Pide una cita a un profesional (cualquier persona con sesión)."""
+    request = await app.send_request(user_id, user.id, user.full_name, body.to_data())
+    return AppointmentResponse.from_domain(request)

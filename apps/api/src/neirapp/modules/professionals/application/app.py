@@ -1,5 +1,15 @@
 from dataclasses import dataclass
 
+from neirapp.modules.professionals.application.appointments import (
+    CancelByCustomer,
+    CancelByProfessional,
+    CompleteRequest,
+    ListReceivedRequests,
+    ListSentRequests,
+    RejectRequest,
+    ScheduleRequest,
+    SendRequest,
+)
 from neirapp.modules.professionals.application.categories import (
     AddSubcategory,
     CreateCategory,
@@ -72,3 +82,11 @@ class ProfessionalsApp:
     list_pending_certificates: ListPendingCertificates
     review_certificate: ReviewCertificate
     list_public_certificates: ListPublicCertificates
+    send_request: SendRequest
+    list_received_requests: ListReceivedRequests
+    schedule_request: ScheduleRequest
+    reject_request: RejectRequest
+    complete_request: CompleteRequest
+    cancel_by_professional: CancelByProfessional
+    list_sent_requests: ListSentRequests
+    cancel_by_customer: CancelByCustomer
