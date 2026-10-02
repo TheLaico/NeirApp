@@ -58,14 +58,18 @@
 .sp-card-text h3 { font-family: 'Montserrat', sans-serif; font-size: 18px; font-weight: 700; color: var(--g2); }
 .sp-tagline { font-size: 14.5px; color: #4f6a55; }
 .sp-desc { margin-top: 6px; font-size: 13.5px; line-height: 1.5; color: var(--ink); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-.sp-card-foot { display: flex; align-items: center; gap: 10px; margin-top: auto; padding: 14px 16px 16px; }
+.sp-card-foot { display: flex; align-items: center; gap: 12px; margin-top: auto; padding: 14px 16px 10px; }
+.sp-card-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 16px 16px; }
+.sp-card-actions .sp-btn { min-height: 40px; padding: 0 10px; font-size: 13.5px; border-radius: 999px; }
+.sp-name { padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.sp-name:hover { color: var(--g); text-decoration: underline; }
+button.sp-logo { padding: 0; cursor: pointer; }
 .sp-contact { display: inline-flex; align-items: center; gap: 8px; padding: 6px 2px; border: 0; background: none; color: var(--ink); font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
 .sp-contact svg { color: var(--g2); }
 .sp-contact:hover { color: var(--g); text-decoration: underline; }
 .sp-socials { display: inline-flex; align-items: center; gap: 8px; }
 .sp-socials a { display: grid; border-radius: 50%; transition: transform .15s; }
 .sp-socials a:hover { transform: scale(1.12); }
-.sp-catalog { margin-left: auto; min-height: 38px; padding: 0 14px; font-size: 13.5px; border-radius: 999px; }
 .sp-empty { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 50px 16px; color: var(--muted); font-size: 16px; text-align: center; }
 .sp-empty svg { color: #9db78f; }
 
@@ -149,4 +153,47 @@
 @media (prefers-reduced-motion: reduce) {
   .sp-card, .sp-socials a { transition: none; }
   .sp-card:hover { transform: none; }
+}
+
+/* ---------- Ver empresa ---------- */
+.sp-btn.small { min-height: 34px; padding: 0 12px; font-size: 13px; border-radius: 10px; }
+.sp-btn.whatsapp { background: #1f8f4e; }
+a.sp-btn { text-decoration: none; }
+.sp-chip.static { position: static; display: inline-flex; align-items: center; gap: 5px; align-self: flex-start; box-shadow: none; }
+.spd { display: flex; flex-direction: column; gap: 18px; }
+.spd-head { overflow: hidden; border: 1px solid var(--line); border-radius: 24px; background: #fff; box-shadow: 0 4px 14px rgba(35, 52, 43, .07); }
+.spd-cover { position: relative; display: grid; place-items: center; height: 210px; overflow: hidden; background: color-mix(in srgb, var(--tint) 16%, #fff); }
+.spd-cover img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.spd-id { display: flex; align-items: flex-end; flex-wrap: wrap; gap: 14px 20px; padding: 0 24px 20px; }
+.spd-logo { width: 130px; height: 130px; margin-top: -56px; border-width: 5px; font-size: 38px; position: relative; z-index: 1; }
+.spd-titles { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 220px; }
+.spd-titles h1 { font-family: 'Montserrat', sans-serif; font-size: clamp(24px, 2.6vw, 34px); font-weight: 800; color: var(--g2); }
+.spd-titles p { font-size: 16.5px; color: #4f6a55; }
+.spd-cta { display: flex; flex-wrap: wrap; gap: 10px; }
+.spd-body { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 18px; align-items: start; }
+.spd-main { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+.spd-card { padding: 20px 22px; border: 1px solid var(--line); border-radius: 20px; background: #fff; box-shadow: 0 2px 10px rgba(35, 52, 43, .05); }
+.spd-card h2 { margin-bottom: 10px; font-family: 'Montserrat', sans-serif; font-size: 18px; color: var(--g2); }
+.spd-card-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 10px; }
+.spd-card-head h2 { margin: 0; }
+.spd-catalog-actions { display: flex; gap: 8px; }
+.spd-about { font-size: 16px; line-height: 1.6; white-space: pre-line; }
+.spd-note { margin-top: 14px; padding: 10px 12px; border-radius: 12px; background: var(--cream); font-size: 13.5px; line-height: 1.45; }
+.spd-catalog { display: block; width: 100%; padding: 0; overflow: hidden; border: 0; border-radius: 14px; background: #f4f5ee; cursor: zoom-in; }
+.spd-catalog img { display: block; width: 100%; height: auto; }
+.spd-empty { display: flex; align-items: center; gap: 12px; padding: 18px; border-radius: 14px; background: #f6f9f1; color: var(--muted); font-size: 15px; }
+.spd-empty svg { flex: none; color: #9db78f; }
+.spd-side { position: sticky; top: 8px; }
+@media (max-width: 1100px) {
+  .spd-body { grid-template-columns: 1fr; }
+  .spd-side { position: static; }
+}
+@media (max-width: 700px) {
+  .spd-cover { height: 140px; }
+  .spd-id { flex-direction: column; align-items: stretch; padding: 0 16px 16px; text-align: center; }
+  .spd-logo { align-self: center; width: 110px; height: 110px; margin-top: -50px; }
+  .spd-titles { min-width: 0; align-items: center; }
+  .sp-chip.static { align-self: center; }
+  .spd-cta { flex-direction: column; }
+  .spd-card { padding: 16px; }
 }

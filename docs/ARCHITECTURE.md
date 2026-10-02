@@ -523,7 +523,8 @@ visibilidad y los clientes las contactan directamente.
   `GET /suppliers/admin/subscriptions` (admin); `GET /suppliers?category=` y `GET /suppliers/{user_id}`
   (públicos: cuentas autorizadas, con la suscripción al día y visibles).
 - En el frontend: `/proveedores` (directorio con categorías, contacto, redes, "Ver catálogo" y
-  paginación de 6), el panel del proveedor `/proveedor` (Inicio, Mi empresa, Catálogo, Suscripción y
+  paginación de 6), "Ver empresa" en `/proveedores/empresa?id=` (quiénes son, contacto y el catálogo
+  completo para ampliar o descargar), el panel del proveedor `/proveedor` (Inicio, Mi empresa, Catálogo, Suscripción y
   Notificaciones) y `/admin/proveedores`. El proveedor también está en la vista de desarrollo.
 
 ## Frontend

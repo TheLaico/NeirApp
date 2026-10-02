@@ -1,4 +1,4 @@
-import { Building2, ChevronDown, ChevronLeft, ChevronRight, Globe, Handshake, Images, LayoutGrid, Mail, MapPin, Phone, Settings, X } from 'lucide-react';
+import { Building2, ChevronDown, ChevronLeft, ChevronRight, Eye, Handshake, Images, LayoutGrid, Phone, Settings, X } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import banner from '../../assets/Proveedores/fondo-card-proveedores.webp';
 import fondoBuscador from '../../assets/fondo-buscador.png';
@@ -6,8 +6,9 @@ import Lightbox from '../../components/common/Lightbox.jsx';
 import { FacebookIcon, InstagramIcon, WhatsappIcon } from '../../components/icons/SocialIcons.jsx';
 import PageShell from '../../components/layout/PageShell.jsx';
 import { suppliersApi } from '../../features/suppliers/api.js';
-import { CATEGORIES, MAIN_CATEGORIES, categoryOf, initials, phoneLabel, telLink, whatsappLink } from '../../features/suppliers/model.js';
+import { CATEGORIES, MAIN_CATEGORIES, categoryOf, initials, whatsappLink } from '../../features/suppliers/model.js';
 import { useNavigate } from '../../lib/router.jsx';
+import { contactRows } from './contact.js';
 import './suppliers.css';
 
 const PER_PAGE = 6;
@@ -94,7 +95,7 @@ export default function SuppliersPage({ user, onLogout }) {
             <ul className="sp-grid">
               {current.map((s) => (
                 <li key={s.user_id}>
-                  <SupplierCard supplier={s} onContact={() => setContact(s)} onCatalog={() => setCatalog(s)} />
+                  <SupplierCard supplier={s} onOpen={() => navigate(`/proveedores/empresa?id=${s.user_id}`)} onContact={() => setContact(s)} onCatalog={() => setCatalog(s)} />
                 </li>
               ))}
             </ul>
@@ -183,7 +184,7 @@ function CategoryBar({ value, onChange }) {
   );
 }
 
-function SupplierCard({ supplier: s, onContact, onCatalog }) {
+function SupplierCard({ supplier: s, onOpen, onContact, onCatalog }) {
   const cat = categoryOf(s.category);
   return (
     <article className="sp-card">
@@ -192,9 +193,15 @@ function SupplierCard({ supplier: s, onContact, onCatalog }) {
         <span className="sp-chip">{cat.label}</span>
       </div>
       <div className="sp-card-main">
-        <span className="sp-logo">{s.logo_url ? <img src={s.logo_url} alt={`Logo de ${s.company_name}`} /> : <span style={{ color: cat.color }}>{initials(s.company_name)}</span>}</span>
+        <button type="button" className="sp-logo" onClick={onOpen} aria-label={`Ver ${s.company_name}`}>
+          {s.logo_url ? <img src={s.logo_url} alt="" /> : <span style={{ color: cat.color }}>{initials(s.company_name)}</span>}
+        </button>
         <div className="sp-card-text">
-          <h3>{s.company_name}</h3>
+          <h3>
+            <button type="button" className="sp-name" onClick={onOpen}>
+              {s.company_name}
+            </button>
+          </h3>
           {s.tagline && <p className="sp-tagline">{s.tagline}</p>}
           <p className="sp-desc">{s.description}</p>
         </div>
@@ -220,7 +227,12 @@ function SupplierCard({ supplier: s, onContact, onCatalog }) {
             </a>
           )}
         </span>
-        <button type="button" className="sp-btn outline sp-catalog" disabled={!s.catalog_url} onClick={onCatalog}>
+      </div>
+      <div className="sp-card-actions">
+        <button type="button" className="sp-btn primary" onClick={onOpen}>
+          <Eye size={16} aria-hidden="true" /> Ver empresa
+        </button>
+        <button type="button" className="sp-btn outline" disabled={!s.catalog_url} onClick={onCatalog}>
           <Images size={16} aria-hidden="true" /> {s.catalog_url ? 'Ver catálogo' : 'Sin catálogo'}
         </button>
       </div>
@@ -236,15 +248,7 @@ function ContactDialog({ supplier: s, onClose }) {
     return () => document.removeEventListener('keydown', onKey);
   }, [onClose]);
   const cat = categoryOf(s.category);
-  const rows = [
-    { key: 'phone', Icon: Phone, label: 'Llamar', value: phoneLabel(s.phone), href: telLink(s.phone) },
-    s.whatsapp && { key: 'wa', Icon: WhatsappIcon, label: 'WhatsApp', value: phoneLabel(s.whatsapp), href: whatsappLink(s.whatsapp, s.company_name), external: true },
-    s.email && { key: 'mail', Icon: Mail, label: 'Correo', value: s.email, href: `mailto:${s.email}` },
-    s.address && { key: 'addr', Icon: MapPin, label: 'Dirección', value: s.address, href: `https://www.google.com/maps/search/${encodeURIComponent(`${s.address}, Neira, Caldas`)}`, external: true },
-    s.website && { key: 'web', Icon: Globe, label: 'Página web', value: s.website.replace(/^https?:\/\//, ''), href: s.website, external: true },
-    s.facebook && { key: 'fb', Icon: FacebookIcon, label: 'Facebook', value: s.facebook.replace(/^https?:\/\/(www\.)?/, ''), href: s.facebook, external: true },
-    s.instagram && { key: 'ig', Icon: InstagramIcon, label: 'Instagram', value: s.instagram.replace(/^https?:\/\/(www\.)?/, ''), href: s.instagram, external: true },
-  ].filter(Boolean);
+  const rows = contactRows(s);
 
   return (
     <div className="sp-scrim" onClick={onClose}>
