@@ -499,6 +499,25 @@ en la plataforma; el trato se cierra por WhatsApp.
 - En el frontend: `/marquetneira`, `/marquetneira/producto?id=`, `/marquetneira/mis-publicaciones` y
   `/admin/marquetneira`. Los favoritos de MarquetNeira se guardan en el dispositivo.
 
+
+## Módulo `suppliers` — Proveedores (implementado)
+
+Empresas de Neira que venden al por mayor a negocios y personas. No hay carrito: NeirAPP les da
+visibilidad y los clientes las contactan directamente.
+
+- **Acceso**: el administrador autoriza el correo de la empresa con el rol `supplier` (nuevo en
+  `identity`, asignable por correo como los demás). La empresa arma su perfil en
+  `/proveedores/mi-empresa`.
+- **Perfil** (`suppliers_supplier`, migración 0032, uno por cuenta): nombre, frase corta, categoría
+  (alimentos, aseo, construcción, ferretería, ropa, tecnología, agro, papelería, salud, hogar,
+  empaques u otros), descripción, teléfono, WhatsApp, correo, dirección, página web, Facebook e
+  Instagram (acepta el enlace o "@usuario"), logo, portada y **catálogo** (una imagen tipo brochure),
+  y si se muestra o no (`is_listed`).
+- **Endpoints**: `GET/PUT /suppliers/me` (proveedor o admin); `GET /suppliers?category=` y
+  `GET /suppliers/{user_id}` (públicos: solo cuentas que siguen autorizadas y no ocultaron su perfil).
+- En el frontend: `/proveedores` (directorio con categorías, contacto, redes, "Ver catálogo" y
+  paginación de 6) y `/proveedores/mi-empresa`.
+
 ## Frontend
 
 `apps/web` (Vite + React 19 + TypeScript). Estructura *feature-based*:

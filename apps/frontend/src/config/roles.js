@@ -13,6 +13,7 @@ export const ROLES = {
   courier: 'Repartidor',
   store_staff: 'Comerciante',
   professional: 'Profesional',
+  supplier: 'Proveedor',
 };
 
 export const roleOf = (email = '') => (DEVELOPER_EMAILS.includes(email.trim().toLowerCase()) ? 'developer' : 'customer');

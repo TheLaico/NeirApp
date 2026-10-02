@@ -35,6 +35,8 @@ import ProfessionalsPage from './pages/professionals/ProfessionalsPage.jsx';
 import ListingPage from './pages/marketplace/ListingPage.jsx';
 import MarketplacePage from './pages/marketplace/MarketplacePage.jsx';
 import MyListingsPage from './pages/marketplace/MyListingsPage.jsx';
+import MySupplierPage from './pages/suppliers/MySupplierPage.jsx';
+import SuppliersPage from './pages/suppliers/SuppliersPage.jsx';
 import SubcategoryProfessionalsPage from './pages/professionals/SubcategoryProfessionalsPage.jsx';
 import RegisterPage from './pages/register/RegisterPage.jsx';
 import MerchantPage from './pages/merchant/MerchantPage.jsx';
@@ -52,6 +54,8 @@ const ROUTES = {
   '/marquetneira': MarketplacePage,
   '/marquetneira/producto': ListingPage,
   '/marquetneira/mis-publicaciones': MyListingsPage,
+  '/proveedores': SuppliersPage,
+  '/proveedores/mi-empresa': MySupplierPage,
   '/favoritos': FavoritesPage,
   '/pedidos': OrdersPage,
   '/checkout': CheckoutPage,

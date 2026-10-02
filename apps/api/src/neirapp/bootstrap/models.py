@@ -13,6 +13,7 @@ from neirapp.modules.pricing.infrastructure import models as pricing_models
 from neirapp.modules.professionals.infrastructure import models as professionals_models
 from neirapp.modules.reviews.infrastructure import models as reviews_models
 from neirapp.modules.stores.infrastructure import models as stores_models
+from neirapp.modules.suppliers.infrastructure import models as suppliers_models
 from neirapp.modules.wallet.infrastructure import models as wallet_models
 from neirapp.shared.infrastructure.db import Base
 
@@ -28,5 +29,6 @@ __all__ = [
     "professionals_models",
     "reviews_models",
     "stores_models",
+    "suppliers_models",
     "wallet_models",
 ]

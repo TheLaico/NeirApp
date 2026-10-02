@@ -1,0 +1,152 @@
+/* Proveedores: empresas de Neira que venden al por mayor. Verde NeirAPP, tarjetas blancas con portada, logo
+   redondo, contacto, redes y "Ver catálogo", como el diseño. */
+
+.sp-page {
+  --g: #0f5238; --g2: #14392a; --ink: #23342b; --muted: #6b7a70; --line: #e3e7d6; --cream: #f7f4ea;
+  padding: 4px 24px 40px; color: var(--ink); font-family: 'Nunito', system-ui, sans-serif;
+}
+/* `flush` le quita el scroll a `.page-cell`; esta página es más alta que la pantalla. */
+@media (min-width: 1024px) {
+  .sp-page { height: 100%; overflow-y: auto; }
+}
+.sp-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.sp-spin { animation: sp-spin 1s linear infinite; }
+@keyframes sp-spin { to { transform: rotate(360deg); } }
+
+/* ---------- Botones ---------- */
+.sp-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 40px; padding: 0 18px; border-radius: 12px; font: inherit; font-size: 14.5px; font-weight: 800; cursor: pointer; white-space: nowrap; transition: filter .15s, background .15s; }
+.sp-btn.primary { border: 0; background: var(--g); color: #fff; box-shadow: 0 4px 12px rgba(15, 82, 56, .22); }
+.sp-btn.primary:hover { filter: brightness(1.12); }
+.sp-btn.outline { border: 1.5px solid var(--g); background: #fff; color: var(--g); }
+.sp-btn.outline:hover { background: #eef5ea; }
+.sp-btn:disabled { opacity: .55; cursor: default; }
+.sp-back { display: inline-flex; align-items: center; gap: 6px; margin: 6px 0 12px; padding: 6px 0; border: 0; background: none; color: var(--g); font: inherit; font-size: 15px; font-weight: 800; cursor: pointer; }
+
+/* ---------- Portada ---------- */
+.sp-hero { display: flex; flex-direction: column; gap: 6px; margin: 4px 0 18px; padding: 10px 24px 16px; overflow: hidden; border: 1px solid var(--line); border-radius: 26px; background: linear-gradient(115deg, #fbf8ee 0%, #f1f5e6 55%, #e8f0dc 100%); box-shadow: 0 6px 20px rgba(35, 52, 43, .09); }
+.sp-hero-img { display: block; width: 100%; max-height: 250px; object-fit: contain; }
+.sp-hero-foot { display: flex; align-items: center; flex-wrap: wrap; gap: 12px 24px; padding-top: 12px; border-top: 1px solid var(--line); }
+.sp-hero-foot p { flex: 1; min-width: 260px; max-width: 640px; font-size: 16px; line-height: 1.5; color: var(--ink); }
+.sp-script { display: inline-flex; align-items: center; gap: 10px; font-family: 'Kaushan Script', cursive; font-size: 26px; color: var(--g2); transform: rotate(-4deg); }
+.sp-script svg { color: var(--g); }
+
+/* ---------- Categorías ---------- */
+.sp-cats { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+.sp-cats > button, .sp-more > button { display: inline-flex; align-items: center; gap: 7px; min-height: 44px; padding: 0 14px; border: 1px solid var(--line); border-radius: 999px; background: #fff; color: var(--ink); font: inherit; font-size: 14px; font-weight: 600; white-space: nowrap; cursor: pointer; box-shadow: 0 2px 6px rgba(35, 52, 43, .05); transition: background .15s, border-color .15s; }
+.sp-cats > button:hover, .sp-more > button:hover { border-color: #b9cdb0; }
+.sp-cats > button.on, .sp-more > button.on { border-color: var(--g); background: var(--g); color: #fff; box-shadow: 0 4px 12px rgba(15, 82, 56, .22); }
+.sp-more { position: relative; margin-left: auto; }
+.sp-more-list { position: absolute; z-index: 30; top: calc(100% + 6px); right: 0; min-width: 240px; padding: 6px; list-style: none; border: 1px solid var(--line); border-radius: 14px; background: #fff; box-shadow: 0 14px 30px rgba(35, 52, 43, .18); }
+.sp-more-list button { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 12px; border: 0; border-radius: 10px; background: none; color: var(--ink); font: inherit; font-size: 14.5px; text-align: left; cursor: pointer; }
+.sp-more-list button:hover { background: #f2f5ea; }
+.sp-more-list button.on { background: #e1eedf; color: var(--g); font-weight: 800; }
+
+/* ---------- Tarjetas ---------- */
+.sp-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px; list-style: none; padding: 0; }
+@media (max-width: 1250px) { .sp-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.sp-card { display: flex; flex-direction: column; height: 100%; overflow: hidden; border: 1px solid var(--line); border-radius: 18px; background: #fff; box-shadow: 0 4px 14px rgba(35, 52, 43, .07); transition: transform .2s, box-shadow .2s; }
+.sp-card:hover { transform: translateY(-3px); box-shadow: 0 12px 26px rgba(35, 52, 43, .13); }
+.sp-cover { position: relative; display: grid; place-items: center; height: 104px; overflow: hidden; background: color-mix(in srgb, var(--tint) 16%, #fff); }
+.sp-cover img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.sp-cover-icon { color: var(--tint); opacity: .55; }
+.sp-chip { position: absolute; z-index: 1; top: 12px; left: 12px; padding: 4px 12px; border-radius: 999px; background: var(--g); color: #fff; font-size: 12.5px; font-weight: 700; box-shadow: 0 2px 6px rgba(0, 0, 0, .2); }
+.sp-card-main { position: relative; z-index: 1; display: flex; gap: 14px; padding: 0 16px; }
+.sp-logo { flex: none; display: grid; place-items: center; width: 92px; height: 92px; margin-top: -32px; overflow: hidden; border: 4px solid #fff; border-radius: 50%; background: #fff; box-shadow: 0 4px 12px rgba(35, 52, 43, .16); font-family: 'Montserrat', sans-serif; font-size: 28px; font-weight: 800; }
+.sp-logo img { width: 100%; height: 100%; object-fit: contain; }
+.sp-logo.small { width: 56px; height: 56px; margin: 0; border-width: 2px; font-size: 18px; }
+.sp-card-text { display: flex; flex-direction: column; gap: 3px; min-width: 0; padding-top: 12px; }
+.sp-card-text h3 { font-family: 'Montserrat', sans-serif; font-size: 18px; font-weight: 700; color: var(--g2); }
+.sp-tagline { font-size: 14.5px; color: #4f6a55; }
+.sp-desc { margin-top: 6px; font-size: 13.5px; line-height: 1.5; color: var(--ink); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.sp-card-foot { display: flex; align-items: center; gap: 10px; margin-top: auto; padding: 14px 16px 16px; }
+.sp-contact { display: inline-flex; align-items: center; gap: 8px; padding: 6px 2px; border: 0; background: none; color: var(--ink); font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
+.sp-contact svg { color: var(--g2); }
+.sp-contact:hover { color: var(--g); text-decoration: underline; }
+.sp-socials { display: inline-flex; align-items: center; gap: 8px; }
+.sp-socials a { display: grid; border-radius: 50%; transition: transform .15s; }
+.sp-socials a:hover { transform: scale(1.12); }
+.sp-catalog { margin-left: auto; min-height: 38px; padding: 0 14px; font-size: 13.5px; border-radius: 999px; }
+.sp-empty { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 50px 16px; color: var(--muted); font-size: 16px; text-align: center; }
+.sp-empty svg { color: #9db78f; }
+
+/* ---------- Paginación ---------- */
+.sp-pages { display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 24px; }
+.sp-pages button { display: grid; place-items: center; min-width: 36px; height: 36px; padding: 0 8px; border: 0; border-radius: 50%; background: none; color: var(--ink); font: inherit; font-size: 15px; font-weight: 700; cursor: pointer; }
+.sp-pages button.on { background: var(--g); color: #fff; }
+.sp-pages button:disabled { opacity: .35; cursor: default; }
+
+/* ---------- Contacto ---------- */
+.sp-scrim { position: fixed; inset: 0; z-index: 1500; display: grid; place-items: center; padding: 16px; background: rgba(12, 24, 18, .55); }
+.sp-dialog { --g: #0f5238; --g2: #14392a; --ink: #23342b; --muted: #6b7a70; --line: #e3e7d6; width: min(460px, 100%); max-height: calc(100dvh - 32px); overflow-y: auto; padding: 20px; border-radius: 22px; background: #fff; color: var(--ink); font-family: 'Nunito', system-ui, sans-serif; box-shadow: 0 20px 50px rgba(0, 0, 0, .3); }
+.sp-dialog-head { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.sp-dialog-head div { flex: 1; min-width: 0; }
+.sp-dialog-head h2 { font-family: 'Montserrat', sans-serif; font-size: 19px; color: var(--g2); }
+.sp-dialog-head p { font-size: 14px; color: var(--muted); }
+.sp-close { flex: none; display: grid; place-items: center; width: 38px; height: 38px; border: 0; border-radius: 12px; background: #f1f4e6; color: var(--g); cursor: pointer; }
+.sp-contact-list { display: flex; flex-direction: column; gap: 8px; list-style: none; padding: 0; }
+.sp-contact-list a { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border: 1.5px solid var(--line); border-radius: 14px; color: var(--ink); text-decoration: none; transition: border-color .15s, background .15s; }
+.sp-contact-list a:hover { border-color: #b9cdb0; background: #f6f9f1; }
+.sp-contact-ico { display: grid; place-items: center; flex: none; width: 38px; height: 38px; border-radius: 12px; background: #eef5ea; color: var(--g); }
+.sp-contact-list span:last-child { display: flex; flex-direction: column; min-width: 0; }
+.sp-contact-list small { font-size: 12.5px; color: var(--muted); }
+.sp-contact-list strong { font-size: 15px; overflow-wrap: anywhere; }
+.sp-note { margin-top: 14px; padding: 10px 12px; border-radius: 12px; background: var(--cream); font-size: 13.5px; line-height: 1.45; color: var(--ink); }
+
+/* ---------- Mi empresa ---------- */
+.sp-mine-head h1 { font-family: 'Montserrat', sans-serif; font-size: clamp(26px, 2.6vw, 36px); font-weight: 800; color: var(--g2); }
+.sp-mine-head p { max-width: 680px; margin-top: 4px; color: var(--muted); font-size: 15.5px; }
+.sp-form { display: flex; flex-direction: column; gap: 16px; max-width: 920px; margin-top: 18px; }
+.sp-form-card { padding: 18px 20px; border: 1px solid var(--line); border-radius: 18px; background: #fff; box-shadow: 0 2px 10px rgba(35, 52, 43, .05); }
+.sp-form-card h2 { margin-bottom: 14px; font-family: 'Montserrat', sans-serif; font-size: 17px; color: var(--g2); }
+.sp-grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 16px; }
+.sp-field { display: flex; flex-direction: column; gap: 6px; min-width: 0; font-size: 14px; font-weight: 700; }
+.sp-field.wide { grid-column: 1 / -1; }
+.sp-field input, .sp-field select, .sp-field textarea { min-height: 46px; padding: 0 14px; border: 1.5px solid #c3cdb8; border-radius: 12px; background: #fff; color: var(--ink); font: inherit; font-size: 15px; font-weight: 500; }
+.sp-field textarea { padding: 10px 14px; resize: vertical; line-height: 1.45; }
+.sp-field input:focus, .sp-field select:focus, .sp-field textarea:focus { outline: none; border-color: var(--g); box-shadow: 0 0 0 3px rgba(15, 82, 56, .14); }
+.sp-field [aria-invalid="true"] { border-color: #b6533c; }
+.sp-optional, .sp-muted, .sp-count { font-size: 12.5px; font-weight: 500; color: var(--muted); }
+.sp-count { align-self: flex-end; }
+.sp-error { font-size: 13px; font-weight: 700; color: #9b3d28; }
+.sp-images { display: grid; grid-template-columns: 160px minmax(0, 1fr) 180px; gap: 18px; align-items: start; }
+.sp-image { display: flex; flex-direction: column; gap: 6px; }
+.sp-image-label { font-size: 14px; font-weight: 700; }
+.sp-image-box { position: relative; display: grid; place-items: center; width: 100%; aspect-ratio: 16 / 7; padding: 0; overflow: hidden; border: 2px dashed #b9cdb0; border-radius: 14px; background: #f6f9f1; color: var(--g); cursor: pointer; }
+.sp-image-box.square { aspect-ratio: 1; border-radius: 50%; }
+.sp-image-box.tall { aspect-ratio: 3 / 4; }
+.sp-image-box img { width: 100%; height: 100%; object-fit: cover; }
+.sp-image-box.square img { object-fit: contain; background: #fff; }
+.sp-image-busy { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(255, 255, 255, .7); }
+.sp-image-remove { display: inline-flex; align-items: center; gap: 4px; align-self: flex-start; padding: 2px 0; border: 0; background: none; color: #9b3d28; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+.sp-check { display: flex; align-items: flex-start; gap: 10px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 16px; background: #fff; cursor: pointer; }
+.sp-check input { width: 18px; height: 18px; margin-top: 2px; accent-color: var(--g); }
+.sp-check span { display: flex; flex-direction: column; gap: 2px; }
+.sp-check small { font-size: 13px; color: var(--muted); }
+.sp-form-actions { display: flex; align-items: center; justify-content: flex-end; gap: 14px; flex-wrap: wrap; }
+.sp-ok { display: inline-flex; align-items: center; gap: 6px; margin-right: auto; color: var(--g); font-weight: 800; }
+
+/* ---------- Celular y tableta ---------- */
+@media (max-width: 1100px) {
+  .sp-more { margin-left: 0; }
+}
+@media (max-width: 700px) {
+  .sp-page { padding: 4px 14px 32px; }
+  .sp-hero { padding: 8px 12px 14px; border-radius: 20px; }
+  .sp-hero-foot { flex-direction: column; align-items: stretch; text-align: center; }
+  .sp-hero-foot p { min-width: 0; font-size: 15px; }
+  .sp-script { align-self: center; font-size: 22px; }
+  .sp-cats { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
+  .sp-cats::-webkit-scrollbar { display: none; }
+  .sp-cats > button, .sp-more > button { flex: none; min-height: 42px; padding: 0 14px; font-size: 14px; }
+  .sp-more { position: static; }
+  .sp-more-list { position: fixed; left: 14px; right: 14px; top: auto; bottom: 14px; }
+  .sp-grid { grid-template-columns: 1fr; gap: 16px; }
+  .sp-card-foot { flex-wrap: wrap; }
+  .sp-grid2, .sp-images { grid-template-columns: 1fr; }
+  .sp-image-box.square { width: 140px; }
+  .sp-image-box.tall { width: 200px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sp-card, .sp-socials a { transition: none; }
+  .sp-card:hover { transform: none; }
+}

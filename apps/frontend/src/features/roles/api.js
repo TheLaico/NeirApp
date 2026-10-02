@@ -5,6 +5,7 @@ import { authRequest } from '../../services/auth.js';
 export const ASSIGNABLE_ROLES = [
   { value: 'courier', label: 'Repartidor' },
   { value: 'store_staff', label: 'Comerciante (dueño de local)' },
+  { value: 'supplier', label: 'Proveedor (empresa al por mayor)' },
 ];
 
 export const roleLabel = (role) => ASSIGNABLE_ROLES.find((r) => r.value === role)?.label ?? role;

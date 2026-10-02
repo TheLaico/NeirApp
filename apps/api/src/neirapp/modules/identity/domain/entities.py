@@ -15,11 +15,12 @@ class Role(StrEnum):
     COURIER = "courier"
     STORE_STAFF = "store_staff"
     PROFESSIONAL = "professional"
+    SUPPLIER = "supplier"  # Empresa que vende al por mayor (espacio Proveedores)
     ADMIN = "admin"
 
 
 # Roles autorizables por correo. `customer` es automático y `admin` nunca sale de la API.
-ASSIGNABLE_ROLES = frozenset({Role.COURIER, Role.STORE_STAFF, Role.PROFESSIONAL})
+ASSIGNABLE_ROLES = frozenset({Role.COURIER, Role.STORE_STAFF, Role.PROFESSIONAL, Role.SUPPLIER})
 
 
 class TermsDocument(StrEnum):

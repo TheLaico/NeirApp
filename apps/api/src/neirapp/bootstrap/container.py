@@ -264,6 +264,17 @@ from neirapp.modules.stores.application.stores import (
 from neirapp.modules.stores.infrastructure.unit_of_work import (
     SqlAlchemyUnitOfWork as StoresSqlAlchemyUnitOfWork,
 )
+from neirapp.modules.suppliers.application.app import SuppliersApp
+from neirapp.modules.suppliers.application.use_cases import (
+    GetMySupplier,
+    GetSupplier,
+    ListSuppliers,
+    SaveMySupplier,
+)
+from neirapp.modules.suppliers.infrastructure.identity_adapter import (
+    IdentityAccessAdapter as SupplierAccessAdapter,
+)
+from neirapp.modules.suppliers.infrastructure.repositories import SqlAlchemySupplierRepository
 from neirapp.modules.wallet.application.app import WalletApp
 from neirapp.modules.wallet.application.wallet import (
     CreditCourier,
@@ -483,6 +494,20 @@ def build_marketplace(
         dismiss_reports=DismissReports(listings, reports, clock),
         remove_listing=RemoveListing(listings, reports, notifier, clock),
         restore_listing=RestoreListing(listings),
+    )
+
+
+def build_suppliers(
+    session_factory: async_sessionmaker[Any], identity: IdentityApp, clock: Clock | None = None
+) -> SuppliersApp:
+    clock = clock or SystemClock()
+    repo = SqlAlchemySupplierRepository(session_factory)
+    access = SupplierAccessAdapter(identity)
+    return SuppliersApp(
+        get_my_supplier=GetMySupplier(repo),
+        save_my_supplier=SaveMySupplier(repo, clock),
+        list_suppliers=ListSuppliers(repo, access),
+        get_supplier=GetSupplier(repo, access),
     )
 
 

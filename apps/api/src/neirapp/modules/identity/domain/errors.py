@@ -109,7 +109,8 @@ class RoleNotAssignable(ValidationError):
     @classmethod
     def default_message(cls) -> str:
         return (
-            "Ese rol no se puede autorizar por correo. Usa repartidor, comerciante o profesional."
+            "Ese rol no se puede autorizar por correo. "
+            "Usa repartidor, comerciante, profesional o proveedor."
         )
 
 
