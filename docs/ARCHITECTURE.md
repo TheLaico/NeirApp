@@ -551,7 +551,9 @@ estadía: muestra los hoteles (lista y mapa), reúne las reseñas y lleva las so
   `reservation_confirmed`, `reservation_declined`, `reservation_cancelled`, `hotel_review_new` y
   `hotel_review_reply` (por la campana de `professionals`, vía `NotifierPort`).
 - En el frontend: `/hospedaje` (recomendados, lista o mapa —el mismo `NeiraMap` del inicio, solo con
-  hoteles— y, en computador, la ficha del hotel elegido con sus opiniones), `/hospedaje/hotel?id=`
+  hoteles— y, en computador, la ficha del hotel elegido con sus opiniones). "Cómo llegar" (en el mapa,
+  en la ficha y en el detalle) abre Google Maps con la ruta ya trazada hasta el hotel
+  (`google.com/maps/dir/?api=1&destination=lat,lng`: gratis y sin clave de API), `/hospedaje/hotel?id=`
   (fotos, servicios, ubicación, contacto, reserva y todas las opiniones, donde se califica),
   `/hospedaje/mis-reservas`, el panel del hotel `/hotel` (Inicio, Mi hotel, Reservas, Reseñas y
   Notificaciones) y `/admin/hospedaje`. El hotel también está en la vista de desarrollo.

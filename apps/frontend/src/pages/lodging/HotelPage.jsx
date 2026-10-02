@@ -1,9 +1,9 @@
-import { ArrowLeft, CalendarCheck, Clock, Heart, Images, Loader2, MapPin, MessageCircle, Phone, Share2 } from 'lucide-react';
+import { ArrowLeft, CalendarCheck, Clock, Heart, Images, Loader2, MapPin, MessageCircle, Navigation, Phone, Share2 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import Lightbox from '../../components/common/Lightbox.jsx';
 import PageShell from '../../components/layout/PageShell.jsx';
 import { lodgingApi } from '../../features/lodging/api.js';
-import { amenitiesOf, kindOf, phoneLabel, telLink, useHotelFavorites, whatsappLink } from '../../features/lodging/model.js';
+import { amenitiesOf, directionsLink, kindOf, phoneLabel, telLink, useHotelFavorites, whatsappLink } from '../../features/lodging/model.js';
 import { formatCop } from '../../lib/money.js';
 import { useNavigate } from '../../lib/router.jsx';
 import HotelsMap from './HotelsMap.jsx';
@@ -153,7 +153,12 @@ export default function HotelPage({ user, onLogout }) {
                 )}
 
                 <section className="lgd-card">
-                  <h2>Ubicación</h2>
+                  <div className="lgd-card-head">
+                    <h2>Ubicación</h2>
+                    <a className="lg-btn primary small" href={directionsLink(h)} target="_blank" rel="noreferrer">
+                      <Navigation size={15} aria-hidden="true" /> Cómo llegar
+                    </a>
+                  </div>
                   <p className="lg-address">
                     <MapPin size={16} aria-hidden="true" /> {h.address}
                   </p>
@@ -178,6 +183,9 @@ export default function HotelPage({ user, onLogout }) {
                       <MessageCircle size={18} aria-hidden="true" /> WhatsApp {phoneLabel(h.whatsapp)}
                     </a>
                   )}
+                  <a className="lg-btn outline wide" href={directionsLink(h)} target="_blank" rel="noreferrer">
+                    <Navigation size={18} aria-hidden="true" /> Cómo llegar
+                  </a>
                   <a className="lg-btn outline wide" href={telLink(h.phone)}>
                     <Phone size={18} aria-hidden="true" /> Llamar {phoneLabel(h.phone)}
                   </a>

@@ -1,10 +1,10 @@
-import { BedDouble, CalendarCheck, ChevronLeft, ChevronRight, Eye, Heart, List, Map as MapIcon, MapPin, MessageCircle, Settings, Star } from 'lucide-react';
+import { BedDouble, CalendarCheck, ChevronLeft, ChevronRight, Eye, Heart, List, Map as MapIcon, MapPin, MessageCircle, Navigation, Settings, Star } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import fondoBuscador from '../../assets/fondo-buscador.png';
 import Lightbox from '../../components/common/Lightbox.jsx';
 import PageShell from '../../components/layout/PageShell.jsx';
 import { lodgingApi } from '../../features/lodging/api.js';
-import { amenitiesOf, contactLink, kindOf, useHotelFavorites } from '../../features/lodging/model.js';
+import { amenitiesOf, contactLink, directionsLink, kindOf, useHotelFavorites } from '../../features/lodging/model.js';
 import { formatCop } from '../../lib/money.js';
 import { useNavigate } from '../../lib/router.jsx';
 import { useMediaQuery } from '../../lib/useMediaQuery.js';
@@ -330,6 +330,9 @@ export function HotelCard({ hotel: h, favorite, onFavorite, onMap, onBook, onOpe
           <button type="button" className="lg-btn outline" onClick={onMap}>
             <MapPin size={16} aria-hidden="true" /> Ver en el mapa
           </button>
+          <a className="lg-btn outline" href={directionsLink(h)} target="_blank" rel="noreferrer">
+            <Navigation size={16} aria-hidden="true" /> Cómo llegar
+          </a>
           <a className="lg-btn outline" href={contactLink(h)} target="_blank" rel="noreferrer">
             <MessageCircle size={16} aria-hidden="true" /> Contactar
           </a>

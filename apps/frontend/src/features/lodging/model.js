@@ -72,6 +72,11 @@ export const phoneLabel = (digits = '') =>
 export const telLink = (digits) => `tel:${digits.length === 10 && digits.startsWith('3') ? `+57${digits}` : digits}`;
 export const whatsappLink = (digits, hotel) =>
   `https://wa.me/57${digits}?text=${encodeURIComponent(`Hola ${hotel}, los encontré en Hospedaje de NeirAPP y quiero información para hospedarme.`)}`;
+/**
+ * "Cómo llegar": abre Google Maps (gratis, sin clave de API) con la ruta desde donde está la persona hasta el
+ * hotel ya trazada. En el celular abre la app de Google Maps si la tiene instalada.
+ */
+export const directionsLink = (h) => `https://www.google.com/maps/dir/?api=1&destination=${h.lat},${h.lng}`;
 /** Contactar: WhatsApp si lo tiene, si no llamada. */
 export const contactLink = (h) => (h.whatsapp ? whatsappLink(h.whatsapp, h.name) : telLink(h.phone));
 

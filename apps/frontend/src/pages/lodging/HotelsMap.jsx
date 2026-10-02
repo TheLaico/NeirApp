@@ -1,9 +1,9 @@
-import { List, LocateFixed, MapPin, Minus, Plus } from 'lucide-react';
+import { List, LocateFixed, MapPin, Minus, Navigation, Plus } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { RELIEF_BEARING, RELIEF_PITCH, STORE_ZOOM } from '../../features/map/constants.js';
 import { NeiraMap, set3D } from '../../features/map/NeiraMap.jsx';
 import { mapThemeFor } from '../../features/map/theme.js';
-import { HOTEL_MARKER } from '../../features/lodging/model.js';
+import { HOTEL_MARKER, directionsLink } from '../../features/lodging/model.js';
 import { useSettings } from '../../features/settings/SettingsContext.jsx';
 
 /**
@@ -20,6 +20,7 @@ export default function HotelsMap({ hotels, selectedId, onSelect, onList, focusK
     [hotels, selectedId],
   );
   const pick = useCallback((m) => onSelect?.(m.id), [onSelect]);
+  const selected = hotels.find((h) => h.id === selectedId);
 
   const fit = useCallback(() => {
     const map = mapRef.current;
@@ -64,6 +65,14 @@ export default function HotelsMap({ hotels, selectedId, onSelect, onList, focusK
           <MapPin size={16} aria-hidden="true" /> Neira, Caldas
         </span>
       </div>
+      {selected && (
+        <a className="lg-map-route" href={directionsLink(selected)} target="_blank" rel="noreferrer">
+          <Navigation size={17} aria-hidden="true" />
+          <span>
+            Cómo llegar{hotels.length > 1 && <small>{selected.name}</small>}
+          </span>
+        </a>
+      )}
       <div className="lg-map-ctrl">
         <button type="button" aria-label="Acercar" onClick={() => mapRef.current?.zoomIn()}>
           <Plus size={20} aria-hidden="true" />
