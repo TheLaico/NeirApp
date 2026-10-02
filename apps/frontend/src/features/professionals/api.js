@@ -11,6 +11,7 @@ const query = (params) => {
 export const professionalsApi = {
   mine: () => authRequest(`${API}/me`),
   saveMine: (body) => authRequest(`${API}/me`, { method: 'PUT', body }),
+  saveSettings: (body) => authRequest(`${API}/me/settings`, { method: 'PUT', body }),
   myServices: () => authRequest(`${API}/me/services`),
   addService: (body) => authRequest(`${API}/me/services`, { method: 'POST', body }),
   updateService: (id, body) => authRequest(`${API}/me/services/${id}`, { method: 'PUT', body }),

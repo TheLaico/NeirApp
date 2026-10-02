@@ -13,6 +13,7 @@ from neirapp.modules.identity.presentation.dependencies import (
 from neirapp.modules.identity.presentation.schemas import (
     AcceptTermsRequest,
     AuthResponse,
+    ChangePasswordRequest,
     LoginRequest,
     RefreshRequest,
     RegisterRequest,
@@ -71,6 +72,14 @@ async def update_me(
 ) -> UserResponse:
     profile = await identity.update_profile(user.id, full_name=body.full_name, phone=body.phone)
     return UserResponse.from_profile(profile)
+
+
+@router.post("/me/password", response_model=AuthResponse)
+async def change_password(
+    body: ChangePasswordRequest, user: CurrentUser, identity: IdentityDep
+) -> AuthResponse:
+    session = await identity.change_password(user.id, body.current_password, body.new_password)
+    return AuthResponse.from_session(session)
 
 
 @router.post("/terms/accept", response_model=UserResponse)

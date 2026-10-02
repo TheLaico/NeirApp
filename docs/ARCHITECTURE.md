@@ -448,6 +448,12 @@ en `/profesional` → "Mi perfil" y queda publicado en `/profesionales`.
   aprobado o rechazado (al profesional). Cada una trae `link` a la pantalla que corresponde. El
   frontend las mezcla con los avisos locales (pedidos) en `NotificationsContext` y las revisa cada
   minuto; el panel del profesional muestra solo estas.
+- **Configuración** (migración 0028): `PUT /professionals/me/settings` con `is_listed` (si es falso
+  el perfil sale del directorio y `GET /professionals/{id}` responde 404, salvo para él mismo, que lo
+  ve con `/me`) y `accepts_requests` (si es falso el perfil se ve pero las solicitudes nuevas se
+  rechazan con `requests_paused`). Guardar el perfil no toca estos ajustes. El cambio de contraseña
+  es de `identity`: `POST /identity/me/password` pide la actual, revoca todos los refresh tokens de
+  la cuenta y devuelve una sesión nueva para seguir conectado en el dispositivo donde se cambió.
 - Pendiente: calificaciones de profesionales; avisos en tiempo real (hoy se revisa cada minuto) y
   por correo o push.
 

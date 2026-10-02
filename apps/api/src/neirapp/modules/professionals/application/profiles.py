@@ -73,6 +73,7 @@ class ListDirectory:
             p
             for p in await self._repo.list_all()
             if p.user_id in allowed
+            and p.is_listed
             and (not flt.category_id or p.category_id == flt.category_id)
             and (not flt.subcategory_id or p.subcategory_id == flt.subcategory_id)
         ]
@@ -86,8 +87,31 @@ class GetPublicProfile:
 
     async def __call__(self, user_id: UUID) -> ProfessionalProfile:
         profile = await self._repo.get(user_id)
-        if profile is None or user_id not in await self._access.professional_ids():
+        if (
+            profile is None
+            or not profile.is_listed
+            or user_id not in await self._access.professional_ids()
+        ):
             raise ProfileNotFound("Perfil no encontrado.")
+        return profile
+
+
+class UpdateMySettings:
+    """Configuración del profesional: mostrar u ocultar su perfil y aceptar o pausar solicitudes.
+    No cambia la fecha de actualización (no es un cambio del contenido del perfil)."""
+
+    def __init__(self, repo: ProfileRepository) -> None:
+        self._repo = repo
+
+    async def __call__(
+        self, user_id: UUID, *, is_listed: bool, accepts_requests: bool
+    ) -> ProfessionalProfile:
+        profile = await self._repo.get(user_id)
+        if profile is None:
+            raise ProfileNotFound()
+        profile.is_listed = is_listed
+        profile.accepts_requests = accepts_requests
+        await self._repo.save(profile)
         return profile
 
 

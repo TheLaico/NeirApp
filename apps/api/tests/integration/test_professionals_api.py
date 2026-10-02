@@ -944,3 +944,84 @@ class TestNotificaciones:
         assert read.status_code == 404 and remove.status_code == 404
         assert (await _inbox(client, pro))["unread"] == 1
         assert (await client.get(f"{API}/notifications")).status_code == 401
+
+
+class TestConfiguracion:
+    async def test_ocultar_el_perfil_lo_saca_del_directorio(
+        self, client: httpx.AsyncClient, app: FastAPI
+    ) -> None:
+        admin = await _admin(client, app)
+        pro, pro_id = await _published(client, admin, "laura@correo.com")
+        customer = await _register(client, "cliente@correo.com")
+
+        saved = await client.put(
+            f"{API}/professionals/me/settings",
+            json={"is_listed": False, "accepts_requests": True},
+            headers=_bearer(pro),
+        )
+        assert saved.status_code == 200
+        assert saved.json()["is_listed"] is False
+
+        directory = await client.get(f"{API}/professionals")
+        assert pro_id not in [p["user_id"] for p in directory.json()]
+        assert (await client.get(f"{API}/professionals/{pro_id}")).status_code == 404
+        sent = await client.post(
+            f"{API}/professionals/{pro_id}/requests", json=REQUEST, headers=_bearer(customer)
+        )
+        assert sent.status_code == 404
+
+        # Su perfil sigue intacto y lo puede volver a mostrar.
+        mine = await client.get(f"{API}/professionals/me", headers=_bearer(pro))
+        assert mine.json()["headline"] == PROFILE["headline"]
+        await client.put(
+            f"{API}/professionals/me/settings",
+            json={"is_listed": True, "accepts_requests": True},
+            headers=_bearer(pro),
+        )
+        assert (await client.get(f"{API}/professionals/{pro_id}")).status_code == 200
+
+    async def test_pausar_solicitudes(self, client: httpx.AsyncClient, app: FastAPI) -> None:
+        admin = await _admin(client, app)
+        pro, pro_id = await _published(client, admin, "laura@correo.com")
+        customer = await _register(client, "cliente@correo.com")
+        await client.put(
+            f"{API}/professionals/me/settings",
+            json={"is_listed": True, "accepts_requests": False},
+            headers=_bearer(pro),
+        )
+
+        public = await client.get(f"{API}/professionals/{pro_id}")
+        assert public.json()["accepts_requests"] is False
+        sent = await client.post(
+            f"{API}/professionals/{pro_id}/requests", json=REQUEST, headers=_bearer(customer)
+        )
+        assert sent.status_code == 422
+        assert sent.json()["code"] == "requests_paused"
+
+    async def test_guardar_el_perfil_no_cambia_los_ajustes(
+        self, client: httpx.AsyncClient, app: FastAPI
+    ) -> None:
+        admin = await _admin(client, app)
+        pro, _ = await _published(client, admin, "laura@correo.com")
+        await client.put(
+            f"{API}/professionals/me/settings",
+            json={"is_listed": False, "accepts_requests": False},
+            headers=_bearer(pro),
+        )
+        saved = await client.put(f"{API}/professionals/me", json=PROFILE, headers=_bearer(pro))
+        assert saved.json()["is_listed"] is False
+        assert saved.json()["accepts_requests"] is False
+
+    async def test_requiere_perfil_y_rol(self, client: httpx.AsyncClient, app: FastAPI) -> None:
+        admin = await _admin(client, app)
+        pro = await _professional(client, admin, "nuevo@correo.com")
+        body = {"is_listed": False, "accepts_requests": True}
+        no_profile = await client.put(
+            f"{API}/professionals/me/settings", json=body, headers=_bearer(pro)
+        )
+        assert no_profile.status_code == 404
+        customer = await _register(client, "cliente@correo.com")
+        forbidden = await client.put(
+            f"{API}/professionals/me/settings", json=body, headers=_bearer(customer)
+        )
+        assert forbidden.status_code == 403

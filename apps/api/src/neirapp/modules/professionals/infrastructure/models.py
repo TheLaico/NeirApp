@@ -30,6 +30,8 @@ class ProfessionalProfileModel(Base):
     is_available: Mapped[bool] = mapped_column(default=True)
     photo_url: Mapped[str] = mapped_column(String(300), default="")
     is_featured: Mapped[bool] = mapped_column(default=False)
+    is_listed: Mapped[bool] = mapped_column(default=True)
+    accepts_requests: Mapped[bool] = mapped_column(default=True)
     created_at: Mapped[datetime] = mapped_column(UTCDateTime)
     updated_at: Mapped[datetime] = mapped_column(UTCDateTime)
 

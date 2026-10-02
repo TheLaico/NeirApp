@@ -170,6 +170,13 @@ class SqlAlchemyRefreshTokenRepository:
             .values(revoked_at=now)
         )
 
+    async def revoke_all_for_user(self, user_id: UUID, now: datetime) -> None:
+        await self._session.execute(
+            update(RefreshTokenModel)
+            .where(RefreshTokenModel.user_id == user_id, RefreshTokenModel.revoked_at.is_(None))
+            .values(revoked_at=now)
+        )
+
 
 def _to_grant(model: RoleGrantModel) -> RoleGrant:
     return RoleGrant(

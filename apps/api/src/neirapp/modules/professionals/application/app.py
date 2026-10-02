@@ -46,6 +46,7 @@ from neirapp.modules.professionals.application.profiles import (
     ListDirectory,
     SaveMyProfile,
     SetFeatured,
+    UpdateMySettings,
 )
 from neirapp.modules.professionals.application.services import (
     AddService,
@@ -63,6 +64,7 @@ class ProfessionalsApp:
     list_directory: ListDirectory
     get_public_profile: GetPublicProfile
     set_featured: SetFeatured
+    update_my_settings: UpdateMySettings
     list_categories: ListCategories
     create_category: CreateCategory
     delete_category: DeleteCategory

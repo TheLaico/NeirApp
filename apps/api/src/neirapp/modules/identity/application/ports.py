@@ -60,6 +60,10 @@ class RefreshTokenRepository(Protocol):
 
     async def revoke_family(self, family_id: UUID, now: datetime) -> None: ...
 
+    async def revoke_all_for_user(self, user_id: UUID, now: datetime) -> None:
+        """Revoca todas las sesiones abiertas del usuario (p. ej. al cambiar la contraseña)."""
+        ...
+
 
 class UnitOfWork(Protocol):
     """Una transacción: todo lo que se hace dentro se confirma o se descarta junto."""

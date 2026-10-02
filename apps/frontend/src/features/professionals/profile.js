@@ -30,6 +30,8 @@ export const emptyProfile = (user) => ({
   schedule: '',
   modalities: { office: true, home: false, online: false },
   available: true,
+  listed: true,
+  acceptsRequests: true,
 });
 
 /** De la respuesta de la API al borrador del formulario. */
@@ -49,6 +51,9 @@ export const fromApi = (p) => ({
   schedule: p.schedule,
   modalities: { ...p.modalities },
   available: p.is_available,
+  // Ajustes de "Configuración": no los envía `toApi`, se guardan aparte con `saveSettings`.
+  listed: p.is_listed,
+  acceptsRequests: p.accepts_requests,
 });
 
 export const toApi = (d) => ({
@@ -110,7 +115,14 @@ export function useProfessionalProfile(user) {
     return profile;
   }, []);
 
-  return { ...state, reload: load, save };
+  // Mostrar u ocultar el perfil y aceptar o pausar solicitudes ({ listed, acceptsRequests }).
+  const saveSettings = useCallback(async ({ listed, acceptsRequests }) => {
+    const profile = fromApi(await professionalsApi.saveSettings({ is_listed: listed, accepts_requests: acceptsRequests }));
+    setState({ profile, exists: true, loading: false, error: '' });
+    return profile;
+  }, []);
+
+  return { ...state, reload: load, save, saveSettings };
 }
 
 /** Nombre como lo ven los clientes: "Dr. Andrés Patiño". */

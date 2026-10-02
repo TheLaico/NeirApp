@@ -276,6 +276,14 @@ class TooManyPendingRequests(ValidationError):
         return "Ya tienes 3 solicitudes esperando respuesta de este profesional."
 
 
+class RequestsPaused(ValidationError):
+    code = "requests_paused"
+
+    @classmethod
+    def default_message(cls) -> str:
+        return "Este profesional no está recibiendo solicitudes de cita por ahora."
+
+
 class AppointmentRequestNotFound(NotFoundError):
     code = "appointment_request_not_found"
 

@@ -136,3 +136,9 @@ export async function updateProfile(_id, { name, phone }) {
   const profile = await authRequest('/me', { method: 'PATCH', body: { full_name: name.trim(), phone: phone.trim() } });
   return save(toUser(profile), readStored()?.tokens);
 }
+
+/** Cambia la contraseña. La API cierra las demás sesiones y entrega tokens nuevos para seguir conectado aquí. */
+export async function changePassword({ current, next }) {
+  const data = await authRequest('/me/password', { method: 'POST', body: { current_password: current, new_password: next } });
+  return save(toUser(data.user), data.tokens);
+}

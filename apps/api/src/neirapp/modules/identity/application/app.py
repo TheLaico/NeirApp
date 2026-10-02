@@ -15,7 +15,12 @@ from neirapp.modules.identity.application.role_grants import (
     ListUserIdsWithRole,
     RevokeRoleGrant,
 )
-from neirapp.modules.identity.application.sessions import Login, Logout, RefreshSession
+from neirapp.modules.identity.application.sessions import (
+    ChangePassword,
+    Login,
+    Logout,
+    RefreshSession,
+)
 
 
 @dataclass(frozen=True)
@@ -29,6 +34,7 @@ class IdentityApp:
     authenticate: AuthenticateAccessToken
     get_profile: GetProfile
     update_profile: UpdateProfile
+    change_password: ChangePassword
     accept_terms: AcceptTerms
     terms_policy: TermsPolicy
     grant_role: GrantRoleByEmail

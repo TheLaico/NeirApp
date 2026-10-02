@@ -36,6 +36,11 @@ class UpdateProfileRequest(BaseModel):
     phone: str | None = None
 
 
+class ChangePasswordRequest(BaseModel):
+    current_password: str = Field(min_length=1, max_length=128)
+    new_password: str
+
+
 class AcceptTermsRequest(BaseModel):
     document: TermsDocument
     version: str

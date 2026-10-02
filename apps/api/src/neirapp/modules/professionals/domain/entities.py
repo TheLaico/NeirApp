@@ -115,6 +115,10 @@ class ProfessionalProfile:
     photo_url: str = ""
     # Lo marca el administrador: aparece primero en su especialidad.
     is_featured: bool = False
+    # Ajustes del profesional (Configuración): pausar el perfil en el directorio y dejar de recibir
+    # solicitudes de cita sin borrar nada.
+    is_listed: bool = True
+    accepts_requests: bool = True
 
     @classmethod
     def create(cls, user_id: UUID, data: ProfileData, now: datetime) -> "ProfessionalProfile":

@@ -150,6 +150,70 @@ class TestMe:
         assert response.json()["full_name"] == "Ana Gómez"
 
 
+class TestChangePassword:
+    async def _change(
+        self, client: httpx.AsyncClient, tokens: dict[str, Any], current: str, new: str
+    ) -> httpx.Response:
+        return await client.post(
+            f"{API}/me/password",
+            headers=bearer(tokens),
+            json={"current_password": current, "new_password": new},
+        )
+
+    async def test_cambia_y_entrega_sesion_nueva(self, client: httpx.AsyncClient) -> None:
+        tokens = (await register(client)).json()["tokens"]
+
+        response = await self._change(client, tokens, VALID["password"], "otra-clave-456")
+
+        assert response.status_code == 200
+        fresh = response.json()["tokens"]
+        assert fresh["refresh_token"] != tokens["refresh_token"]
+        old_login = await client.post(
+            f"{API}/login", json={"email": VALID["email"], "password": VALID["password"]}
+        )
+        assert old_login.status_code == 401
+        new_login = await client.post(
+            f"{API}/login", json={"email": VALID["email"], "password": "otra-clave-456"}
+        )
+        assert new_login.status_code == 200
+
+    async def test_cierra_las_demas_sesiones(self, client: httpx.AsyncClient) -> None:
+        tokens = (await register(client)).json()["tokens"]
+        other = (
+            await client.post(
+                f"{API}/login", json={"email": VALID["email"], "password": VALID["password"]}
+            )
+        ).json()["tokens"]
+
+        fresh = (await self._change(client, tokens, VALID["password"], "otra-clave-456")).json()
+
+        stale = await client.post(f"{API}/refresh", json={"refresh_token": other["refresh_token"]})
+        assert stale.status_code == 401
+        kept = await client.post(
+            f"{API}/refresh", json={"refresh_token": fresh["tokens"]["refresh_token"]}
+        )
+        assert kept.status_code == 200
+
+    async def test_rechaza_contrasena_actual_incorrecta(self, client: httpx.AsyncClient) -> None:
+        tokens = (await register(client)).json()["tokens"]
+        response = await self._change(client, tokens, "no-es-esta", "otra-clave-456")
+        assert response.status_code == 422
+        assert response.json()["code"] == "wrong_current_password"
+
+    async def test_rechaza_contrasena_debil_o_igual(self, client: httpx.AsyncClient) -> None:
+        tokens = (await register(client)).json()["tokens"]
+        weak = await self._change(client, tokens, VALID["password"], "corta")
+        assert weak.json()["code"] == "weak_password"
+        same = await self._change(client, tokens, VALID["password"], VALID["password"])
+        assert same.json()["code"] == "same_password"
+
+    async def test_requiere_token(self, client: httpx.AsyncClient) -> None:
+        response = await client.post(
+            f"{API}/me/password", json={"current_password": "x", "new_password": "y" * 10}
+        )
+        assert response.status_code == 401
+
+
 class TestRefresh:
     async def test_rota_el_refresh_token(self, client: httpx.AsyncClient) -> None:
         first = (await register(client)).json()["tokens"]

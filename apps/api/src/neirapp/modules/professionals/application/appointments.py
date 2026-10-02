@@ -21,6 +21,7 @@ from neirapp.modules.professionals.domain.errors import (
     CannotRequestYourself,
     InvalidAppointmentRequest,
     ProfileNotFound,
+    RequestsPaused,
     TooManyPendingRequests,
 )
 from neirapp.modules.professionals.domain.notifications import (
@@ -62,8 +63,14 @@ class SendRequest:
         if professional_id == customer_id:
             raise CannotRequestYourself()
         profile = await self._profiles.get(professional_id)
-        if profile is None or professional_id not in await self._access.professional_ids():
+        if (
+            profile is None
+            or not profile.is_listed
+            or professional_id not in await self._access.professional_ids()
+        ):
             raise ProfileNotFound("Perfil no encontrado.")
+        if not profile.accepts_requests:
+            raise RequestsPaused()
         service_name = ""
         if data.service_id is not None:
             service = await self._services.get(data.service_id)

@@ -16,6 +16,7 @@ import NotificationsView from './NotificationsView.jsx';
 import HomeView from './HomeView.jsx';
 import ProfileView from './ProfileView.jsx';
 import ServicesView from './ServicesView.jsx';
+import SettingsView from './SettingsView.jsx';
 import { NAV, TABS } from './model.js';
 import RequestsView from './RequestsView.jsx';
 import './professional-panel.css';
@@ -26,7 +27,7 @@ const DESKTOP = '(min-width: 1100px)';
  * Panel del profesional. El administrador autoriza su correo y aquí la persona arma su propio perfil.
  * Mismo marco que los paneles de comerciante y repartidor: menú lateral en escritorio, barra inferior en celular.
  */
-export default function ProfessionalPage({ user, onLogout }) {
+export default function ProfessionalPage({ user, onLogout, onUserChange }) {
   const navigate = useNavigate();
   const desktop = useMediaQuery(DESKTOP);
   // Se puede entrar directo a una sección: /profesional?seccion=requests (así llevan los avisos).
@@ -94,6 +95,19 @@ export default function ProfessionalPage({ user, onLogout }) {
     );
   } else if (view === 'home') {
     content = <HomeView name={name} activity={activity} onGo={setView} onPlans={() => navigate('/profesional/planes')} />;
+  } else if (view === 'settings') {
+    content = (
+      <SettingsView
+        user={user}
+        profile={profile}
+        published={mine.exists}
+        onSaveSettings={mine.saveSettings}
+        onUserChange={onUserChange}
+        onGo={setView}
+        onPlans={() => navigate('/profesional/planes')}
+        onLogout={onLogout}
+      />
+    );
   } else if (view === 'notifications') {
     content = <NotificationsView onGo={setView} onNavigate={navigate} />;
   } else if (view === 'requests') {
@@ -122,7 +136,7 @@ export default function ProfessionalPage({ user, onLogout }) {
 
   const shell = {
     user,
-    profile: { name, image: profile?.photo, Icon: UserRound, roleLabel: 'Profesional' },
+    profile: { name, image: profile?.photo, Icon: UserRound, roleLabel: 'Profesional', onSettings: allowed ? () => setView('settings') : undefined },
     nav: NAV,
     badges: { requests: newRequests, notifications: unreadNotices },
     view,

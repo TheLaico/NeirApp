@@ -40,8 +40,8 @@ export default function ProfessionalProfilePage({ user, onLogout }) {
 
   useEffect(() => {
     let alive = true;
-    professionalsApi
-      .get(id)
+    // El propio profesional ve su perfil aunque lo tenga oculto en el directorio.
+    (id === user.id ? professionalsApi.mine() : professionalsApi.get(id))
       .then((p) => alive && setState({ profile: p, loading: false, error: '' }))
       .catch((err) => alive && setState({ profile: null, loading: false, error: err.status === 404 || err.status === 422 ? 'Este perfil ya no está disponible.' : err.message }));
     // Los servicios son un extra: si fallan, el perfil se ve igual, sin esa sección.
@@ -60,7 +60,7 @@ export default function ProfessionalProfilePage({ user, onLogout }) {
     return () => {
       alive = false;
     };
-  }, [id]);
+  }, [id, user.id]);
 
   const p = state.profile;
   const card = p && toCard(p);
@@ -133,11 +133,15 @@ export default function ProfessionalProfilePage({ user, onLogout }) {
 
             <aside className="pp-contact" aria-label="Contactar">
               <h2>Contactar</h2>
-              {p.user_id !== user.id && (
-                <button type="button" className="subcat-btn pp-request" onClick={() => setAsking(true)}>
-                  <CalendarCheck size={16} aria-hidden="true" /> Pedir una cita
-                </button>
-              )}
+              {p.user_id !== user.id &&
+                (p.accepts_requests ? (
+                  <button type="button" className="subcat-btn pp-request" onClick={() => setAsking(true)}>
+                    <CalendarCheck size={16} aria-hidden="true" /> Pedir una cita
+                  </button>
+                ) : (
+                  <p className="pp-paused">Por ahora no está recibiendo solicitudes de cita. Puedes llamarle o escribirle.</p>
+                ))}
+              {p.user_id === user.id && !p.is_listed && <p className="pp-paused">Tu perfil está oculto: solo tú lo ves. Puedes volver a mostrarlo en Configuración.</p>}
               <a className="subcat-btn" href={telLink(card.phone)}>
                 <Phone size={16} aria-hidden="true" /> Llamar
               </a>

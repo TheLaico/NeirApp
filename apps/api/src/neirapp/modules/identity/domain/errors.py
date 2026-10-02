@@ -79,6 +79,22 @@ class WeakPassword(ValidationError):
         return "La contraseña debe tener entre 8 y 128 caracteres."
 
 
+class WrongCurrentPassword(ValidationError):
+    code = "wrong_current_password"
+
+    @classmethod
+    def default_message(cls) -> str:
+        return "Tu contraseña actual no es correcta."
+
+
+class SamePassword(ValidationError):
+    code = "same_password"
+
+    @classmethod
+    def default_message(cls) -> str:
+        return "La contraseña nueva debe ser distinta de la actual."
+
+
 class InvalidFullName(ValidationError):
     code = "invalid_full_name"
 

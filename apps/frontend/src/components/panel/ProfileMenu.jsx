@@ -1,13 +1,13 @@
-import { ChevronDown, LogOut, ShieldCheck } from 'lucide-react';
+import { ChevronDown, LogOut, Settings, ShieldCheck } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { canAccessAdmin } from '../../config/roles.js';
 import { useNavigate } from '../../lib/router.jsx';
 
 /**
  * Perfil del panel (comerciante o repartidor) con "Cerrar sesión". Muestra la foto o un ícono, el nombre y el rol.
- * Con `compact` (celular) solo se ve el avatar.
+ * Con `compact` (celular) solo se ve el avatar. Con `onSettings` agrega "Configuración" (lo usa el profesional).
  */
-export default function ProfileMenu({ user, name, image, Icon, roleLabel, onLogout, compact = false }) {
+export default function ProfileMenu({ user, name, image, Icon, roleLabel, onLogout, onSettings, compact = false }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
   const navigate = useNavigate();
@@ -51,6 +51,19 @@ export default function ProfileMenu({ user, name, image, Icon, roleLabel, onLogo
             <button type="button" role="menuitem" onClick={() => navigate('/admin')}>
               <ShieldCheck size={16} aria-hidden="true" />
               Panel de administrador
+            </button>
+          )}
+          {onSettings && (
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                setOpen(false);
+                onSettings();
+              }}
+            >
+              <Settings size={16} aria-hidden="true" />
+              Configuración
             </button>
           )}
           <button type="button" role="menuitem" onClick={onLogout}>

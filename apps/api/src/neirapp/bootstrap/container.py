@@ -56,7 +56,12 @@ from neirapp.modules.identity.application.role_grants import (
     RevokeRoleGrant,
 )
 from neirapp.modules.identity.application.session_issuer import SessionIssuer
-from neirapp.modules.identity.application.sessions import Login, Logout, RefreshSession
+from neirapp.modules.identity.application.sessions import (
+    ChangePassword,
+    Login,
+    Logout,
+    RefreshSession,
+)
 from neirapp.modules.identity.domain.entities import TermsDocument
 from neirapp.modules.identity.infrastructure.security import Argon2PasswordHasher, JwtTokenService
 from neirapp.modules.identity.infrastructure.unit_of_work import SqlAlchemyUnitOfWork
@@ -152,6 +157,7 @@ from neirapp.modules.professionals.application.profiles import (
     ListDirectory,
     SaveMyProfile,
     SetFeatured,
+    UpdateMySettings,
 )
 from neirapp.modules.professionals.application.services import (
     AddService,
@@ -262,6 +268,7 @@ def build_identity(
         authenticate=AuthenticateAccessToken(uow_factory, tokens, clock),
         get_profile=GetProfile(uow_factory, policy),
         update_profile=UpdateProfile(uow_factory, policy),
+        change_password=ChangePassword(uow_factory, hasher, sessions, policy, clock),
         accept_terms=AcceptTerms(uow_factory, policy, clock),
         terms_policy=policy,
         grant_role=GrantRoleByEmail(uow_factory, clock),
@@ -355,6 +362,7 @@ def build_professionals(
         list_directory=ListDirectory(repo, access),
         get_public_profile=GetPublicProfile(repo, access),
         set_featured=SetFeatured(repo),
+        update_my_settings=UpdateMySettings(repo),
         list_categories=ListCategories(categories),
         create_category=CreateCategory(categories),
         delete_category=DeleteCategory(categories, repo),

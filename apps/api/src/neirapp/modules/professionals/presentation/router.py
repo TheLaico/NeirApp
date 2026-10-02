@@ -98,6 +98,11 @@ class SetFeaturedRequest(BaseModel):
     is_featured: bool
 
 
+class SettingsRequest(BaseModel):
+    is_listed: bool
+    accepts_requests: bool
+
+
 class ProfileResponse(BaseModel):
     user_id: UUID
     title: str
@@ -117,6 +122,8 @@ class ProfileResponse(BaseModel):
     is_available: bool
     photo_url: str
     is_featured: bool
+    is_listed: bool
+    accepts_requests: bool
     updated_at: datetime
 
     @classmethod
@@ -142,6 +149,8 @@ class ProfileResponse(BaseModel):
             is_available=p.is_available,
             photo_url=p.photo_url,
             is_featured=p.is_featured,
+            is_listed=p.is_listed,
+            accepts_requests=p.accepts_requests,
             updated_at=p.updated_at,
         )
 
@@ -158,6 +167,17 @@ async def save_my_profile(
 ) -> ProfileResponse:
     """Crea o actualiza el perfil. Se publica en el directorio mientras la cuenta tenga acceso."""
     return ProfileResponse.from_domain(await app.save_my_profile(user.id, body.to_data()))
+
+
+@router.put("/me/settings", response_model=ProfileResponse)
+async def update_my_settings(
+    body: SettingsRequest, user: RequireProfessional, app: ProfessionalsDep
+) -> ProfileResponse:
+    """Muestra u oculta el perfil en el directorio y acepta o pausa las solicitudes de cita."""
+    profile = await app.update_my_settings(
+        user.id, is_listed=body.is_listed, accepts_requests=body.accepts_requests
+    )
+    return ProfileResponse.from_domain(profile)
 
 
 class ServiceRequest(BaseModel):
