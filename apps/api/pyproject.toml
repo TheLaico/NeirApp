@@ -130,6 +130,15 @@ layers = [
 ]
 
 [[tool.importlinter.contracts]]
+name = "marketplace: capas"
+type = "layers"
+layers = [
+  "neirapp.modules.marketplace.presentation | neirapp.modules.marketplace.infrastructure",
+  "neirapp.modules.marketplace.application",
+  "neirapp.modules.marketplace.domain",
+]
+
+[[tool.importlinter.contracts]]
 name = "wallet: capas"
 type = "layers"
 layers = [
@@ -170,6 +179,7 @@ source_modules = [
   "neirapp.modules.reviews.domain",
   "neirapp.modules.incidents.domain",
   "neirapp.modules.professionals.domain",
+  "neirapp.modules.marketplace.domain",
   "neirapp.shared.domain",
 ]
 forbidden_modules = ["fastapi", "sqlalchemy", "pydantic", "jwt", "argon2", "starlette"]
@@ -188,6 +198,7 @@ source_modules = [
   "neirapp.modules.reviews.application",
   "neirapp.modules.incidents.application",
   "neirapp.modules.professionals.application",
+  "neirapp.modules.marketplace.application",
   "neirapp.shared.application",
 ]
 forbidden_modules = ["fastapi", "sqlalchemy", "starlette"]
@@ -365,3 +376,49 @@ source_modules = [
   "neirapp.modules.pricing",
 ]
 forbidden_modules = ["neirapp.modules.professionals"]
+
+# domain/application de `marketplace` (MarquetNeira) no importan otros módulos: las cuentas las
+# pide por `AccountsPort` (adaptador sobre identity) y los avisos por `NotifierPort`, que conecta
+# la composición de la app (`bootstrap/notifier.py`). Y ningún otro módulo depende de él.
+[[tool.importlinter.contracts]]
+name = "el dominio/aplicación de marketplace no depende de otros módulos"
+type = "forbidden"
+source_modules = [
+  "neirapp.modules.marketplace.domain",
+  "neirapp.modules.marketplace.application",
+]
+forbidden_modules = [
+  "neirapp.modules.identity",
+  "neirapp.modules.stores",
+  "neirapp.modules.ordering",
+  "neirapp.modules.dispatch",
+  "neirapp.modules.wallet",
+  "neirapp.modules.reviews",
+  "neirapp.modules.incidents",
+  "neirapp.modules.leads",
+  "neirapp.modules.pricing",
+  "neirapp.modules.professionals",
+]
+
+[[tool.importlinter.contracts]]
+name = "marketplace no depende de professionals"
+type = "forbidden"
+source_modules = ["neirapp.modules.marketplace"]
+forbidden_modules = ["neirapp.modules.professionals"]
+
+[[tool.importlinter.contracts]]
+name = "otros módulos no dependen de marketplace"
+type = "forbidden"
+source_modules = [
+  "neirapp.modules.identity",
+  "neirapp.modules.stores",
+  "neirapp.modules.ordering",
+  "neirapp.modules.dispatch",
+  "neirapp.modules.wallet",
+  "neirapp.modules.reviews",
+  "neirapp.modules.incidents",
+  "neirapp.modules.leads",
+  "neirapp.modules.pricing",
+  "neirapp.modules.professionals",
+]
+forbidden_modules = ["neirapp.modules.marketplace"]

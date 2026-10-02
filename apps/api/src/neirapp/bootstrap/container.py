@@ -5,6 +5,7 @@ from typing import Any
 
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
+from neirapp.bootstrap.notifier import NotificationsAdapter
 from neirapp.bootstrap.settings import Settings
 from neirapp.modules.dispatch.application.app import DispatchApp
 from neirapp.modules.dispatch.application.couriers import (
@@ -84,6 +85,32 @@ from neirapp.modules.incidents.infrastructure.unit_of_work import (
 from neirapp.modules.leads.application.app import LeadsApp
 from neirapp.modules.leads.application.leads import ListLeads, SetLeadContacted, SubmitLead
 from neirapp.modules.leads.infrastructure.store import SqlAlchemyLeadStore
+from neirapp.modules.marketplace.application.app import MarketplaceApp
+from neirapp.modules.marketplace.application.use_cases import (
+    ApprovePayment,
+    CancelPayment,
+    CreateListing,
+    DeleteListing,
+    DismissReports,
+    GetPublicListing,
+    ListMyListings,
+    ListPendingPayments,
+    ListPublicListings,
+    ListReportedListings,
+    RejectPayment,
+    RemoveListing,
+    ReportListing,
+    RequestPayment,
+    RestoreListing,
+    SetListingActive,
+    UpdateListing,
+)
+from neirapp.modules.marketplace.infrastructure.identity_adapter import IdentityAccountsAdapter
+from neirapp.modules.marketplace.infrastructure.repositories import (
+    SqlAlchemyListingRepository,
+    SqlAlchemyPaymentRepository,
+    SqlAlchemyReportRepository,
+)
 from neirapp.modules.ordering.application.app import OrderingApp
 from neirapp.modules.ordering.application.orders import (
     AcceptStoreOrder,
@@ -150,6 +177,7 @@ from neirapp.modules.professionals.application.notifications import (
     DeleteNotification,
     ListMyNotifications,
     MarkNotificationRead,
+    SendNotification,
 )
 from neirapp.modules.professionals.application.plans import (
     ApprovePlanRequest,
@@ -412,6 +440,7 @@ def build_professionals(
         list_my_notifications=ListMyNotifications(notifications),
         mark_notification_read=MarkNotificationRead(notifications),
         delete_notification=DeleteNotification(notifications),
+        send_notification=SendNotification(notifications, clock),
         plans=plans,
         get_my_plan=GetMyPlan(subscriptions, clock),
         request_plan=RequestPlan(subscriptions, clock),
@@ -421,6 +450,39 @@ def build_professionals(
         reject_plan_request=RejectPlanRequest(subscriptions, notifications, clock),
         grant_plan=GrantPlan(subscriptions, notifications, clock),
         end_plan=EndPlan(subscriptions, clock),
+    )
+
+
+def build_marketplace(
+    session_factory: async_sessionmaker[Any],
+    identity: IdentityApp,
+    professionals: ProfessionalsApp,
+    clock: Clock | None = None,
+) -> MarketplaceApp:
+    clock = clock or SystemClock()
+    listings = SqlAlchemyListingRepository(session_factory)
+    payments = SqlAlchemyPaymentRepository(session_factory)
+    reports = SqlAlchemyReportRepository(session_factory)
+    accounts = IdentityAccountsAdapter(identity)
+    notifier = NotificationsAdapter(professionals)
+    return MarketplaceApp(
+        list_my_listings=ListMyListings(listings, payments),
+        create_listing=CreateListing(listings, accounts, clock),
+        update_listing=UpdateListing(listings, payments, accounts, clock),
+        set_listing_active=SetListingActive(listings, payments),
+        delete_listing=DeleteListing(listings),
+        list_public_listings=ListPublicListings(listings, clock),
+        get_public_listing=GetPublicListing(listings, clock),
+        request_payment=RequestPayment(listings, payments, clock),
+        cancel_payment=CancelPayment(listings, payments),
+        list_pending_payments=ListPendingPayments(listings, payments),
+        approve_payment=ApprovePayment(listings, payments, notifier, clock),
+        reject_payment=RejectPayment(listings, payments, notifier, clock),
+        report_listing=ReportListing(listings, reports, accounts, notifier, clock),
+        list_reported_listings=ListReportedListings(listings, reports),
+        dismiss_reports=DismissReports(listings, reports, clock),
+        remove_listing=RemoveListing(listings, reports, notifier, clock),
+        restore_listing=RestoreListing(listings),
     )
 
 

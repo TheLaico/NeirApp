@@ -39,6 +39,7 @@ from neirapp.modules.professionals.application.notifications import (
     DeleteNotification,
     ListMyNotifications,
     MarkNotificationRead,
+    SendNotification,
 )
 from neirapp.modules.professionals.application.plans import (
     ApprovePlanRequest,
@@ -111,6 +112,7 @@ class ProfessionalsApp:
     list_my_notifications: ListMyNotifications
     mark_notification_read: MarkNotificationRead
     delete_notification: DeleteNotification
+    send_notification: SendNotification
     plans: PlanBook
     get_my_plan: GetMyPlan
     request_plan: RequestPlan

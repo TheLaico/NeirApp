@@ -45,6 +45,11 @@ class NotificationKind(StrEnum):
     CERTIFICATE_REJECTED = "certificate_rejected"  # Al profesional
     PLAN_ACTIVATED = "plan_activated"  # Al profesional
     PLAN_REJECTED = "plan_rejected"  # Al profesional
+    # De MarquetNeira (los crea ese módulo a través de `SendNotification`).
+    LISTING_ACTIVATED = "listing_activated"  # Al vendedor
+    LISTING_PAYMENT_REJECTED = "listing_payment_rejected"  # Al vendedor
+    LISTING_REMOVED = "listing_removed"  # Al vendedor
+    LISTING_REPORTED = "listing_reported"  # A los administradores
 
 
 @dataclass

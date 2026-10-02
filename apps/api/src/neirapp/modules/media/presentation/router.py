@@ -26,7 +26,7 @@ from PIL import Image, ImageOps, UnidentifiedImageError
 from pydantic import BaseModel
 
 from neirapp.modules.identity.domain.entities import Role, User
-from neirapp.modules.identity.presentation.dependencies import require_roles
+from neirapp.modules.identity.presentation.dependencies import CurrentUser, require_roles
 from neirapp.shared.domain.errors import NotFoundError, ValidationError
 
 # Lo que se acepta al subir (las fotos de celular pesan varios MB); lo guardado queda mucho menor.
@@ -38,10 +38,9 @@ _NAME = re.compile(r"^[0-9a-f]{32}\.(png|jpg|webp)$")
 MAX_DOCUMENT_BYTES = 10 * 1024 * 1024
 _DOCUMENT_NAME = re.compile(r"^[0-9a-f]{32}\.pdf$")
 
-# Suben fotos quienes arman algo que ven los clientes: comerciantes, profesionales y el admin.
-RequireUploader = Annotated[
-    User, Depends(require_roles(Role.STORE_STAFF, Role.PROFESSIONAL, Role.ADMIN))
-]
+# Fotos: cualquier persona con cuenta, porque en MarquetNeira cualquiera publica sus muebles
+# (antes solo comerciantes, profesionales y el admin). Se reducen y se guardan con nombre aleatorio.
+RequireUploader = CurrentUser
 
 router = APIRouter(prefix="/uploads", tags=["media"])
 

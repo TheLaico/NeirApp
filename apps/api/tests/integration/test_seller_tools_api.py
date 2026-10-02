@@ -76,7 +76,7 @@ class TestSubirImagenes:
         assert response.status_code == 422
         assert response.json()["code"] == "invalid_image"
 
-    async def test_un_comerciante_autorizado_puede_subir_y_un_cliente_no(
+    async def test_cualquier_cuenta_puede_subir_fotos_y_sin_sesion_no(
         self, client: httpx.AsyncClient, app: FastAPI
     ) -> None:
         admin = await _admin_tokens(client, app)
@@ -95,7 +95,8 @@ class TestSubirImagenes:
         ).json()["tokens"]
 
         assert (await _upload(client, merchant, PNG)).status_code == 201
-        assert (await _upload(client, customer, PNG)).status_code == 403
+        # Cualquiera publica muebles en MarquetNeira, así que también sube fotos.
+        assert (await _upload(client, customer, PNG)).status_code == 201
         assert (await client.post(UPLOAD, content=PNG)).status_code == 401
 
     async def test_un_profesional_autorizado_puede_subir_su_foto(
