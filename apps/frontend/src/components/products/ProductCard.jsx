@@ -1,6 +1,7 @@
 import { Heart, Plus } from 'lucide-react';
 import { useCart } from '../../features/cart/CartContext.jsx';
 import { useFavorites } from '../../features/favorites/FavoritesContext.jsx';
+import { flyToCart } from '../../lib/flyToCart.js';
 import { formatCop } from '../../lib/money.js';
 import QuantityStepper from './QuantityStepper.jsx';
 
@@ -48,7 +49,10 @@ export default function ProductCard({ product, store, selected = false, onOpen }
                 type="button"
                 className="add-btn"
                 aria-label={`Agregar ${product.name} al carrito`}
-                onClick={() => add(store, product)}
+                onClick={(e) => {
+                  add(store, product);
+                  flyToCart(e.currentTarget.closest('.product-art'), product.image_url);
+                }}
               >
                 <Plus size={20} aria-hidden="true" />
               </button>

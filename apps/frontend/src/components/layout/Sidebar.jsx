@@ -54,6 +54,7 @@ export default function Sidebar({ onOpenCart }) {
               type="button"
               className={`side-item${active ? ' active' : ''}`}
               aria-current={active ? 'page' : undefined}
+              data-cart-target={action === 'cart' ? '' : undefined}
               onClick={() => (action === 'cart' ? onOpenCart?.() : navigate(to))}
             >
               <span className="side-ico">

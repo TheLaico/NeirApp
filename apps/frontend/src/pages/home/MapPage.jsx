@@ -304,16 +304,6 @@ export default function MapPage({ user, onLogout }) {
           <NeiraMap stores={visible} onSelectStore={openStore} onMapReady={onMapReady} showBuildings={showBuildings} theme={theme} className="map" />
           <MapAmbience />
 
-          {selected && infoOpen && <StoreScreen key={selected.id} store={selected} onClose={() => setInfoOpen(false)} />}
-
-          {productStore && (
-            <ProductScreen
-              key={product.id}
-              product={product}
-              store={productStore}
-              onClose={() => setProduct(null)}
-            />
-          )}
 
           {showHint && (
             <div
@@ -433,6 +423,17 @@ export default function MapPage({ user, onLogout }) {
           </button>
         </section>
         <StoreListView stores={visible} status={status} productsByStore={hits.byStore} onOpen={openStore} hidden={view !== 'list'} />
+        {/* Fichas de tienda y de producto: sobre el escenario (no dentro del mapa) para verse también en modo Lista. */}
+        {selected && infoOpen && <StoreScreen key={selected.id} store={selected} onClose={() => setInfoOpen(false)} />}
+
+        {productStore && (
+          <ProductScreen
+            key={product.id}
+            product={product}
+            store={productStore}
+            onClose={() => setProduct(null)}
+          />
+        )}
         </div>
       </main>
 

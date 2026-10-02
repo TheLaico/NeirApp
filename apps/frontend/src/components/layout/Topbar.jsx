@@ -136,6 +136,7 @@ export default function Topbar({
             <button
               type="button"
               className="cart-btn"
+              data-cart-target
               aria-label={`Carrito${totalItems ? `, ${totalItems} productos` : ''}`}
               onClick={onOpenCart}
             >

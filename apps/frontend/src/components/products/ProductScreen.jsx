@@ -5,6 +5,7 @@ import { useFavorites } from '../../features/favorites/FavoritesContext.jsx';
 import { useStoreReviews } from '../../features/reviews/api.js';
 import { formatCop } from '../../lib/money.js';
 import CompactModal, { isCompactScreen } from './CompactModal.jsx';
+import { flyToCart } from '../../lib/flyToCart.js';
 import Stars from './Stars.jsx';
 
 const dateFormat = new Intl.DateTimeFormat('es-CO', { day: 'numeric', month: 'short', year: 'numeric' });
@@ -30,7 +31,8 @@ export default function ProductScreen({ product, store, onClose }) {
     return () => document.removeEventListener('keydown', onKey);
   }, [onClose]);
 
-  const addToCart = () => {
+  const addToCart = (e) => {
+    flyToCart(e?.currentTarget?.closest('.product-screen')?.querySelector('.ps-art'), product.image_url);
     if (inCart === 0) {
       add(store, product);
       if (quantity > 1) setQuantity(store.id, product.id, quantity);

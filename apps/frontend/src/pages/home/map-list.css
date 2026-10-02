@@ -17,7 +17,7 @@
 .view-toggle button[aria-pressed='true'] { color: #fff; }
 
 /* ---------- Escenario: el mapa y la lista ocupan el mismo lugar y se cruzan con un fundido ---------- */
-.map-stage { position: relative; height: 100%; }
+.map-stage { position: relative; height: 100%; overflow: hidden; border-radius: 20px; }
 .map-stage > .map-card, .map-list {
   transition: opacity .4s ease, transform .4s cubic-bezier(.4, 0, .2, 1), visibility 0s linear 0s;
 }
