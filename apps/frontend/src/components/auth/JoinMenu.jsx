@@ -1,6 +1,7 @@
 import { ArrowLeft, CheckCircle2, ChevronRight, Loader2, Menu, Send, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
+import inicioImg from '../../assets/inicio.png';
 import { applicationsApi } from '../../features/leads/api.js';
 import { JOIN_ROLES } from '../../features/leads/joinRoles.js';
 import './join.css';
@@ -56,13 +57,13 @@ export default function JoinMenu() {
               </button>
             </div>
 
-            <section className="join-hero">
-              <h2 id="join-title">¿Quieres formar parte de NeirAPP?</h2>
-              <p>Elige cómo quieres trabajar con nosotros y manda una solicitud. Te contactamos para conocerte y activar tu cuenta.</p>
-              <button type="button" className="join-cta" onClick={() => start('')}>
-                <Send size={18} aria-hidden="true" /> Manda una solicitud
-              </button>
-            </section>
+            {/* La imagen ya trae el título y el botón "Manda una solicitud": toda ella abre el formulario. */}
+            <h2 id="join-title" className="join-sr">
+              ¿Quieres formar parte de NeirAPP?
+            </h2>
+            <button type="button" className="join-hero" onClick={() => start('')} aria-label="¿Quieres formar parte de NeirAPP? Manda una solicitud">
+              <img src={inicioImg} alt="" />
+            </button>
 
             <ul className="join-roles">
               {JOIN_ROLES.map(({ role, title, text, Icon, color }) => (
