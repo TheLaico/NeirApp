@@ -1,19 +1,14 @@
 import {
   ArrowRight,
-  Bike,
   Briefcase,
-  CalendarCheck,
   Car,
   Crown,
   ChevronRight,
   Heart,
   Home as HomeIcon,
   Mic,
-  Package,
   Search,
   Star,
-  Store,
-  X,
 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import PageShell from '../../components/layout/PageShell.jsx';
@@ -23,22 +18,10 @@ import fondoBuscador from '../../assets/fondo-buscador.png';
 import { useProfessionalDirectory } from '../../features/professionals/directory.js';
 import { useStores } from '../../features/stores/api.js';
 import { useNavigate } from '../../lib/router.jsx';
+import { TOP_CATS, categoryPath } from './categories.jsx';
 import './home-feed.css';
 
 const normalize = (t) => t.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
-
-// Categorías del encabezado. "Domicilios" lleva al mapa (las tiendas reales); las demás todavía no son
-// módulos propios en NeirAPP, así que —igual que "Otros servicios" más abajo— abren un aviso de
-// "próximamente" en vez de fingir que filtran algo.
-const TOP_CATS = [
-  { id: 'domicilios', label: 'Domicilios', color: '#0f5238', Icon: Bike },
-  { id: 'profesionales', label: 'Profesionales', color: '#E8A92C', Icon: Briefcase },
-  { id: 'transporte', label: 'Transporte', color: '#1D8A9C', Icon: Car },
-  { id: 'hospedaje', label: 'Hospedaje', color: '#B6533C', Icon: HomeIcon },
-  { id: 'marquetneira', label: 'MarketNeira', color: '#6A4C93', Icon: Store },
-  { id: 'proveedores', label: 'Proveedores', color: '#3B6E8F', Icon: Package },
-  { id: 'reservas', label: 'Reservas', color: '#C0587A', Icon: CalendarCheck },
-];
 
 // Cuántas veces se repite la fila de categorías dentro de la pasarela: de sobra para que, en cualquier
 // ancho de pantalla, siempre quede contenido de más a los dos lados y el salto al reiniciar no se note.
@@ -153,31 +136,6 @@ const MORE_SERVICES = [
   { label: 'Hospedaje', text: 'Alojamientos cómodos en Neira.', Icon: HomeIcon, color: '#B6533C' },
 ];
 
-/** Todas las categorías, quietas y en cuadrícula, para verlas con calma sin que se deslicen. */
-function MoreCategoriesModal({ cats, onSelect, onClose }) {
-  return (
-    <div className="cats-backdrop" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="cats-modal" role="dialog" aria-modal="true" aria-labelledby="cats-title">
-        <button type="button" className="cats-close" onClick={onClose} aria-label="Cerrar">
-          <X size={20} aria-hidden="true" />
-        </button>
-        <h2 id="cats-title">Categorías</h2>
-        <div className="cats-grid">
-          {cats.map(({ id, label, color, Icon }) => (
-            <button key={id} type="button" className="cats-grid-item" onClick={() => onSelect(id)}>
-              <span className="feed-cat-dot" style={{ background: color }}>
-                <Icon size={22} color="#fff" aria-hidden="true" />
-              </span>
-              <span>{label}</span>
-              {id !== 'domicilios' && id !== 'profesionales' && id !== 'marquetneira' && id !== 'proveedores' && id !== 'hospedaje' && id !== 'reservas' && id !== 'transporte' && <span className="feed-soon">Próximamente</span>}
-            </button>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
 /** Recomendados en el inicio: los profesionales con plan Premium (es uno de los beneficios del plan). */
 function RecommendedProfessionals({ onOpen, onSeeAll }) {
   const { list } = useProfessionalDirectory();
@@ -243,7 +201,6 @@ const SpeechRecognition = typeof window !== 'undefined' ? window.SpeechRecogniti
 export default function HomePage({ user, onLogout }) {
   const { stores, status } = useStores();
   const [query, setQuery] = useState('');
-  const [showMoreCats, setShowMoreCats] = useState(false);
   const [listening, setListening] = useState(false);
   const recognitionRef = useRef(null);
   const resultsRef = useRef(null);
@@ -284,30 +241,9 @@ export default function HomePage({ user, onLogout }) {
   };
 
   const openStore = (store) => navigate(`/mapa?tienda=${store.id}`);
-  // "Domicilios" y "Profesionales" ya tienen a dónde ir; las demás categorías, todavía no.
   const openCategory = (id) => {
-    if (id === 'domicilios') {
-      navigate('/mapa');
-      setShowMoreCats(false);
-    } else if (id === 'profesionales') {
-      navigate('/profesionales');
-      setShowMoreCats(false);
-    } else if (id === 'marquetneira') {
-      navigate('/marquetneira');
-      setShowMoreCats(false);
-    } else if (id === 'proveedores') {
-      navigate('/proveedores');
-      setShowMoreCats(false);
-    } else if (id === 'hospedaje') {
-      navigate('/hospedaje');
-      setShowMoreCats(false);
-    } else if (id === 'reservas') {
-      navigate('/reservas');
-      setShowMoreCats(false);
-    } else if (id === 'transporte') {
-      navigate('/transporte');
-      setShowMoreCats(false);
-    }
+    const to = categoryPath(id);
+    if (to) navigate(to);
   };
 
   return (
@@ -337,20 +273,9 @@ export default function HomePage({ user, onLogout }) {
           </label>
 
           <div className="feed-cats-wrap">
-            <CatCarousel
-              cats={TOP_CATS}
-              onSelect={(id) => (id === 'domicilios' || id === 'profesionales' || id === 'marquetneira' || id === 'proveedores' || id === 'hospedaje' || id === 'reservas' || id === 'transporte' ? openCategory(id) : setShowMoreCats(true))}
-            />
-            <button type="button" className="feed-cat feed-cat-static" onClick={() => setShowMoreCats(true)}>
-              <span className="feed-cat-dot feed-cat-more">
-                <ArrowRight size={22} color="#fff" aria-hidden="true" />
-              </span>
-              Más
-            </button>
+            <CatCarousel cats={TOP_CATS} onSelect={openCategory} />
           </div>
         </section>
-
-        {showMoreCats && <MoreCategoriesModal cats={TOP_CATS} onSelect={openCategory} onClose={() => setShowMoreCats(false)} />}
 
         <button type="button" className="feed-card feed-map-card" onClick={() => navigate('/mapa')}>
           <img src={cardVerMapa} alt="Explora las tiendas en Neira: toca un marcador para ver su catálogo y hacer tu pedido." />

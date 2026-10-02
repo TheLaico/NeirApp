@@ -74,16 +74,13 @@
   text-align: center; cursor: pointer;
 }
 .feed-cat-track .feed-cat { flex: none; }
-.feed-cat-static { flex: none; }
 .feed-cat-dot {
   width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center;
   box-shadow: 0 4px 10px rgba(35, 52, 43, 0.2); transition: transform 0.15s, box-shadow 0.15s;
 }
 .feed-cat:hover .feed-cat-dot { transform: translateY(-2px); }
-/* Burbuja fija de "Más": no representa una categoría propia, solo abre el aviso de "próximamente". */
-.feed-cat-more { background: var(--muted); }
 
-/* ---------- Ventana "todas las categorías" (ver HomePage `MoreCategoriesModal`) ---------- */
+/* ---------- Ventana "todas las categorías" (ver `CategoriesModal` en categories.jsx) ---------- */
 .cats-backdrop { position: fixed; inset: 0; z-index: 80; display: grid; place-items: center; padding: 16px; background: rgba(20, 40, 30, .55); }
 .cats-modal { position: relative; width: min(460px, 100%); padding: 28px 24px 24px; border-radius: 22px; background: #fbfaef; box-shadow: 0 24px 60px rgba(0, 0, 0, .28); text-align: center; }
 .cats-modal h2 { margin: 0; font-family: 'Montserrat', sans-serif; font-size: 20px; color: #14392a; }
