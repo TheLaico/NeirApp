@@ -139,18 +139,25 @@
 }
 .feed-empty { padding: 10px 2px; font-size: 13.5px; color: var(--muted); }
 
-.feed-brand-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 12px; }
+.feed-brand-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; }
+/* Card cuadrada que llena el logo de la marca; la calificación va encima, en la esquina. */
 .feed-brand {
-  display: flex; align-items: center; gap: 14px; padding: 14px 16px; border: 1px solid var(--line);
-  border-radius: 16px; background: var(--card); font: inherit; text-align: left; color: var(--ink);
+  position: relative; aspect-ratio: 1; padding: 0; overflow: hidden; border: 1px solid var(--line);
+  border-radius: 16px; background: #fff; font: inherit; color: var(--ink);
   cursor: pointer; transition: box-shadow 0.15s, transform 0.15s;
 }
 .feed-brand:hover { box-shadow: 0 6px 16px rgba(35, 52, 43, 0.12); transform: translateY(-1px); }
-.feed-brand-ico { flex: none; width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; }
-.feed-brand-logo { object-fit: cover; background: #fff; border: 1px solid var(--line); }
-.feed-brand-info { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
-.feed-brand-info strong { font-size: 14.5px; font-weight: 700; color: #14392a; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.feed-brand-rating { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 700; color: var(--ink); }
+.feed-brand-logo { display: block; width: 100%; height: 100%; object-fit: cover; }
+.feed-brand-fallback {
+  width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 8px; padding: 10px; color: #fff; text-align: center;
+}
+.feed-brand-name { font-size: 13px; font-weight: 700; line-height: 1.2; overflow-wrap: anywhere; }
+.feed-brand-rating {
+  position: absolute; top: 8px; right: 8px; display: inline-flex; align-items: center; gap: 3px;
+  padding: 2px 8px; border-radius: 999px; background: rgba(255, 255, 255, 0.92); box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+  font-size: 12px; font-weight: 700; color: var(--ink);
+}
 .feed-brand-rating.muted { color: var(--muted); font-weight: 600; }
 
 .feed-more-list { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 10px; }
@@ -176,8 +183,7 @@
 
 @media (max-width: 480px) {
   .feed-map-btn { left: 16px; bottom: 14px; height: 40px; padding: 0 16px; font-size: 13.5px; }
-  .feed-brand-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .feed-brand-info strong { font-size: 13.5px; }
+  .feed-brand-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
 }
 
 /* Profesionales recomendados (plan Premium) */

@@ -172,26 +172,25 @@ function RecommendedProfessionals({ onOpen, onSeeAll }) {
 function BrandCard({ store, onOpen }) {
   const { Icon } = store;
   return (
-    <button type="button" className="feed-brand" onClick={() => onOpen(store)}>
-      {/* El logo lo sube el comerciante en "Mi tienda"; sin logo, el ícono y el color de su categoría. */}
+    // Card cuadrada: el logo (que ya trae el nombre de la marca) la llena entera. El nombre queda solo
+    // para lectores de pantalla y, si la tienda aún no sube logo, se muestra bajo el ícono de su categoría.
+    <button type="button" className="feed-brand" aria-label={store.name} title={store.name} onClick={() => onOpen(store)}>
       {store.logo_url ? (
-        <img className="feed-brand-ico feed-brand-logo" src={store.logo_url} alt="" loading="lazy" />
+        <img className="feed-brand-logo" src={store.logo_url} alt="" loading="lazy" />
       ) : (
-        <span className="feed-brand-ico" style={{ background: store.color }}>
-          <Icon size={26} color="#fff" aria-hidden="true" />
+        <span className="feed-brand-fallback" style={{ background: store.color }}>
+          <Icon size={34} color="#fff" aria-hidden="true" />
+          <span className="feed-brand-name">{store.name}</span>
         </span>
       )}
-      <span className="feed-brand-info">
-        <strong>{store.name}</strong>
-        {store.rating ? (
-          <span className="feed-brand-rating">
-            <Star size={13} fill="#F2A81D" color="#F2A81D" aria-hidden="true" />
-            {store.rating.toFixed(1)}
-          </span>
-        ) : (
-          <span className="feed-brand-rating muted">Nueva</span>
-        )}
-      </span>
+      {store.rating ? (
+        <span className="feed-brand-rating">
+          <Star size={12} fill="#F2A81D" color="#F2A81D" aria-hidden="true" />
+          {store.rating.toFixed(1)}
+        </span>
+      ) : (
+        <span className="feed-brand-rating muted">Nueva</span>
+      )}
     </button>
   );
 }
