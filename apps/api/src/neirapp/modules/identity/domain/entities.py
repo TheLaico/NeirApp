@@ -18,12 +18,21 @@ class Role(StrEnum):
     SUPPLIER = "supplier"  # Empresa que vende al por mayor (espacio Proveedores)
     HOTEL = "hotel"  # Hotel u hospedaje (espacio Hospedaje)
     VENUE = "venue"  # Establecimiento que recibe reservas (espacio Reservas)
+    DRIVER = "driver"  # Conductor de motocarro (espacio Transporte)
     ADMIN = "admin"
 
 
 # Roles autorizables por correo. `customer` es automático y `admin` nunca sale de la API.
 ASSIGNABLE_ROLES = frozenset(
-    {Role.COURIER, Role.STORE_STAFF, Role.PROFESSIONAL, Role.SUPPLIER, Role.HOTEL, Role.VENUE}
+    {
+        Role.COURIER,
+        Role.STORE_STAFF,
+        Role.PROFESSIONAL,
+        Role.SUPPLIER,
+        Role.HOTEL,
+        Role.VENUE,
+        Role.DRIVER,
+    }
 )
 
 

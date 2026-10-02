@@ -62,6 +62,8 @@ export default function NotificationsPage({ user, onLogout }) {
                     <span className="notif-text">
                       <strong>{n.title}</strong>
                       <span>{n.body}</span>
+                      {/* Algunos avisos traen una acción (p. ej. "Mirar motocarro"); toda la fila la abre. */}
+                      {n.link && SERVER_KINDS[n.kind]?.action && <span className="notif-action">{SERVER_KINDS[n.kind].action}</span>}
                       <time dateTime={n.createdAt}>{timeAgo(n.createdAt)}</time>
                     </span>
                     {!n.read && <span className="notif-dot" aria-hidden="true" />}

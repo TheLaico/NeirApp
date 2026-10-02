@@ -70,6 +70,11 @@ class NotificationKind(StrEnum):
     BOOKING_DECLINED = "booking_declined"  # Al cliente
     VENUE_REVIEW_NEW = "venue_review_new"  # Al establecimiento
     VENUE_REVIEW_REPLY = "venue_review_reply"  # A quien escribió la reseña
+    # De Transporte (motocarros).
+    RIDE_ACCEPTED = "ride_accepted"  # Al cliente: un motocarro va por él
+    RIDE_ARRIVED = "ride_arrived"  # Al cliente: el motocarro llegó
+    RIDE_COMPLETED = "ride_completed"  # Al cliente: para que califique
+    RIDE_CANCELLED = "ride_cancelled"  # Al otro lado de quien cancela
 
 
 @dataclass

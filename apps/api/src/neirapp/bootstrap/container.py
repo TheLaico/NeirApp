@@ -250,6 +250,15 @@ from neirapp.modules.reviews.infrastructure.ordering_adapter import (
 from neirapp.modules.reviews.infrastructure.unit_of_work import (
     SqlAlchemyUnitOfWork as ReviewsSqlAlchemyUnitOfWork,
 )
+from neirapp.modules.rides.application import use_cases as rides
+from neirapp.modules.rides.application.app import RidesApp
+from neirapp.modules.rides.infrastructure.identity_adapter import (
+    IdentityAccessAdapter as DriverAccessAdapter,
+)
+from neirapp.modules.rides.infrastructure.repositories import (
+    SqlAlchemyDriverRepository,
+    SqlAlchemyRideRepository,
+)
 from neirapp.modules.stores.application.app import StoresApp
 from neirapp.modules.stores.application.products import (
     CreateProduct,
@@ -634,6 +643,40 @@ def build_venues(
         answer_booking=venues.AnswerBooking(places, bookings, notifier, clock),
         list_venues_for_admin=venues.ListVenuesForAdmin(places, reviews, access),
         set_featured=venues.SetFeatured(places, reviews),
+    )
+
+
+def build_rides(
+    session_factory: async_sessionmaker[Any],
+    identity: IdentityApp,
+    professionals: ProfessionalsApp,
+    clock: Clock | None = None,
+) -> RidesApp:
+    clock = clock or SystemClock()
+    drivers = SqlAlchemyDriverRepository(session_factory)
+    trips = SqlAlchemyRideRepository(session_factory)
+    access = DriverAccessAdapter(identity)
+    notifier = NotificationsAdapter(professionals)
+    return RidesApp(
+        get_my_driver=rides.GetMyDriver(drivers, trips),
+        save_my_driver=rides.SaveMyDriver(drivers, trips, clock),
+        set_online=rides.SetOnline(drivers, trips, clock),
+        update_driver_location=rides.UpdateDriverLocation(drivers, clock),
+        list_live_drivers=rides.ListLiveDrivers(drivers, trips, access, clock),
+        request_ride=rides.RequestRide(trips, clock),
+        get_current_ride=rides.GetCurrentRide(trips, drivers, clock),
+        get_ride=rides.GetRide(trips, drivers, clock),
+        list_my_rides=rides.ListMyRides(trips, drivers),
+        share_location=rides.ShareLocation(trips, clock),
+        cancel_ride=rides.CancelRide(trips, drivers, notifier, clock),
+        rate_ride=rides.RateRide(trips, drivers),
+        list_nearby_requests=rides.ListNearbyRequests(trips, drivers, clock),
+        accept_ride=rides.AcceptRide(trips, drivers, access, notifier, clock),
+        mark_arrived=rides.MarkArrived(trips, drivers, notifier, clock),
+        start_ride=rides.StartRide(trips, drivers, notifier, clock),
+        complete_ride=rides.CompleteRide(trips, drivers, notifier, clock),
+        get_driver_current_ride=rides.GetDriverCurrentRide(trips, drivers),
+        get_earnings=rides.GetEarnings(trips, drivers, clock),
     )
 
 

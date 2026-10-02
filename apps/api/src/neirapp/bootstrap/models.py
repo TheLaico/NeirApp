@@ -13,6 +13,7 @@ from neirapp.modules.ordering.infrastructure import models as ordering_models
 from neirapp.modules.pricing.infrastructure import models as pricing_models
 from neirapp.modules.professionals.infrastructure import models as professionals_models
 from neirapp.modules.reviews.infrastructure import models as reviews_models
+from neirapp.modules.rides.infrastructure import models as rides_models
 from neirapp.modules.stores.infrastructure import models as stores_models
 from neirapp.modules.suppliers.infrastructure import models as suppliers_models
 from neirapp.modules.venues.infrastructure import models as venues_models
@@ -31,6 +32,7 @@ __all__ = [
     "pricing_models",
     "professionals_models",
     "reviews_models",
+    "rides_models",
     "stores_models",
     "suppliers_models",
     "venues_models",

@@ -15,6 +15,7 @@ from neirapp.bootstrap.container import (
     build_pricing,
     build_professionals,
     build_reviews,
+    build_rides,
     build_stores,
     build_suppliers,
     build_venues,
@@ -36,6 +37,7 @@ from neirapp.modules.professionals.presentation.notifications_router import (
 )
 from neirapp.modules.professionals.presentation.router import router as professionals_router
 from neirapp.modules.reviews.presentation.router import router as reviews_router
+from neirapp.modules.rides.presentation.router import router as rides_router
 from neirapp.modules.stores.presentation.router import router as stores_router
 from neirapp.modules.suppliers.presentation.router import router as suppliers_router
 from neirapp.modules.venues.presentation.router import router as venues_router
@@ -77,6 +79,9 @@ def create_app(settings: Settings | None = None, clock: Clock | None = None) -> 
         session_factory, app.state.identity, app.state.professionals, clock
     )
     app.state.venues = build_venues(
+        session_factory, app.state.identity, app.state.professionals, clock
+    )
+    app.state.rides = build_rides(
         session_factory, app.state.identity, app.state.professionals, clock
     )
     app.state.marketplace = build_marketplace(
@@ -122,6 +127,7 @@ def create_app(settings: Settings | None = None, clock: Clock | None = None) -> 
     app.include_router(suppliers_router, prefix="/api/v1")
     app.include_router(lodging_router, prefix="/api/v1")
     app.include_router(venues_router, prefix="/api/v1")
+    app.include_router(rides_router, prefix="/api/v1")
     app.include_router(dispatch_router, prefix="/api/v1")
     app.include_router(reviews_router, prefix="/api/v1")
     app.include_router(incidents_router, prefix="/api/v1")

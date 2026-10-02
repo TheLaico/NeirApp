@@ -594,6 +594,43 @@ solicitudes que el lugar confirma o rechaza), pero la reserva es por **día, hor
   desarrollo) y `/admin/reservas`. Reusa los componentes y estilos de Hospedaje (`HotelsMap` con
   `markerOf`, estrellas, reseñas).
 
+## Módulo `rides` — Transporte en motocarro (implementado)
+
+Pedir un motocarro en tiempo real dentro de Neira. Es aparte de `dispatch` (domicilios): aquí se
+lleva personas, no pedidos.
+
+- **Conductores**: rol `driver` ("Conductor", asignable por correo). Perfil `rides_driver`
+  (migración 0037): nombre, celular, foto, placa (se guarda "NEI123", se muestra "NEI-123"),
+  marca/año/color, capacidad (1 a 3) y foto del motocarro. "Disponible" (`PUT /rides/driver/status`)
+  y su ubicación (`PUT /rides/driver/location`, la app la manda cada ~8 s; sin GPS la marca tocando
+  el mapa). Los clientes ven los motocarros en servicio (`GET /rides/drivers/live`: solo posición,
+  y si va ocupado) mientras su ubicación tenga menos de 2 minutos.
+- **Viaje** (`rides_ride`): el cliente pide con cuántas personas van (1 a 3), el punto de recogida
+  (su ubicación actual o el que ajuste en el mapa), la dirección/referencia y, si quiere, a dónde va
+  (`POST /rides`). Tarifa: **$ 2.500 por persona**, se le paga al conductor. Un cliente tiene un
+  solo viaje abierto; una solicitud que nadie acepta en 15 minutos se vence.
+- **Aceptar**: el conductor ve las solicitudes más cercanas (`GET /rides/driver/requests`, sin el
+  celular del cliente) y acepta una (`POST /rides/{id}/accept`). Solo lleva un cliente a la vez y
+  la aceptación es un `UPDATE … WHERE status = 'requested'`: si dos aceptan a la vez, gana el
+  primero (`ride_taken`). Luego `arrived` → `start` → `complete`; cancelan el cliente (hasta que
+  arranquen) o el conductor (después de aceptar).
+- **Tiempo real**: por consultas periódicas (cada 4–5 s) a `GET /rides/current` (cliente),
+  `GET /rides/{id}` y `GET /rides/driver/current` (conductor). El tiempo estimado se calcula con la
+  distancia (haversine × 1,35 por las calles, a 18 km/h). El cliente puede compartir su ubicación
+  mientras espera (`PUT /rides/{id}/location`) y el conductor la ve en su mapa.
+- **Avisos**: `ride_accepted` ("¡Tu motocarro ha sido asignado!", con el botón "Mirar motocarro" que
+  abre `/transporte/viaje?id=`), `ride_arrived`, `ride_completed` (para calificar) y
+  `ride_cancelled`. Además, `RideAlert` muestra ese aviso flotante en cualquier pantalla apenas el
+  conductor acepta.
+- **Calificación e ingresos**: el cliente califica de 1 a 5 (`PUT /rides/{id}/rate`); el promedio
+  sale en el perfil del conductor. `GET /rides/driver/earnings?period=today|week|month` da el total,
+  los viajes, las personas, las barras por hora (hoy, hora de Colombia) o por día, y los últimos viajes.
+- En el frontend: `/transporte` (pedir, estados del viaje, mapa con motocarros en servicio, viajes
+  recientes), `/transporte/viaje?id=` (seguimiento en vivo con la ruta punteada, llamar y compartir
+  ubicación) y el panel `/conductor` (Inicio con ingresos de hoy, motocarro, perfil, disponible y
+  solicitudes cercanas en el mapa; Mis viajes; Ganancias; Mi perfil; Notificaciones; también en la
+  vista de desarrollo). `NeiraMap` acepta punteros con imagen (`marker.image`) y una ruta (`line`).
+
 ## Frontend
 
 `apps/web` (Vite + React 19 + TypeScript). Estructura *feature-based*:

@@ -1,4 +1,4 @@
-import { BadgeCheck, BedDouble, CalendarCheck, CalendarClock, CalendarPlus, CalendarX, Crown, FileWarning, Flag, MessageSquareReply, ReceiptText, ShieldOff, Sofa, Sparkles, Star, Warehouse } from 'lucide-react';
+import { BadgeCheck, BedDouble, Bike, Car, CircleCheckBig, CalendarCheck, CalendarClock, CalendarPlus, CalendarX, Crown, FileWarning, Flag, MessageSquareReply, ReceiptText, ShieldOff, Sofa, Sparkles, Star, Warehouse } from 'lucide-react';
 
 // Íconos y color de los avisos que vienen de la API (citas, certificados y planes de profesionales).
 export const SERVER_KINDS = {
@@ -32,4 +32,9 @@ export const SERVER_KINDS = {
   booking_cancelled: { Icon: CalendarX, tone: 'bad' },
   venue_review_new: { Icon: Star, tone: 'new' },
   venue_review_reply: { Icon: MessageSquareReply, tone: 'info' },
+  // Transporte: el aviso de motocarro asignado (o que llegó) trae el botón "Mirar motocarro".
+  ride_accepted: { Icon: Car, tone: 'good', action: 'Mirar motocarro' },
+  ride_arrived: { Icon: Bike, tone: 'good', action: 'Mirar motocarro' },
+  ride_completed: { Icon: CircleCheckBig, tone: 'info', action: 'Calificar' },
+  ride_cancelled: { Icon: CalendarX, tone: 'bad' },
 };

@@ -31,3 +31,5 @@
 .notif-icon.bad, .notif.unread .notif-icon.bad { background: #f9e3dc; color: #9b3d28; }
 .notif-icon.info, .notif.unread .notif-icon.info { background: #fbeec8; color: #8a6510; }
 .notif-icon.new, .notif.unread .notif-icon.new { background: #fde3d3; color: #b1400f; }
+/* Acción del aviso (p. ej. "Mirar motocarro"): se ve como botón; toda la fila la abre. */
+.notif-action { align-self: flex-start; margin: 4px 0 2px; padding: 6px 14px; border-radius: 10px; background: #0f5238; color: #fff !important; font-size: 13.5px; font-weight: 800; }

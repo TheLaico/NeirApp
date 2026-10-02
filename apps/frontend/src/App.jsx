@@ -4,6 +4,7 @@ import { CartProvider } from './features/cart/CartContext.jsx';
 import { FavoritesProvider } from './features/favorites/FavoritesContext.jsx';
 import { OrdersProvider } from './features/orders/OrdersContext.jsx';
 import OrderTracker from './features/orders/OrderTracker.jsx';
+import RideAlert from './features/rides/RideAlert.jsx';
 import { NotificationsProvider } from './features/notifications/NotificationsContext.jsx';
 import { PaymentsProvider } from './features/payments/PaymentsContext.jsx';
 import { SettingsProvider } from './features/settings/SettingsContext.jsx';
@@ -46,6 +47,9 @@ import MyReservationsPage from './pages/lodging/MyReservationsPage.jsx';
 import SupplierPage from './pages/suppliers/SupplierPage.jsx';
 import SuppliersPage from './pages/suppliers/SuppliersPage.jsx';
 import VenuePanelPage from './pages/venue/VenuePanelPage.jsx';
+import DriverPanelPage from './pages/driver/DriverPanelPage.jsx';
+import TrackPage from './pages/transport/TrackPage.jsx';
+import TransportPage from './pages/transport/TransportPage.jsx';
 import MyBookingsPage from './pages/venues/MyBookingsPage.jsx';
 import VenuePage from './pages/venues/VenuePage.jsx';
 import VenuesPage from './pages/venues/VenuesPage.jsx';
@@ -78,6 +82,9 @@ const ROUTES = {
   '/reservas/lugar': VenuePage,
   '/reservas/mis-reservas': MyBookingsPage,
   '/establecimiento': VenuePanelPage,
+  '/transporte': TransportPage,
+  '/transporte/viaje': TrackPage,
+  '/conductor': DriverPanelPage,
   '/favoritos': FavoritesPage,
   '/pedidos': OrdersPage,
   '/checkout': CheckoutPage,
@@ -115,6 +122,7 @@ function AuthenticatedApp({ user, onLogout, onUserChange }) {
               <FavoritesProvider>
                 <Page user={user} onLogout={onLogout} onUserChange={onUserChange} />
                 <OrderTracker userId={user.id} />
+                <RideAlert />
                 <DevViewSwitcher user={user} />
               </FavoritesProvider>
             </CartProvider>

@@ -1,4 +1,4 @@
-import { BedDouble, Bike, BriefcaseBusiness, Building2, CalendarCheck, Code2, ShieldCheck, Store, UserRound, X } from 'lucide-react';
+import { BedDouble, Bike, BriefcaseBusiness, Building2, CalendarCheck, Car, Code2, ShieldCheck, Store, UserRound, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { canAccessAdmin } from '../../config/roles.js';
 import { useNavigate, usePath } from '../../lib/router.jsx';
@@ -6,13 +6,14 @@ import './dev-switcher.css';
 
 // Vista de cada rol. Se decide por la ruta, así el botón sirve igual en cualquier pantalla.
 const VIEWS = [
-  { key: 'customer', label: 'Cliente', to: '/', Icon: UserRound, match: (p) => !/^\/(admin|repartidor|comercio|profesional(\/|$)|proveedor(\/|$)|hotel(\/|$)|establecimiento(\/|$))/.test(p) && p !== '/proveedores/mi-empresa' },
+  { key: 'customer', label: 'Cliente', to: '/', Icon: UserRound, match: (p) => !/^\/(admin|repartidor|comercio|profesional(\/|$)|proveedor(\/|$)|hotel(\/|$)|establecimiento(\/|$)|conductor(\/|$))/.test(p) && p !== '/proveedores/mi-empresa' },
   { key: 'courier', label: 'Repartidor', to: '/repartidor', Icon: Bike, match: (p) => p.startsWith('/repartidor') },
   { key: 'merchant', label: 'Comerciante', to: '/comercio', Icon: Store, match: (p) => p.startsWith('/comercio') },
   { key: 'professional', label: 'Profesional', to: '/profesional', Icon: BriefcaseBusiness, match: (p) => /^\/profesional(\/|$)/.test(p) },
   { key: 'supplier', label: 'Proveedor', to: '/proveedor', Icon: Building2, match: (p) => /^\/proveedor(\/|$)/.test(p) || p === '/proveedores/mi-empresa' },
   { key: 'hotel', label: 'Hotel', to: '/hotel', Icon: BedDouble, match: (p) => /^\/hotel(\/|$)/.test(p) },
   { key: 'venue', label: 'Establecimiento', to: '/establecimiento', Icon: CalendarCheck, match: (p) => /^\/establecimiento(\/|$)/.test(p) },
+  { key: 'driver', label: 'Conductor', to: '/conductor', Icon: Car, match: (p) => /^\/conductor(\/|$)/.test(p) },
   { key: 'admin', label: 'Administrador', to: '/admin', Icon: ShieldCheck, match: (p) => p.startsWith('/admin') },
 ];
 

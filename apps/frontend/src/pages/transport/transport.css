@@ -1,0 +1,136 @@
+/* Transporte (motocarros): verde NeirAPP, tarjetas blancas redondeadas y el mapa de Neira grande al lado, como el
+   diseño. También lo usan las vistas del conductor (tr-map, tr-status, tr-avatar…). */
+
+.tr-page { --g: #0f5238; --g2: #14392a; --ink: #23342b; --muted: #6b7a70; --line: #e3e7d6; padding: 4px 24px 40px; color: var(--ink); font-family: 'Nunito', system-ui, sans-serif; }
+@media (min-width: 1024px) { .tr-page { height: 100%; overflow-y: auto; } }
+.tr-empty { padding: 50px 16px; color: var(--muted); text-align: center; }
+.tr-muted { font-size: 13px; color: var(--muted); }
+.tr-error { font-size: 14px; font-weight: 700; color: #9b3d28; }
+.tr-spin { animation: tr-spin 1s linear infinite; }
+@keyframes tr-spin { to { transform: rotate(360deg); } }
+.tr-back { display: inline-flex; align-items: center; gap: 6px; margin: 6px 0 10px; padding: 6px 0; border: 0; background: none; color: var(--g); font: inherit; font-size: 15px; font-weight: 800; cursor: pointer; }
+
+/* Botones */
+.tr-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 46px; padding: 0 18px; border-radius: 14px; font: inherit; font-size: 15px; font-weight: 800; text-decoration: none; cursor: pointer; transition: filter .15s, background .15s; }
+.tr-btn.primary { border: 0; background: var(--g); color: #fff; box-shadow: 0 6px 16px rgba(15, 82, 56, .25); }
+.tr-btn.primary:hover { filter: brightness(1.12); }
+.tr-btn.outline { border: 1.5px solid var(--g); background: #fff; color: var(--g); }
+.tr-btn.small { min-height: 36px; padding: 0 14px; font-size: 13.5px; border-radius: 11px; }
+.tr-btn.wide { width: 100%; }
+.tr-btn:disabled { opacity: .55; cursor: default; }
+.tr-link { align-self: center; padding: 4px; border: 0; background: none; color: var(--g); font: inherit; font-size: 14px; font-weight: 800; text-decoration: underline; cursor: pointer; }
+.tr-link.danger { color: #9b3d28; }
+
+/* Distribución: tarjeta a la izquierda, mapa a la derecha. */
+.tr-layout { display: grid; grid-template-columns: minmax(330px, 400px) minmax(0, 1fr); gap: 22px; align-items: stretch; }
+.tr-panel { min-width: 0; }
+.tr-card { display: flex; flex-direction: column; gap: 14px; padding: 22px; border: 1px solid var(--line); border-radius: 24px; background: rgba(255, 255, 255, .96); box-shadow: 0 6px 22px rgba(35, 52, 43, .08); }
+.tr-card h1, .tr-card h2 { font-family: 'Montserrat', sans-serif; font-weight: 800; color: var(--g2); }
+.tr-card h1 { font-size: clamp(24px, 2.2vw, 30px); }
+.tr-card h2 { font-size: 23px; text-align: center; }
+.tr-sub { margin-top: -8px; font-size: 15px; color: var(--muted); line-height: 1.45; }
+.tr-state { align-items: stretch; text-align: center; }
+.tr-state .tr-sub { margin-top: -6px; }
+
+/* Formulario */
+.tr-field { display: flex; flex-direction: column; gap: 7px; font-size: 14.5px; font-weight: 700; text-align: left; }
+.tr-field small { font-weight: 500; color: var(--muted); }
+.tr-field > span:first-child { display: inline-flex; align-items: center; gap: 5px; }
+.tr-input { display: flex; align-items: center; gap: 8px; padding: 0 14px; border: 1.5px solid #c3cdb8; border-radius: 14px; background: #fff; }
+.tr-input svg { flex: none; color: #b6533c; }
+.tr-input input { flex: 1; min-width: 0; min-height: 46px; border: 0; background: none; color: var(--ink); font: inherit; font-size: 15px; font-weight: 500; outline: none; }
+.tr-input:focus-within { border-color: var(--g); box-shadow: 0 0 0 3px rgba(15, 82, 56, .14); }
+.tr-plain, .tr-field textarea { min-height: 44px; padding: 0 14px; border: 1.5px solid #c3cdb8; border-radius: 14px; background: #fff; color: var(--ink); font: inherit; font-size: 15px; font-weight: 500; }
+.tr-field textarea { padding: 10px 14px; resize: vertical; }
+.tr-plain:focus, .tr-field textarea:focus { outline: none; border-color: var(--g); box-shadow: 0 0 0 3px rgba(15, 82, 56, .14); }
+.tr-counter { display: inline-flex; align-items: center; align-self: flex-start; gap: 4px; padding: 4px; border: 1.5px solid #c3cdb8; border-radius: 14px; background: #fff; }
+.tr-counter button { display: grid; place-items: center; width: 40px; height: 36px; border: 0; border-radius: 10px; background: #eef5ea; color: var(--g); font-size: 22px; font-weight: 800; cursor: pointer; }
+.tr-counter button:disabled { opacity: .35; cursor: default; }
+.tr-counter strong { min-width: 44px; font-size: 18px; text-align: center; }
+.tr-gps { display: flex; align-items: flex-start; gap: 6px; margin-top: -6px; font-size: 13px; color: #8a5d06; text-align: left; }
+.tr-gps.ok { color: #2d7a3d; }
+.tr-gps svg { flex: none; margin-top: 2px; }
+.tr-fare { display: grid; grid-template-columns: 1fr auto; align-items: baseline; gap: 2px 10px; padding: 12px 16px; border-radius: 16px; background: #eef5ea; text-align: left; }
+.tr-fare span { font-size: 14px; font-weight: 700; color: #2d7a3d; }
+.tr-fare strong { font-family: 'Montserrat', sans-serif; font-size: 24px; color: var(--g2); }
+.tr-fare small { grid-column: 1 / -1; font-size: 12.5px; color: var(--muted); }
+
+/* Estados del viaje */
+.tr-hero { position: relative; margin: -6px -6px 0; overflow: hidden; border-radius: 18px; background: #0d1a12; }
+.tr-hero img { display: block; width: 100%; aspect-ratio: 3 / 2; object-fit: cover; }
+.tr-check { position: absolute; left: 50%; top: 14px; display: grid; place-items: center; width: 56px; height: 56px; border-radius: 50%; background: var(--g); color: #fff; box-shadow: 0 0 0 6px rgba(255, 255, 255, .85); transform: translateX(-50%); }
+.tr-check.small { position: static; align-self: center; width: 52px; height: 52px; transform: none; box-shadow: 0 0 0 6px #e4f0dd; }
+.tr-check.warn { background: #e8a92c; box-shadow: 0 0 0 6px #fdf0d2; }
+.tr-searching { display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-size: 14px; font-weight: 800; color: #3d6690; }
+.tr-details { display: flex; flex-direction: column; gap: 8px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 16px; background: #fbfcf8; text-align: left; }
+.tr-details h3 { font-size: 15px; color: var(--g2); }
+.tr-details p { display: flex; align-items: flex-start; gap: 8px; font-size: 14px; }
+.tr-details svg { flex: none; margin-top: 2px; color: var(--g); }
+.tr-facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; list-style: none; padding: 0; }
+.tr-facts li { display: flex; flex-direction: column; gap: 2px; padding: 10px 8px; border-radius: 14px; background: #f3f7ee; }
+.tr-facts span { font-size: 12px; color: var(--muted); }
+.tr-facts strong { font-size: 15px; color: var(--g2); overflow-wrap: anywhere; }
+.tr-share { display: flex; align-items: flex-start; gap: 8px; padding: 10px 12px; border-radius: 14px; background: #f1f5fa; color: #2e5a86; font-size: 13.5px; font-weight: 700; text-align: left; cursor: pointer; }
+.tr-share input { width: 18px; height: 18px; margin: 1px 0 0; accent-color: #2f6fd6; }
+.tr-share svg { flex: none; margin-top: 2px; }
+.tr-share span { display: flex; flex-direction: column; }
+.tr-share small { font-weight: 600; color: #9b3d28; }
+.tr-status { align-self: center; padding: 4px 12px; border-radius: 999px; font-size: 13px; font-weight: 800; }
+.tr-status.wait { background: #f1f5fa; color: #3d6690; }
+.tr-status.info { background: #e8f1fb; color: #2f6fd6; }
+.tr-status.ok { background: #eef6e8; color: #1f6a35; }
+.tr-status.bad { background: #fbefea; color: #9b3d28; }
+.tr-status.off { background: #f0f1ec; color: #6b7a70; }
+.tr-rated { display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-size: 14px; color: var(--muted); }
+.tr-rate-inline { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 14px; border-radius: 16px; background: #fdf6e3; }
+
+/* Conductor (como lo ve el cliente) */
+.tr-avatar { display: grid; flex: none; place-items: center; overflow: hidden; border-radius: 50%; background: #e3efe0; color: var(--g); font-weight: 800; }
+.tr-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.tr-driver { display: flex; align-items: center; gap: 12px; padding: 12px; border: 1px solid var(--line); border-radius: 18px; background: #fff; text-align: left; }
+.tr-driver-text { display: flex; flex: 1; flex-direction: column; gap: 3px; min-width: 0; }
+.tr-driver-text strong { font-family: 'Montserrat', sans-serif; font-size: 17px; color: var(--g2); }
+.tr-rating { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 5px; font-size: 13px; color: var(--muted); }
+.tr-plate-box { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.tr-plate-box img { width: 64px; height: 52px; object-fit: contain; }
+.tr-plate { padding: 2px 8px; border: 2px solid #23342b; border-radius: 6px; background: #f2c14e; color: #23342b; font-family: 'Montserrat', sans-serif; font-size: 12.5px; font-weight: 800; letter-spacing: .04em; }
+.tr-driver.compact .tr-plate-box img { width: 48px; height: 40px; }
+
+/* Mapa */
+.tr-map { position: relative; min-height: 520px; overflow: hidden; border: 1px solid var(--line); border-radius: 24px; background: #e9eee0; box-shadow: 0 6px 22px rgba(35, 52, 43, .08); }
+.tr-map.tall { min-height: 620px; }
+.tr-map-canvas { position: absolute; inset: 0; }
+.tr-chip { position: absolute; top: 14px; right: 62px; z-index: 2; display: inline-flex; align-items: center; gap: 6px; padding: 7px 13px; border-radius: 999px; background: #fff; color: var(--g2); box-shadow: 0 2px 8px rgba(0, 0, 0, .14); font-size: 13.5px; font-weight: 800; pointer-events: none; }
+.tr-chip svg { color: #b6533c; }
+.tr-map-ctrl { position: absolute; top: 12px; right: 12px; z-index: 2; display: flex; flex-direction: column; overflow: hidden; border-radius: 12px; background: #fff; box-shadow: 0 2px 8px rgba(0, 0, 0, .14); }
+.tr-map-ctrl button { display: grid; place-items: center; width: 38px; height: 38px; border: 0; border-bottom: 1px solid var(--line); background: #fff; color: var(--g2); cursor: pointer; }
+.tr-map-ctrl button:last-child { border-bottom: 0; }
+.tr-legend { position: absolute; left: 14px; bottom: 14px; z-index: 2; display: flex; flex-direction: column; gap: 6px; padding: 10px 14px; border-radius: 14px; background: rgba(255, 255, 255, .94); box-shadow: 0 2px 8px rgba(0, 0, 0, .12); list-style: none; font-size: 12.5px; font-weight: 700; }
+.tr-legend li { display: flex; align-items: center; gap: 8px; }
+.tr-legend i { width: 11px; height: 11px; border: 2px solid #fff; border-radius: 50%; box-shadow: 0 0 0 1px rgba(0, 0, 0, .15); }
+.tr-legend i.blue { background: #2f6fd6; }
+.tr-legend i.orange { background: #e0662f; }
+.tr-legend i.green { background: #0f5238; }
+
+/* Viajes recientes */
+.tr-recent { margin-top: 24px; }
+.tr-recent-head h2 { margin-bottom: 12px; font-family: 'Montserrat', sans-serif; font-size: 20px; color: var(--g2); }
+.tr-recent ul { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; list-style: none; padding: 0; }
+.tr-trip { display: flex; align-items: center; gap: 12px; padding: 14px; border: 1px solid var(--line); border-radius: 20px; background: #fff; }
+.tr-trip img { width: 70px; height: 60px; flex: none; object-fit: contain; }
+.tr-trip div { display: flex; flex: 1; flex-direction: column; gap: 2px; min-width: 0; }
+.tr-trip strong { font-size: 15px; color: var(--g2); }
+.tr-trip small { overflow: hidden; font-size: 12.5px; color: var(--muted); text-overflow: ellipsis; white-space: nowrap; }
+.tr-trip-fare { font-weight: 800; }
+
+@media (max-width: 1100px) {
+  .tr-recent ul { grid-template-columns: 1fr; }
+}
+@media (max-width: 900px) {
+  .tr-page { padding: 4px 14px 32px; }
+  .tr-layout { grid-template-columns: 1fr; }
+  .tr-layout .tr-main-map { order: -1; min-height: 340px; }
+  .tr-map.tall { min-height: 420px; }
+  .tr-legend { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { .tr-spin { animation: none; } }

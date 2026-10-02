@@ -70,8 +70,42 @@ export function set3D(map, on) {
   }
 }
 
+// Marcador redondo con una imagen (p. ej. el motocarro de Transporte): `store.marker = { image, color }`.
+function imageMarkerElement(store) {
+  const { image, color = '#0f5238', size = 46 } = store.marker;
+  const el = document.createElement('div');
+  el.style.cursor = 'pointer';
+  el.setAttribute('role', 'button');
+  el.setAttribute('aria-label', store.name);
+  el.innerHTML = renderToStaticMarkup(
+    <span
+      style={{
+        display: 'grid',
+        placeItems: 'center',
+        width: store.active ? size + 8 : size,
+        height: store.active ? size + 8 : size,
+        borderRadius: '50%',
+        border: `3px solid ${color}`,
+        background: '#fff',
+        boxShadow: '0 3px 10px rgba(32,39,36,.35)',
+        overflow: 'hidden',
+      }}
+    >
+      <img src={image} alt="" style={{ width: '86%', height: '86%', objectFit: 'contain' }} />
+    </span>,
+  );
+  if (store.name) {
+    const label = document.createElement('span');
+    label.className = store.active ? 'store-label active' : 'store-label';
+    label.textContent = store.name;
+    el.appendChild(label);
+  }
+  return el;
+}
+
 // Marcador en forma de gota, con el color e icono del grupo de la tienda (o los de `store.marker`, p. ej. hoteles).
 function markerElement(store) {
+  if (store.marker?.image) return imageMarkerElement(store);
   const { Icon, color } = store.marker ?? GROUPS[store.group] ?? GROUPS.mercados;
   const el = document.createElement('div');
   el.style.cursor = 'pointer';
@@ -108,9 +142,10 @@ function markerElement(store) {
 
 // Con el mapa muy alejado los nombres se amontonarían: solo se muestran desde este zoom.
 const LABELS_MIN_ZOOM = 14.5;
+const ROUTE_ID = 'neira-route';
 
 /** `onMapReady` recibe la instancia del mapa (para los controles de zoom de la interfaz). */
-export function NeiraMap({ stores, onSelectStore, onMapReady, showBuildings = true, theme = 'day', onPick, pin, bearing = NEIRA_BEARING, className = '' }) {
+export function NeiraMap({ stores, onSelectStore, onMapReady, showBuildings = true, theme = 'day', onPick, pin, line, bearing = NEIRA_BEARING, className = '' }) {
   const containerRef = useRef(null);
   const mapRef = useRef(null);
   const markersRef = useRef([]);
@@ -194,7 +229,7 @@ export function NeiraMap({ stores, onSelectStore, onMapReady, showBuildings = tr
     const map = mapRef.current;
     if (!map) return undefined;
     markersRef.current = stores.map((store) => {
-      const marker = new Marker({ element: markerElement(store), anchor: 'bottom' })
+      const marker = new Marker({ element: markerElement(store), anchor: store.marker?.image ? 'center' : 'bottom' })
         .setLngLat([store.lng, store.lat])
         .addTo(map);
       marker.getElement().addEventListener('click', () => onSelectStore?.(store));
@@ -233,6 +268,26 @@ export function NeiraMap({ stores, onSelectStore, onMapReady, showBuildings = tr
       pinRef.current = null;
     }
   }, [pin]);
+
+  // `line`: una ruta como lista de [lng, lat] (p. ej. del motocarro al punto de recogida), punteada.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return undefined;
+    const data = { type: 'Feature', geometry: { type: 'LineString', coordinates: line ?? [] }, properties: {} };
+    const draw = () => {
+      if (map.getSource(ROUTE_ID)) map.getSource(ROUTE_ID).setData(data);
+      else {
+        map.addSource(ROUTE_ID, { type: 'geojson', data });
+        map.addLayer({ id: `${ROUTE_ID}-casing`, type: 'line', source: ROUTE_ID, paint: { 'line-color': '#ffffff', 'line-width': 7, 'line-opacity': 0.9 }, layout: { 'line-cap': 'round' } });
+        map.addLayer({ id: ROUTE_ID, type: 'line', source: ROUTE_ID, paint: { 'line-color': '#2f6fd6', 'line-width': 4, 'line-dasharray': [1.2, 1.4] }, layout: { 'line-cap': 'round' } });
+      }
+    };
+    // Si el estilo aún está cargando (teselas, relieve…), se dibuja apenas el mapa quede quieto: el evento 'load'
+    // ya pudo haber pasado y no se repite.
+    if (map.isStyleLoaded()) draw();
+    else map.once('idle', draw);
+    return () => map.off('idle', draw);
+  }, [line]);
 
   // `map-theme-night` le cambia el halo de los rótulos HTML (nombres, calles, tiendas) en map-ambience.css:
   // esas etiquetas son DOM aparte del estilo de MapLibre, así que `applyMapTheme` no las alcanza.

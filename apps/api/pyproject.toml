@@ -148,6 +148,15 @@ layers = [
 ]
 
 [[tool.importlinter.contracts]]
+name = "rides: capas"
+type = "layers"
+layers = [
+  "neirapp.modules.rides.presentation | neirapp.modules.rides.infrastructure",
+  "neirapp.modules.rides.application",
+  "neirapp.modules.rides.domain",
+]
+
+[[tool.importlinter.contracts]]
 name = "venues: capas"
 type = "layers"
 layers = [
@@ -210,6 +219,7 @@ source_modules = [
   "neirapp.modules.suppliers.domain",
   "neirapp.modules.lodging.domain",
   "neirapp.modules.venues.domain",
+  "neirapp.modules.rides.domain",
   "neirapp.shared.domain",
 ]
 forbidden_modules = ["fastapi", "sqlalchemy", "pydantic", "jwt", "argon2", "starlette"]
@@ -232,6 +242,7 @@ source_modules = [
   "neirapp.modules.suppliers.application",
   "neirapp.modules.lodging.application",
   "neirapp.modules.venues.application",
+  "neirapp.modules.rides.application",
   "neirapp.shared.application",
 ]
 forbidden_modules = ["fastapi", "sqlalchemy", "starlette"]
@@ -584,3 +595,51 @@ source_modules = [
   "neirapp.modules.lodging",
 ]
 forbidden_modules = ["neirapp.modules.venues"]
+
+# Transporte: domain/application no importan otros módulos (quién es conductor lo pregunta por
+# `AccessPort`, sobre identity; los avisos salen por `NotifierPort`) y nadie depende de él. Es
+# aparte de `dispatch` (domicilios): un motocarro lleva personas, no pedidos.
+[[tool.importlinter.contracts]]
+name = "el dominio/aplicación de rides no depende de otros módulos"
+type = "forbidden"
+source_modules = [
+  "neirapp.modules.rides.domain",
+  "neirapp.modules.rides.application",
+]
+forbidden_modules = [
+  "neirapp.modules.identity",
+  "neirapp.modules.stores",
+  "neirapp.modules.ordering",
+  "neirapp.modules.dispatch",
+  "neirapp.modules.wallet",
+  "neirapp.modules.reviews",
+  "neirapp.modules.incidents",
+  "neirapp.modules.leads",
+  "neirapp.modules.pricing",
+  "neirapp.modules.professionals",
+  "neirapp.modules.marketplace",
+  "neirapp.modules.suppliers",
+  "neirapp.modules.lodging",
+  "neirapp.modules.venues",
+]
+
+[[tool.importlinter.contracts]]
+name = "otros módulos no dependen de rides"
+type = "forbidden"
+source_modules = [
+  "neirapp.modules.identity",
+  "neirapp.modules.stores",
+  "neirapp.modules.ordering",
+  "neirapp.modules.dispatch",
+  "neirapp.modules.wallet",
+  "neirapp.modules.reviews",
+  "neirapp.modules.incidents",
+  "neirapp.modules.leads",
+  "neirapp.modules.pricing",
+  "neirapp.modules.professionals",
+  "neirapp.modules.marketplace",
+  "neirapp.modules.suppliers",
+  "neirapp.modules.lodging",
+  "neirapp.modules.venues",
+]
+forbidden_modules = ["neirapp.modules.rides"]
