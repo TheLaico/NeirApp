@@ -7,7 +7,9 @@ export const NEIRA_BOUNDS = [
   [-75.4985, 5.1865],
 ];
 
-export const NEIRA_ZOOM = 15;
+// Vista inicial (y la de "Centrar en Neira"): todo el casco urbano con algo de sus alrededores, sin llegar al
+// zoom más lejano permitido (13).
+export const NEIRA_ZOOM = 14.4;
 
 // Zoom al elegir una tienda: lo bastante cerca para ver las calles y los sitios de alrededor.
 export const STORE_ZOOM = 17;
