@@ -35,7 +35,7 @@ const TOP_CATS = [
   { id: 'profesionales', label: 'Profesionales', color: '#E8A92C', Icon: Briefcase },
   { id: 'transporte', label: 'Transporte', color: '#1D8A9C', Icon: Car },
   { id: 'hospedaje', label: 'Hospedaje', color: '#B6533C', Icon: HomeIcon },
-  { id: 'marquetneira', label: 'MarquetNeira', color: '#6A4C93', Icon: Store },
+  { id: 'marquetneira', label: 'MarketNeira', color: '#6A4C93', Icon: Store },
   { id: 'proveedores', label: 'Proveedores', color: '#3B6E8F', Icon: Package },
   { id: 'reservas', label: 'Reservas', color: '#C0587A', Icon: CalendarCheck },
 ];
