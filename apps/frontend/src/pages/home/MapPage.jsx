@@ -85,6 +85,23 @@ export default function MapPage({ user, onLogout }) {
   const [hintDx, setHintDx] = useState(0);
   const [hintReady, setHintReady] = useState(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches); // ya terminó de entrar: desde aquí manda el arrastre (sin animación de entrada, ya desde el inicio)
   const hintDrag = useRef(null);
+  // Se va solo a los 3 segundos, deslizándose hacia la izquierda igual que al descartarlo con el dedo (si en ese
+  // momento lo están arrastrando, espera a que lo suelten).
+  useEffect(() => {
+    if (!showHint) return undefined;
+    let removeTimer;
+    const timer = setInterval(() => {
+      if (hintDrag.current) return;
+      clearInterval(timer);
+      setHintReady(true);
+      setHintDx(-600);
+      removeTimer = setTimeout(() => setShowHint(false), 250);
+    }, 3000);
+    return () => {
+      clearInterval(timer);
+      clearTimeout(removeTimer);
+    };
+  }, [showHint]);
   const onHintDown = (e) => {
     if (e.target.closest('button')) return;
     hintDrag.current = { x: e.clientX, id: e.pointerId };
@@ -328,7 +345,7 @@ export default function MapPage({ user, onLogout }) {
               <div>
                 <strong>Explora las tiendas</strong>
                 <p>
-                  Toca un marcador para ver su catálogo
+                  Toca un marcador para ver su catálogo{' '}
                   <br />y hacer tu pedido.
                 </p>
               </div>
