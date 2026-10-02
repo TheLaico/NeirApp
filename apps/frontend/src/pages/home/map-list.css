@@ -56,9 +56,11 @@
 .ml-chev { flex: none; color: var(--muted); }
 
 @media (max-width: 1023px) {
-  /* En celular la lista de tiendas de abajo repetiría las mismas tiendas: en modo Lista se oculta (el
-     catálogo de una tienda abierta sí se sigue viendo). */
-  .app.view-list .panel:not(.store-detail) { display: none; }
+  /* En celular sobra la lista de tiendas de abajo ("Todas las tiendas"/"Tiendas recomendadas"): las tiendas ya
+     están en el mapa y en la vista Lista. Solo queda debajo el catálogo de la tienda que se abra, y la flecha
+     para bajar a él solo aparece entonces. */
+  .app.map-view .panel:not(.store-detail) { display: none; }
+  .app.map-view:not(.has-store) .map-scroll-down { display: none; }
   .view-toggle { width: 100%; }
   .map-stage { height: 62dvh; min-height: 380px; }
   .map-stage > .map-card { height: 100%; min-height: 0; }
