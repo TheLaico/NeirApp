@@ -49,6 +49,9 @@ export default function CartDrawer({ open, onClose }) {
                   <ul>
                     {group.lines.map(({ product, quantity }) => (
                       <li key={product.id} className="cart-line">
+                        <span className="cart-line-photo">
+                          {product.image_url ? <img src={product.image_url} alt="" loading="lazy" /> : <ShoppingBag size={22} aria-hidden="true" />}
+                        </span>
                         <div className="cart-line-info">
                           <strong>{product.name}</strong>
                           <span>{formatCop(product.price_cop)} c/u</span>

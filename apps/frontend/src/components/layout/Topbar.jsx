@@ -6,7 +6,7 @@ import { GROUPS } from '../../features/stores/categories.jsx';
 import { Leaf } from '../common/Leaf.jsx';
 import { useCart } from '../../features/cart/CartContext.jsx';
 import { canAccessAdmin, ROLES } from '../../config/roles.js';
-import { useNavigate } from '../../lib/router.jsx';
+import { useNavigate, usePath } from '../../lib/router.jsx';
 
 // Las categorías de la barra (sin "Más", que no filtraba nada) para la pasarela que se desliza sola.
 const TOP_GROUPS = Object.entries(GROUPS)
@@ -92,6 +92,7 @@ export default function Topbar({
 }) {
   const { totalItems } = useCart();
   const navigate = useNavigate();
+  const path = usePath();
 
   return (
     <>
@@ -125,9 +126,12 @@ export default function Topbar({
         )}
 
         <div className="top-right">
-          <button type="button" className="map-btn" aria-label="Ver el mapa de Neira" onClick={() => navigate('/mapa')}>
-            <MapIcon size={22} aria-hidden="true" />
-          </button>
+          {/* Acceso al mapa: no hace falta estando ya en él. */}
+          {path !== '/mapa' && (
+            <button type="button" className="map-btn" aria-label="Ver el mapa de Neira" onClick={() => navigate('/mapa')}>
+              <MapIcon size={22} aria-hidden="true" />
+            </button>
+          )}
           {!hideCart && (
             <button
               type="button"
