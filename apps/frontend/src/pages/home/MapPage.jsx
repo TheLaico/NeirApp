@@ -11,9 +11,53 @@ import { mapThemeFor } from '../../features/map/theme.js';
 import { useSettings } from '../../features/settings/SettingsContext.jsx';
 import { useStores } from '../../features/stores/api.js';
 import { usePersistentState } from '../../lib/usePersistentState.js';
+import MapSearchResults from './MapSearchResults.jsx';
 import StorePanel from './StorePanel.jsx';
 
 const normalize = (t) => t.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+
+// Ejemplos que se "escriben" solos en el buscador del mapa mientras está vacío.
+const SEARCH_EXAMPLES = ['pizza', 'pan de queso', 'una droguería', 'café', 'empanadas', 'hamburguesa', 'frutas'];
+
+/**
+ * Productos que coinciden con la búsqueda, agrupados por tienda (id de tienda -> productos). Se pide a la API con
+ * una pausa corta para no consultar en cada letra. Solo cuentan los que coinciden por su nombre o descripción (la
+ * API también devuelve los de una tienda cuyo nombre coincide, y esos no deben filtrar su catálogo).
+ */
+function useProductHits(query) {
+  const [state, setState] = useState({ q: '', byStore: new Map(), loading: false });
+  useEffect(() => {
+    const q = query.trim();
+    if (normalize(q).length < 2) {
+      setState({ q: '', byStore: new Map(), loading: false });
+      return undefined;
+    }
+    setState((s) => ({ ...s, loading: true }));
+    const controller = new AbortController();
+    const timer = setTimeout(() => {
+      fetch(`/api/v1/products/search?q=${encodeURIComponent(q)}`, { signal: controller.signal })
+        .then((res) => (res.ok ? res.json() : []))
+        .then((results) => {
+          const needle = normalize(q);
+          const byStore = new Map();
+          for (const { product } of results) {
+            if (!normalize(`${product.name} ${product.description ?? ''}`).includes(needle)) continue;
+            if (!byStore.has(product.store_id)) byStore.set(product.store_id, []);
+            byStore.get(product.store_id).push(product);
+          }
+          setState({ q, byStore, loading: false });
+        })
+        .catch((err) => {
+          if (err.name !== 'AbortError') setState({ q, byStore: new Map(), loading: false });
+        });
+    }, 250);
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [query]);
+  return state;
+}
 
 /**
  * Página "Mapa": mapa de Neira con el catálogo de tiendas y productos.
@@ -76,12 +120,37 @@ export default function MapPage({ user, onLogout }) {
     return () => clearInterval(id);
   }, [prefs.mapNightAuto]);
 
+  // Búsqueda: tiendas por nombre o categoría, y tiendas que venden lo buscado (p. ej. "pizza"). En el mapa y en la
+  // lista quedan solo esas; al abrir una que vende lo buscado, su catálogo llega filtrado.
+  const searchText = query.trim();
+  const hits = useProductHits(query);
+  const [resultsOpen, setResultsOpen] = useState(false);
+  const nameMatches = useMemo(() => {
+    const q = normalize(searchText);
+    return q ? stores.filter((s) => normalize(`${s.name} ${s.label}`).includes(q)) : [];
+  }, [stores, searchText]);
+  const productMatches = useMemo(
+    () => stores.filter((s) => hits.byStore.has(s.id)).map((s) => ({ store: s, products: hits.byStore.get(s.id) })),
+    [stores, hits],
+  );
   const visible = useMemo(() => {
-    const q = normalize(query.trim());
-    return stores.filter(
-      (s) => (!group || s.group === group) && (!q || normalize(`${s.name} ${s.label}`).includes(q)),
-    );
-  }, [stores, group, query]);
+    const names = new Set(nameMatches.map((s) => s.id));
+    return stores.filter((s) => (!group || s.group === group) && (!searchText || names.has(s.id) || hits.byStore.has(s.id)));
+  }, [stores, group, searchText, nameMatches, hits]);
+
+  // Los accesos directos se cierran al tocar fuera del buscador y vuelven al tocarlo de nuevo.
+  useEffect(() => {
+    const onDown = (e) => setResultsOpen(Boolean(e.target.closest?.('.search-wrap')));
+    const onKey = (e) => e.key === 'Escape' && setResultsOpen(false);
+    document.addEventListener('mousedown', onDown);
+    document.addEventListener('focusin', onDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDown);
+      document.removeEventListener('focusin', onDown);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, []);
 
   const onMapReady = useCallback((map) => {
     mapRef.current = map;
@@ -143,7 +212,26 @@ export default function MapPage({ user, onLogout }) {
       group={group}
       onGroup={setGroup}
       query={query}
-      onQuery={setQuery}
+      onQuery={(q) => {
+        setQuery(q);
+        setResultsOpen(true);
+      }}
+      searchExamples={SEARCH_EXAMPLES}
+      searchResults={
+        resultsOpen && normalize(searchText).length >= 1 ? (
+          <MapSearchResults
+            query={searchText}
+            byName={nameMatches}
+            byProduct={productMatches}
+            loading={hits.loading}
+            onOpen={(store) => {
+              setResultsOpen(false);
+              setGroup(null);
+              openStore(store);
+            }}
+          />
+        ) : null
+      }
       className={`map-view ${selected ? 'has-store' : ''}`.trim()}
       heroImage={fondoBuscador}
     >
@@ -300,6 +388,8 @@ export default function MapPage({ user, onLogout }) {
           setProduct(p);
         }}
         overlayOpen={Boolean(product) || infoOpen}
+        searchLabel={searchText}
+        detailQuery={selected && hits.byStore.has(selected.id) ? searchText : ''}
         onOpenInfo={() => {
           setProduct(null);
           setInfoOpen(true);

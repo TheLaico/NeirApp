@@ -87,9 +87,10 @@
   padding: 0 24px 0 8px;
 }
 
+.search-wrap { position: relative; z-index: 8; flex: 0 1 440px; min-width: 200px; display: flex; }
 .search {
-  flex: 0 1 440px;
-  min-width: 200px;
+  flex: 1;
+  min-width: 0;
   height: 52px;
   display: flex;
   align-items: center;
@@ -108,18 +109,13 @@
 .search input::placeholder { color: var(--muted); }
 
 .cats { display: flex; gap: 12px; }
-.cat {
-  display: flex; flex-direction: column; align-items: center; gap: 6px;
-  min-width: 64px; padding: 2px 6px; border: 0; background: none;
-  font: inherit; font-size: 14px; color: var(--ink); cursor: pointer; border-radius: 12px;
-}
-.cat-dot {
-  width: 50px; height: 50px; border-radius: 50%; display: grid; place-items: center;
-  box-shadow: 0 3px 8px rgba(35, 52, 43, .18); transition: transform .15s, box-shadow .15s;
-}
-.cat:hover .cat-dot { transform: translateY(-2px); }
-.cat.active .cat-dot { box-shadow: 0 0 0 3px #f6f5e7, 0 0 0 5px var(--g); }
-.cat.active { font-weight: 700; }
+/* Pasarela de categorías (CatCarousel): ocupa el espacio libre entre el buscador y los íconos de la derecha. */
+.topbar .cats { flex: 1 1 0; min-width: 0; }
+.topbar .feed-cat-track { gap: 14px; padding: 4px 0; }
+.topbar .feed-cat { width: 74px; font-size: 13px; }
+.topbar .feed-cat-dot { width: 48px; height: 48px; }
+/* En el mapa el buscador cede un poco de ancho para que la pasarela muestre más categorías a la vez. */
+.app.map-view .search-wrap { flex-basis: 360px; }
 
 .top-right { display: flex; align-items: center; gap: 8px; margin-left: auto; margin-right: 96px; z-index: 6; }
 .user-menu { position: relative; }
@@ -398,7 +394,6 @@
   .app.has-store { --panel-w: 460px; }
   .top-right { margin-right: 70px; }
   .user-text { display: none; }
-  .cats { gap: 4px; }
 }
 
 @media (max-width: 1023px) {
@@ -433,9 +428,12 @@
   .user-btn { padding-right: 10px; background: rgba(240, 238, 220, .96); border: 1px solid #d9dfc9; box-shadow: 0 2px 8px rgba(35, 52, 43, .1); }
   .user-btn:hover { background: #e8ecd6; }
   .top-leaves { width: 90px; height: 70px; }
-  .search { order: 2; flex: 1 1 100%; }
-  .cats { order: 3; flex: 1 1 100%; overflow-x: auto; justify-content: space-between; padding-bottom: 4px; }
-  .cat { flex: 1 0 64px; }
+  .search-wrap { order: 2; flex: 1 1 100%; }
+  /* La pasarela de categorías va de borde a borde de la pantalla (anula el relleno de .topbar). */
+  .topbar .cats { order: 3; flex: 1 1 100%; margin: 0 -16px; }
+  /* Mapa: el buscador baja hasta quedar justo debajo de las hojas del fondo, sin taparlas. */
+  .app.map-view.has-hero { --hero-h: 196px; }
+  .app.map-view .search-wrap { margin-top: 42px; }
 
   .map-cell { padding: 0 12px; }
   .map-card { height: 62dvh; min-height: 380px; border-radius: 20px; }

@@ -6,9 +6,10 @@ import ProductCard from '../../components/products/ProductCard.jsx';
 
 const normalize = (t) => t.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 
-export default function StoreDetail({ store, onBack, selectedProductId, onOpenProduct, overlayOpen, onOpenInfo }) {
+export default function StoreDetail({ store, onBack, selectedProductId, onOpenProduct, overlayOpen, onOpenInfo, initialQuery = '' }) {
   const { products, status } = useStoreProducts(store.id);
-  const [query, setQuery] = useState('');
+  // Llega con lo que se buscó en el mapa (p. ej. "pizza"): se ve solo eso, y se puede borrar para ver todo.
+  const [query, setQuery] = useState(initialQuery);
 
   // Escape vuelve a la lista de tiendas.
   useEffect(() => {

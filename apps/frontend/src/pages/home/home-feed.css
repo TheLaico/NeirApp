@@ -56,28 +56,10 @@
   50% { transform: scale(1.15); }
 }
 
-/* Fila de categorías: la pasarela que se desliza sola (`.feed-cat-track`, ver HomePage `CatCarousel`).
+/* Fila de categorías: la pasarela que se desliza sola (`.feed-cat-track`, ver components/common/CatCarousel).
    Los márgenes negativos anulan el relleno lateral de `.feed-hero`, para que los íconos entren y salgan
    por el borde de la pantalla y no por un borde interno de la app. */
 .feed-cats-wrap { display: flex; align-items: flex-start; gap: 14px; margin: 18px -28px 0; }
-.feed-cat-track {
-  flex: 1; min-width: 0; display: flex; gap: clamp(10px, 3vw, 26px); overflow-x: auto; overflow-y: hidden;
-  cursor: grab; -webkit-user-select: none; user-select: none; touch-action: pan-y;
-  scrollbar-width: none; -ms-overflow-style: none;
-}
-.feed-cat-track::-webkit-scrollbar { display: none; }
-.feed-cat-track:active { cursor: grabbing; }
-.feed-cat {
-  display: flex; flex-direction: column; align-items: center; gap: 6px; width: 78px; padding: 2px;
-  border: 0; background: none; font: inherit; font-size: 12.5px; font-weight: 600; color: var(--ink);
-  text-align: center; cursor: pointer;
-}
-.feed-cat-track .feed-cat { flex: none; }
-.feed-cat-dot {
-  width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center;
-  box-shadow: 0 4px 10px rgba(35, 52, 43, 0.2); transition: transform 0.15s, box-shadow 0.15s;
-}
-.feed-cat:hover .feed-cat-dot { transform: translateY(-2px); }
 
 /* ---------- Ventana "todas las categorías" (ver `CategoriesModal` en categories.jsx) ---------- */
 .cats-backdrop { position: fixed; inset: 0; z-index: 80; display: grid; place-items: center; padding: 16px; background: rgba(20, 40, 30, .55); }

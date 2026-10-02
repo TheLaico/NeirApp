@@ -57,13 +57,19 @@ export default function StorePanel({
   onOpenProduct,
   overlayOpen,
   onOpenInfo,
+  // Búsqueda del mapa: con algo escrito se listan todas las tiendas que coinciden (no solo las recomendadas), y al
+  // abrir una tienda que vende lo buscado su catálogo llega filtrado por `detailQuery`.
+  searchLabel = '',
+  detailQuery = '',
 }) {
   const [showAll, setShowAll] = useState(false);
 
   if (selected) {
     return (
       <StoreDetail
+        key={`${selected.id}|${detailQuery}`}
         store={selected}
+        initialQuery={detailQuery}
         onBack={onBack}
         selectedProductId={selectedProductId}
         onOpenProduct={onOpenProduct}
@@ -76,13 +82,14 @@ export default function StorePanel({
   // Por defecto se ven las tiendas recomendadas, en el orden que decide el administrador. "Ver todas" muestra el resto.
   const recommended = stores.filter((s) => s.recommended_position != null).sort((a, b) => a.recommended_position - b.recommended_position);
   const hasRecommended = recommended.length > 0;
-  const list = showAll || !hasRecommended ? stores : recommended;
+  const list = showAll || !hasRecommended || searchLabel ? stores : recommended;
+  const title = searchLabel ? `Resultados de “${searchLabel}”` : showAll || !hasRecommended ? 'Todas las tiendas' : 'Tiendas recomendadas';
 
   return (
-    <aside className="panel has-banner" aria-label={showAll || !hasRecommended ? 'Todas las tiendas' : 'Tiendas recomendadas'}>
+    <aside className="panel has-banner" aria-label={title}>
       <div className="panel-head">
-        <h2>{showAll || !hasRecommended ? 'Todas las tiendas' : 'Tiendas recomendadas'}</h2>
-        {hasRecommended && (
+        <h2>{title}</h2>
+        {hasRecommended && !searchLabel && (
           <button type="button" className="see-all" onClick={() => setShowAll((v) => !v)} aria-pressed={showAll}>
             {showAll ? 'Ver recomendadas' : 'Ver todas'} <ArrowRight size={16} aria-hidden="true" />
           </button>
@@ -97,7 +104,7 @@ export default function StorePanel({
           </p>
         )}
         {status === 'ok' && stores.length === 0 && (
-          <p className="panel-empty">Todavía no hay tiendas para mostrar.</p>
+          <p className="panel-empty">{searchLabel ? `Ninguna tienda tiene “${searchLabel}”.` : 'Todavía no hay tiendas para mostrar.'}</p>
         )}
         {list.map((s) => (
           <StoreCard key={s.id} store={s} onSelect={onSelect} />

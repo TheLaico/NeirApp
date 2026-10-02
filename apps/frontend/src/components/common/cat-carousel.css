@@ -1,0 +1,21 @@
+/* Pasarela de categorías (ver CatCarousel.jsx): se desliza sola y se puede arrastrar. */
+.feed-cat-track {
+  flex: 1; min-width: 0; display: flex; gap: clamp(10px, 3vw, 26px); overflow-x: auto; overflow-y: hidden;
+  cursor: grab; -webkit-user-select: none; user-select: none; touch-action: pan-y;
+  scrollbar-width: none; -ms-overflow-style: none;
+}
+.feed-cat-track::-webkit-scrollbar { display: none; }
+.feed-cat-track:active { cursor: grabbing; }
+.feed-cat {
+  display: flex; flex-direction: column; align-items: center; gap: 6px; width: 78px; padding: 2px;
+  border: 0; background: none; font: inherit; font-size: 12.5px; font-weight: 600; color: var(--ink);
+  text-align: center; cursor: pointer;
+}
+.feed-cat-track .feed-cat { flex: none; }
+.feed-cat-dot {
+  width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center;
+  box-shadow: 0 4px 10px rgba(35, 52, 43, 0.2); transition: transform 0.15s, box-shadow 0.15s;
+}
+.feed-cat:hover .feed-cat-dot { transform: translateY(-2px); }
+.feed-cat.active { font-weight: 800; }
+.feed-cat.active .feed-cat-dot { box-shadow: 0 0 0 3px #f6f5e7, 0 0 0 5px var(--g); }

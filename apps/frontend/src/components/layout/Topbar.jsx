@@ -1,11 +1,18 @@
 import { ChevronDown, LogOut, Map as MapIcon, Search, ShieldCheck, ShoppingCart, UserRound } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import CatCarousel from '../common/CatCarousel.jsx';
 import logo from '../../assets/logo-neirapp.png';
 import { GROUPS } from '../../features/stores/categories.jsx';
 import { Leaf } from '../common/Leaf.jsx';
 import { useCart } from '../../features/cart/CartContext.jsx';
 import { canAccessAdmin, ROLES } from '../../config/roles.js';
 import { useNavigate } from '../../lib/router.jsx';
+import { useTypingPlaceholder } from '../../lib/useTypingPlaceholder.js';
+
+// Las categorías de la barra (sin "Más", que no filtraba nada) para la pasarela que se desliza sola.
+const TOP_GROUPS = Object.entries(GROUPS)
+  .filter(([id]) => id !== 'mas')
+  .map(([id, g]) => ({ id, ...g }));
 
 function UserMenu({ user, onLogout }) {
   const [open, setOpen] = useState(false);
@@ -74,9 +81,26 @@ function UserMenu({ user, onLogout }) {
   );
 }
 
-export default function Topbar({ user, onLogout, group, onGroup, query, onQuery, onOpenCart, hideCart }) {
+export default function Topbar({
+  user,
+  onLogout,
+  group,
+  onGroup,
+  query,
+  onQuery,
+  onOpenCart,
+  hideCart,
+  // Opcionales (los usa el mapa): ejemplos que se "escriben" solos en el buscador vacío, y lo que se muestra
+  // justo debajo de él mientras se busca (accesos directos a tiendas y productos).
+  searchExamples,
+  searchResults,
+}) {
   const { totalItems } = useCart();
   const navigate = useNavigate();
+  const [focused, setFocused] = useState(false);
+  const fallback = 'Busca productos, tiendas o categorías...';
+  const typed = useTypingPlaceholder(searchExamples, { prefix: 'Busca ', active: !query && !focused, fallback });
+  const placeholder = searchExamples?.length && !query && !focused && typed !== fallback ? `${typed}|` : fallback;
 
   return (
     <>
@@ -86,37 +110,29 @@ export default function Topbar({ user, onLogout, group, onGroup, query, onQuery,
 
       <header className="topbar">
         {onQuery && (
-          <label className="search">
-            <Search size={22} aria-hidden="true" />
-            <input
-              type="search"
-              placeholder="Busca productos, tiendas o categorías..."
-              aria-label="Buscar"
-              value={query}
-              onChange={(e) => onQuery(e.target.value)}
-            />
-          </label>
+          <div className="search-wrap">
+            <label className="search">
+              <Search size={22} aria-hidden="true" />
+              <input
+                type="search"
+                placeholder={placeholder}
+                aria-label="Buscar productos, tiendas o categorías"
+                value={query}
+                onChange={(e) => onQuery(e.target.value)}
+                onFocus={() => setFocused(true)}
+                onBlur={() => setFocused(false)}
+              />
+            </label>
+            {searchResults}
+          </div>
         )}
 
         {/* Categorías generales de tiendas: solo en páginas que además filtran por ellas (ver `onGroup`).
             Algunas páginas quieren el buscador sin esto (por ejemplo Profesionales, que tiene las suyas
             propias más abajo en el cuerpo de la página). */}
         {onGroup && (
-          <div className="cats" role="group" aria-label="Categorías">
-            {Object.entries(GROUPS).map(([id, { label, color, Icon }]) => (
-              <button
-                key={id}
-                type="button"
-                className={`cat${group === id ? ' active' : ''}`}
-                aria-pressed={group === id}
-                onClick={() => id !== 'mas' && onGroup(group === id ? null : id)}
-              >
-                <span className="cat-dot" style={{ background: color }}>
-                  <Icon size={24} color="#fff" aria-hidden="true" />
-                </span>
-                {label}
-              </button>
-            ))}
+          <div className="cats">
+            <CatCarousel cats={TOP_GROUPS} activeId={group ?? null} onSelect={(id) => onGroup(group === id ? null : id)} />
           </div>
         )}
 

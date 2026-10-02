@@ -28,6 +28,9 @@ export default function AppShell({
   // Oculta el botón del carrito del navbar (por ejemplo, Profesionales: no vende productos, así que no
   // tiene sentido tenerlo ahí).
   hideCart,
+  // Ver Topbar: ejemplos animados del buscador y resultados debajo de él (los usa el mapa).
+  searchExamples,
+  searchResults,
   children,
 }) {
   const [cartOpen, setCartOpen] = useState(false);
@@ -53,6 +56,8 @@ export default function AppShell({
         onQuery={onQuery}
         onOpenCart={openCart}
         hideCart={hideCart}
+        searchExamples={searchExamples}
+        searchResults={searchResults}
       />
       <Sidebar onOpenCart={openCart} />
 

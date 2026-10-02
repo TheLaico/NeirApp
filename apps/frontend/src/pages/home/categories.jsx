@@ -1,4 +1,5 @@
 import { Bike, Briefcase, CalendarCheck, Car, Home as HomeIcon, Package, Store, X } from 'lucide-react';
+import '../../components/common/cat-carousel.css';
 import './home-feed.css';
 
 // Categorías de NeirAPP: la pasarela del inicio y la ventana "Categorías" de la página "Más" (celular).
