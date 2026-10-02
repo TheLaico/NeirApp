@@ -1,4 +1,5 @@
 import { Heart, Plus } from 'lucide-react';
+import { useRef } from 'react';
 import { useCart } from '../../features/cart/CartContext.jsx';
 import { useFavorites } from '../../features/favorites/FavoritesContext.jsx';
 import { flyToCart } from '../../lib/flyToCart.js';
@@ -15,6 +16,7 @@ export default function ProductCard({ product, store, selected = false, onOpen }
   const closed = store.is_open === false;
   const quantity = quantityOf(store.id, product.id);
   const favorite = isFavorite(product.id);
+  const artRef = useRef(null);
 
   return (
     <article
@@ -23,7 +25,7 @@ export default function ProductCard({ product, store, selected = false, onOpen }
     >
       <button type="button" className="product-open" aria-label={`Ver ${product.name}`} onClick={() => onOpen(product)} />
 
-      <div className="product-art" style={{ '--tint': store.color }}>
+      <div className="product-art" ref={artRef} style={{ '--tint': store.color }}>
         {product.image_url ? (
           <img src={product.image_url} alt="" loading="lazy" />
         ) : (
@@ -49,9 +51,9 @@ export default function ProductCard({ product, store, selected = false, onOpen }
                 type="button"
                 className="add-btn"
                 aria-label={`Agregar ${product.name} al carrito`}
-                onClick={(e) => {
+                onClick={() => {
                   add(store, product);
-                  flyToCart(e.currentTarget.closest('.product-art'), product.image_url);
+                  flyToCart(artRef.current, product.image_url);
                 }}
               >
                 <Plus size={20} aria-hidden="true" />
@@ -60,7 +62,11 @@ export default function ProductCard({ product, store, selected = false, onOpen }
               <QuantityStepper
                 quantity={quantity}
                 label={product.name}
-                onChange={(next) => setQuantity(store.id, product.id, next)}
+                onChange={(next) => {
+                  // Con "+" también vuela una copia al carrito (con "−" no).
+                  if (next > quantity) flyToCart(artRef.current, product.image_url);
+                  setQuantity(store.id, product.id, next);
+                }}
               />
             )}
           </div>
