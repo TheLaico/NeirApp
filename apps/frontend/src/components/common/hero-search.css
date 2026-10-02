@@ -1,0 +1,54 @@
+/* Buscador grande del inicio y del mapa (HeroSearch.jsx). */
+
+/* ---------- Buscador ---------- */
+/* La imagen (fondo-buscador.png) ya no va aquí: vive en `.app.has-hero::before` (ver app-shell.css), para
+   que se vea detrás del encabezado (logo + íconos) y no solo detrás de esta sección. La imagen trae su
+   propio espacio en blanco en la base, pensado para el buscador; `padding-top` deja esa franja libre para
+   que el buscador caiga justo ahí en vez de sobre las montañas. */
+.feed-hero {
+  position: relative;
+  padding: 26px 28px 18px;
+}
+
+.feed-search-box { position: relative; z-index: 8; max-width: 640px; margin: 0 auto; }
+.feed-search {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 56px;
+  padding: 0 20px;
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: 0 8px 22px rgba(35, 52, 43, 0.14);
+  color: var(--g);
+}
+.feed-search:focus-within { box-shadow: 0 0 0 3px rgba(15, 82, 56, 0.18), 0 8px 22px rgba(35, 52, 43, 0.14); }
+.feed-search input {
+  flex: 1; min-width: 0; border: 0; outline: 0; background: transparent;
+  font: inherit; font-size: 16px; color: var(--ink);
+}
+.feed-search input::placeholder { color: var(--muted); }
+.feed-mic {
+  flex: none; width: 34px; height: 34px; display: grid; place-items: center; border: 0; border-radius: 50%;
+  background: none; color: var(--muted); cursor: pointer; transition: background .15s, color .15s;
+}
+.feed-mic:hover:not(:disabled) { background: rgba(15, 82, 56, .1); color: var(--g); }
+.feed-mic:disabled { cursor: not-allowed; }
+/* Micrófono escuchando: parpadea en rojo mientras espera lo que digas. */
+.feed-mic.listening { color: #c0392b; background: rgba(192, 57, 43, .12); animation: feed-mic-pulse 1s ease-in-out infinite; }
+@keyframes feed-mic-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+}
+
+/* Fila de categorías: la pasarela que se desliza sola (`.feed-cat-track`, ver CatCarousel.jsx).
+   Los márgenes negativos anulan el relleno lateral de `.feed-hero`, para que los íconos entren y salgan
+   por el borde de la pantalla y no por un borde interno de la app. */
+.feed-cats-wrap { display: flex; align-items: flex-start; gap: 14px; margin: 18px -28px 0; }
+
+/* ---------- Tablet y móvil ---------- */
+@media (max-width: 1023px) {
+  .feed-hero { padding: 24px 16px 16px; }
+  .feed-cats-wrap { margin-left: -16px; margin-right: -16px; }
+  .feed-cat-track { gap: 14px; }
+}

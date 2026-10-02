@@ -44,13 +44,14 @@
   z-index: 0;
   pointer-events: none;
 }
-/* En el mapa, solo en pantallas grandes: el navbar ya lleva buscador y categorías propias, y esa imagen
-   de fondo competía con ellos. En vez de seguir ajustando el recorte, se quita del todo aquí; en
-   celular/tableta se queda igual que en el inicio. (El logo ya no se centra en esta página —MapPage ya
-   no pasa `centerLogo`—, así que se queda en su posición de siempre, columna propia arriba de la barra
-   lateral, igual que en el resto de páginas como "Mis pedidos".) */
+/* Mapa: el mismo encabezado que el inicio (logo centrado, fondo de montañas y el buscador grande con las
+   categorías, ver HeroSearch). En computador el buscador ocupa su propia fila entre el encabezado y el
+   mapa/panel; la barra lateral se estira por las dos. En celular todo va apilado, igual que en el inicio. */
+.map-hero { grid-column: 2 / -1; grid-row: 2; min-width: 0; }
 @media (min-width: 1024px) {
-  .app.map-view.has-hero::before { display: none; }
+  .app.map-view { grid-template-rows: 127px auto minmax(0, 1fr); }
+  .app.map-view .sidebar { grid-row: 2 / 4; }
+  .app.map-view .map-cell, .app.map-view .panel { grid-row: 3; }
 }
 
 /* ---------- Encabezado ---------- */
@@ -114,8 +115,6 @@
 .topbar .feed-cat-track { gap: 14px; padding: 4px 0; }
 .topbar .feed-cat { width: 74px; font-size: 13px; }
 .topbar .feed-cat-dot { width: 48px; height: 48px; }
-/* En el mapa el buscador cede un poco de ancho para que la pasarela muestre más categorías a la vez. */
-.app.map-view .search-wrap { flex-basis: 360px; }
 
 .top-right { display: flex; align-items: center; gap: 8px; margin-left: auto; margin-right: 96px; z-index: 6; }
 .user-menu { position: relative; }
@@ -431,9 +430,6 @@
   .search-wrap { order: 2; flex: 1 1 100%; }
   /* La pasarela de categorías va de borde a borde de la pantalla (anula el relleno de .topbar). */
   .topbar .cats { order: 3; flex: 1 1 100%; margin: 0 -16px; }
-  /* Mapa: el buscador baja hasta quedar justo debajo de las hojas del fondo, sin taparlas. */
-  .app.map-view.has-hero { --hero-h: 196px; }
-  .app.map-view .search-wrap { margin-top: 42px; }
 
   .map-cell { padding: 0 12px; }
   .map-card { height: 62dvh; min-height: 380px; border-radius: 20px; }

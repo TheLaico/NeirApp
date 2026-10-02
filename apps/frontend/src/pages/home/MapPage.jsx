@@ -1,5 +1,6 @@
 import { Building2, ChevronDown, LocateFixed, Menu, Minus, Mountain, Plus, X } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import HeroSearch from '../../components/common/HeroSearch.jsx';
 import AppShell from '../../components/layout/AppShell.jsx';
 import ProductScreen from '../../components/products/ProductScreen.jsx';
 import StoreScreen from '../../components/products/StoreScreen.jsx';
@@ -10,11 +11,17 @@ import { NEIRA_BEARING, NEIRA_CENTER, NEIRA_ZOOM, RELIEF_BEARING, RELIEF_PITCH, 
 import { mapThemeFor } from '../../features/map/theme.js';
 import { useSettings } from '../../features/settings/SettingsContext.jsx';
 import { useStores } from '../../features/stores/api.js';
+import { GROUPS } from '../../features/stores/categories.jsx';
 import { usePersistentState } from '../../lib/usePersistentState.js';
 import MapSearchResults from './MapSearchResults.jsx';
 import StorePanel from './StorePanel.jsx';
 
 const normalize = (t) => t.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+
+// Categorías del mapa para la pasarela del buscador (sin "Más", que no filtraba nada).
+const MAP_GROUPS = Object.entries(GROUPS)
+  .filter(([id]) => id !== 'mas')
+  .map(([id, g]) => ({ id, ...g }));
 
 // Ejemplos que se "escriben" solos en el buscador del mapa mientras está vacío.
 const SEARCH_EXAMPLES = ['pizza', 'pan de queso', 'una droguería', 'café', 'empanadas', 'hamburguesa', 'frutas'];
@@ -138,9 +145,43 @@ export default function MapPage({ user, onLogout }) {
     return stores.filter((s) => (!group || s.group === group) && (!searchText || names.has(s.id) || hits.byStore.has(s.id)));
   }, [stores, group, searchText, nameMatches, hits]);
 
+  // Con una búsqueda, el mapa se acerca a las tiendas encontradas (a una sola, la centra); al borrar la búsqueda
+  // vuelve a la vista de Neira. Espera a que lleguen los productos para no moverse dos veces, y no se mueve si ya
+  // hay una tienda abierta (esa ya la centró al abrirla).
+  const foundKey = searchText && !hits.loading ? visible.map((s) => s.id).sort().join(',') : '';
+  const searchedBefore = useRef(false);
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || selectedId) return;
+    if (!searchText) {
+      if (searchedBefore.current) {
+        searchedBefore.current = false;
+        map.easeTo({ center: NEIRA_CENTER, zoom: NEIRA_ZOOM, duration: 900 });
+      }
+      return;
+    }
+    if (!foundKey) return;
+    searchedBefore.current = true;
+    const found = visible;
+    if (found.length === 1) {
+      map.easeTo({ center: [found[0].lng, found[0].lat], zoom: Math.max(map.getZoom(), STORE_ZOOM), duration: 900 });
+      return;
+    }
+    const lngs = found.map((s) => s.lng);
+    const lats = found.map((s) => s.lat);
+    map.fitBounds(
+      [
+        [Math.min(...lngs), Math.min(...lats)],
+        [Math.max(...lngs), Math.max(...lats)],
+      ],
+      { padding: 90, maxZoom: STORE_ZOOM, duration: 900, bearing: map.getBearing(), pitch: map.getPitch() },
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [foundKey, searchText === '']);
+
   // Los accesos directos se cierran al tocar fuera del buscador y vuelven al tocarlo de nuevo.
   useEffect(() => {
-    const onDown = (e) => setResultsOpen(Boolean(e.target.closest?.('.search-wrap')));
+    const onDown = (e) => setResultsOpen(Boolean(e.target.closest?.('.feed-search-box')));
     const onKey = (e) => e.key === 'Escape' && setResultsOpen(false);
     document.addEventListener('mousedown', onDown);
     document.addEventListener('focusin', onDown);
@@ -209,32 +250,41 @@ export default function MapPage({ user, onLogout }) {
     <AppShell
       user={user}
       onLogout={onLogout}
-      group={group}
-      onGroup={setGroup}
-      query={query}
-      onQuery={(q) => {
-        setQuery(q);
-        setResultsOpen(true);
-      }}
-      searchExamples={SEARCH_EXAMPLES}
-      searchResults={
-        resultsOpen && normalize(searchText).length >= 1 ? (
-          <MapSearchResults
-            query={searchText}
-            byName={nameMatches}
-            byProduct={productMatches}
-            loading={hits.loading}
-            onOpen={(store) => {
-              setResultsOpen(false);
-              setGroup(null);
-              openStore(store);
-            }}
-          />
-        ) : null
-      }
+      centerLogo
       className={`map-view ${selected ? 'has-store' : ''}`.trim()}
       heroImage={fondoBuscador}
     >
+      {/* El mismo buscador del inicio (píldora con micrófono, sobre el fondo de montañas) y debajo las categorías;
+          los accesos directos flotan justo debajo de la píldora. */}
+      <HeroSearch
+        className="map-hero"
+        value={query}
+        onChange={(q) => {
+          setQuery(q);
+          setResultsOpen(true);
+        }}
+        ariaLabel="Buscar productos, tiendas o categorías"
+        examples={SEARCH_EXAMPLES}
+        results={
+          resultsOpen && searchText ? (
+            <MapSearchResults
+              query={searchText}
+              byName={nameMatches}
+              byProduct={productMatches}
+              loading={hits.loading}
+              onOpen={(store) => {
+                setResultsOpen(false);
+                setGroup(null);
+                openStore(store);
+              }}
+            />
+          ) : null
+        }
+        cats={MAP_GROUPS}
+        activeCat={group}
+        onSelectCat={(id) => setGroup(group === id ? null : id)}
+      />
+
       <main className="map-cell">
         <section className="map-card" aria-label="Mapa de Neira">
           <NeiraMap stores={visible} onSelectStore={openStore} onMapReady={onMapReady} showBuildings={showBuildings} theme={theme} className="map" />

@@ -14,53 +14,6 @@
   .home-feed { height: 100%; overflow-y: auto; }
 }
 
-/* ---------- Buscador ---------- */
-/* La imagen (fondo-buscador.png) ya no va aquí: vive en `.app.has-hero::before` (ver app-shell.css), para
-   que se vea detrás del encabezado (logo + íconos) y no solo detrás de esta sección. La imagen trae su
-   propio espacio en blanco en la base, pensado para el buscador; `padding-top` deja esa franja libre para
-   que el buscador caiga justo ahí en vez de sobre las montañas. */
-.feed-hero {
-  position: relative;
-  padding: 26px 28px 18px;
-}
-
-.feed-search {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  height: 56px;
-  max-width: 640px;
-  margin: 0 auto;
-  padding: 0 20px;
-  border-radius: 999px;
-  background: #fff;
-  box-shadow: 0 8px 22px rgba(35, 52, 43, 0.14);
-  color: var(--g);
-}
-.feed-search:focus-within { box-shadow: 0 0 0 3px rgba(15, 82, 56, 0.18), 0 8px 22px rgba(35, 52, 43, 0.14); }
-.feed-search input {
-  flex: 1; min-width: 0; border: 0; outline: 0; background: transparent;
-  font: inherit; font-size: 16px; color: var(--ink);
-}
-.feed-search input::placeholder { color: var(--muted); }
-.feed-mic {
-  flex: none; width: 34px; height: 34px; display: grid; place-items: center; border: 0; border-radius: 50%;
-  background: none; color: var(--muted); cursor: pointer; transition: background .15s, color .15s;
-}
-.feed-mic:hover:not(:disabled) { background: rgba(15, 82, 56, .1); color: var(--g); }
-.feed-mic:disabled { cursor: not-allowed; }
-/* Micrófono escuchando: parpadea en rojo mientras espera lo que digas. */
-.feed-mic.listening { color: #c0392b; background: rgba(192, 57, 43, .12); animation: feed-mic-pulse 1s ease-in-out infinite; }
-@keyframes feed-mic-pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.15); }
-}
-
-/* Fila de categorías: la pasarela que se desliza sola (`.feed-cat-track`, ver components/common/CatCarousel).
-   Los márgenes negativos anulan el relleno lateral de `.feed-hero`, para que los íconos entren y salgan
-   por el borde de la pantalla y no por un borde interno de la app. */
-.feed-cats-wrap { display: flex; align-items: flex-start; gap: 14px; margin: 18px -28px 0; }
-
 /* ---------- Ventana "todas las categorías" (ver `CategoriesModal` en categories.jsx) ---------- */
 .cats-backdrop { position: fixed; inset: 0; z-index: 80; display: grid; place-items: center; padding: 16px; background: rgba(20, 40, 30, .55); }
 .cats-modal { position: relative; width: min(460px, 100%); padding: 28px 24px 24px; border-radius: 22px; background: #fbfaef; box-shadow: 0 24px 60px rgba(0, 0, 0, .28); text-align: center; }
@@ -197,11 +150,8 @@
 /* ---------- Tablet y móvil ---------- */
 @media (max-width: 1023px) {
   .home-feed { margin: 0; }
-  .feed-hero { padding: 24px 16px 16px; }
   .feed-map-card, .feed-support, .feed-section { margin-left: 12px; margin-right: 12px; }
   .feed-map-card { width: calc(100% - 24px); }
-  .feed-cats-wrap { margin-left: -16px; margin-right: -16px; }
-  .feed-cat-track { gap: 14px; }
 }
 
 @media (max-width: 480px) {

@@ -7,15 +7,13 @@ import {
   ChevronRight,
   Heart,
   Home as HomeIcon,
-  Mic,
   Package,
-  Search,
   Star,
   Store,
 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import PageShell from '../../components/layout/PageShell.jsx';
-import CatCarousel from '../../components/common/CatCarousel.jsx';
+import HeroSearch from '../../components/common/HeroSearch.jsx';
 import { Leaf } from '../../components/common/Leaf.jsx';
 import cardVerMapa from '../../assets/card-ver-mapa.png';
 import fondoBuscador from '../../assets/fondo-buscador.png';
@@ -154,14 +152,10 @@ function BrandCard({ store, onOpen }) {
  * Página de inicio: un resumen tipo "todo en un solo lugar" (buscador, categorías, acceso al mapa y
  * las tiendas de Neira), en vez del mapa de una vez. El mapa completo ahora vive en "/mapa".
  */
-// ¿El navegador sabe transcribir voz? (Chrome/Edge sí; Firefox y Safari todavía no lo traen).
-const SpeechRecognition = typeof window !== 'undefined' ? window.SpeechRecognition || window.webkitSpeechRecognition : null;
 
 export default function HomePage({ user, onLogout }) {
   const { stores, status } = useStores();
   const [query, setQuery] = useState('');
-  const [listening, setListening] = useState(false);
-  const recognitionRef = useRef(null);
   const resultsRef = useRef(null);
   const navigate = useNavigate();
 
@@ -182,26 +176,6 @@ export default function HomePage({ user, onLogout }) {
     if (filtering) resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }, [filtering]);
 
-  useEffect(() => () => recognitionRef.current?.stop(), []);
-
-  const toggleVoiceSearch = () => {
-    if (!SpeechRecognition) return;
-    if (listening) {
-      recognitionRef.current?.stop();
-      return;
-    }
-    const recognition = new SpeechRecognition();
-    recognition.lang = 'es-CO';
-    recognition.interimResults = false;
-    recognition.maxAlternatives = 1;
-    recognition.onresult = (e) => setQuery(e.results[0][0].transcript);
-    recognition.onend = () => setListening(false);
-    recognition.onerror = () => setListening(false);
-    recognitionRef.current = recognition;
-    recognition.start();
-    setListening(true);
-  };
-
   const openStore = (store) => navigate(`/mapa?tienda=${store.id}`);
   const openCategory = (id) => {
     const to = categoryPath(id);
@@ -211,33 +185,7 @@ export default function HomePage({ user, onLogout }) {
   return (
     <PageShell user={user} onLogout={onLogout} flush heroImage={fondoBuscador} centerLogo>
       <div className="home-feed">
-        <section className="feed-hero">
-          <label className="feed-search">
-            <Search size={20} aria-hidden="true" />
-            <input
-              type="search"
-              placeholder="¿Qué estás buscando?"
-              aria-label="Buscar tiendas"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-            />
-            <button
-              type="button"
-              className={`feed-mic${listening ? ' listening' : ''}`}
-              aria-label="Buscar por voz"
-              aria-pressed={listening}
-              title={SpeechRecognition ? (listening ? 'Escuchando…' : 'Buscar por voz') : 'Tu navegador no admite búsqueda por voz'}
-              disabled={!SpeechRecognition}
-              onClick={toggleVoiceSearch}
-            >
-              <Mic size={20} aria-hidden="true" />
-            </button>
-          </label>
-
-          <div className="feed-cats-wrap">
-            <CatCarousel cats={TOP_CATS} onSelect={openCategory} />
-          </div>
-        </section>
+        <HeroSearch value={query} onChange={setQuery} ariaLabel="Buscar tiendas" cats={TOP_CATS} onSelectCat={openCategory} />
 
         <button type="button" className="feed-card feed-map-card" onClick={() => navigate('/mapa')}>
           <img src={cardVerMapa} alt="Explora las tiendas en Neira: toca un marcador para ver su catálogo y hacer tu pedido." />

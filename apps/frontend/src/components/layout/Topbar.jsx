@@ -7,7 +7,6 @@ import { Leaf } from '../common/Leaf.jsx';
 import { useCart } from '../../features/cart/CartContext.jsx';
 import { canAccessAdmin, ROLES } from '../../config/roles.js';
 import { useNavigate } from '../../lib/router.jsx';
-import { useTypingPlaceholder } from '../../lib/useTypingPlaceholder.js';
 
 // Las categorías de la barra (sin "Más", que no filtraba nada) para la pasarela que se desliza sola.
 const TOP_GROUPS = Object.entries(GROUPS)
@@ -90,17 +89,9 @@ export default function Topbar({
   onQuery,
   onOpenCart,
   hideCart,
-  // Opcionales (los usa el mapa): ejemplos que se "escriben" solos en el buscador vacío, y lo que se muestra
-  // justo debajo de él mientras se busca (accesos directos a tiendas y productos).
-  searchExamples,
-  searchResults,
 }) {
   const { totalItems } = useCart();
   const navigate = useNavigate();
-  const [focused, setFocused] = useState(false);
-  const fallback = 'Busca productos, tiendas o categorías...';
-  const typed = useTypingPlaceholder(searchExamples, { prefix: 'Busca ', active: !query && !focused, fallback });
-  const placeholder = searchExamples?.length && !query && !focused && typed !== fallback ? `${typed}|` : fallback;
 
   return (
     <>
@@ -115,15 +106,12 @@ export default function Topbar({
               <Search size={22} aria-hidden="true" />
               <input
                 type="search"
-                placeholder={placeholder}
+                placeholder="Busca productos, tiendas o categorías..."
                 aria-label="Buscar productos, tiendas o categorías"
                 value={query}
                 onChange={(e) => onQuery(e.target.value)}
-                onFocus={() => setFocused(true)}
-                onBlur={() => setFocused(false)}
               />
             </label>
-            {searchResults}
           </div>
         )}
 
