@@ -56,8 +56,10 @@
   50% { transform: scale(1.15); }
 }
 
-/* Fila de categorías: la pasarela que se desliza sola (`.feed-cat-track`, ver HomePage `CatCarousel`). */
-.feed-cats-wrap { display: flex; align-items: flex-start; gap: 14px; margin-top: 18px; }
+/* Fila de categorías: la pasarela que se desliza sola (`.feed-cat-track`, ver HomePage `CatCarousel`).
+   Los márgenes negativos anulan el relleno lateral de `.feed-hero`, para que los íconos entren y salgan
+   por el borde de la pantalla y no por un borde interno de la app. */
+.feed-cats-wrap { display: flex; align-items: flex-start; gap: 14px; margin: 18px -28px 0; }
 .feed-cat-track {
   flex: 1; min-width: 0; display: flex; gap: clamp(10px, 3vw, 26px); overflow-x: auto; overflow-y: hidden;
   cursor: grab; -webkit-user-select: none; user-select: none; touch-action: pan-y;
@@ -169,7 +171,7 @@
   .feed-hero { padding: 24px 16px 16px; }
   .feed-map-card, .feed-support, .feed-section { margin-left: 12px; margin-right: 12px; }
   .feed-map-card { width: calc(100% - 24px); }
-  .feed-cats-wrap { margin-left: 4px; margin-right: 4px; }
+  .feed-cats-wrap { margin-left: -16px; margin-right: -16px; }
   .feed-cat-track { gap: 14px; }
 }
 
