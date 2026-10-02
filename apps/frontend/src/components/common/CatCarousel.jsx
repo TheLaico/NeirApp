@@ -2,8 +2,9 @@ import { useEffect, useRef } from 'react';
 import './cat-carousel.css';
 
 // Cuántas veces se repite la fila de categorías dentro de la pasarela: de sobra para que, en cualquier
-// ancho de pantalla, siempre quede contenido de más a los dos lados y el salto al reiniciar no se note.
-const CAT_LOOPS = 6;
+// ancho de pantalla (aunque una vuelta sea más angosta que la pantalla, como en el mapa con 4 categorías),
+// siempre quede contenido de más a los dos lados y el salto al reiniciar no se note.
+const CAT_LOOPS = 12;
 
 /**
  * Fila de categorías que se desliza sola hacia la izquierda y también se puede arrastrar con el mouse (o el dedo).
@@ -14,48 +15,76 @@ export default function CatCarousel({ cats, onSelect, activeId, className = '' }
   const unitRef = useRef(0);
   const drag = useRef({ active: false, moved: false, startX: 0, startScroll: 0 });
   const hovered = useRef(false);
+  // Posición con decimales llevada aparte: `scrollLeft` se redondea a píxeles enteros en muchas pantallas
+  // (p. ej. Windows al 100 %), así que sumarle medio píxel por cuadro se perdía en el redondeo y la fila
+  // quedaba quieta "sin razón" según en qué posición estuviera.
+  const pos = useRef(0);
 
+  // El listado está repetido `CAT_LOOPS` veces: al acercarnos a cualquiera de las puntas saltamos
+  // exactamente un "unit" (el ancho de una vuelta completa), que es invisible porque el patrón se repite.
+  // El salto de la derecha se hace antes del tope real de desplazamiento: si la pantalla es más ancha que una
+  // vuelta, `scrollLeft` no puede llegar a `unit * (CAT_LOOPS - 1)` y la fila se quedaba quieta en el tope.
   const wrap = () => {
-    const track = trackRef.current;
     const unit = unitRef.current;
-    if (!track || !unit) return;
-    // El listado está repetido `CAT_LOOPS` veces: al acercarnos a cualquiera de las puntas saltamos
-    // exactamente un "unit" (el ancho de una vuelta completa), que es invisible porque el patrón se repite.
-    if (track.scrollLeft < unit) track.scrollLeft += unit;
-    else if (track.scrollLeft > unit * (CAT_LOOPS - 1)) track.scrollLeft -= unit;
+    const track = trackRef.current;
+    if (!unit || !track) return;
+    const max = Math.min(unit * (CAT_LOOPS - 1), track.scrollWidth - track.clientWidth - 1);
+    if (pos.current < unit) pos.current += unit;
+    else if (pos.current > max) pos.current -= unit;
   };
 
   useEffect(() => {
     const track = trackRef.current;
     if (!track) return undefined;
-    unitRef.current = track.scrollWidth / CAT_LOOPS;
-    track.scrollLeft = unitRef.current * Math.floor(CAT_LOOPS / 2);
+    // El ancho de una vuelta cambia si cargan las fuentes o cambia el tamaño de la ventana: se vuelve a medir.
+    const measure = () => {
+      const unit = track.scrollWidth / CAT_LOOPS;
+      if (!unit) return;
+      const offset = unitRef.current ? (pos.current % unitRef.current) / unitRef.current : 0;
+      unitRef.current = unit;
+      pos.current = unit * Math.floor(CAT_LOOPS / 2) + offset * unit;
+      track.scrollLeft = pos.current;
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(track);
 
     let raf;
-    const tick = () => {
+    let last = performance.now();
+    const SPEED = 30; // píxeles por segundo, igual en pantallas de 60 Hz que de 120 Hz
+    const tick = (now) => {
+      const dt = Math.min(now - last, 100) / 1000; // tras volver a la pestaña no da un salto
+      last = now;
       // Se detiene con el mouse encima (no solo al arrastrar): si la fila se sigue moviendo bajo el
       // cursor, el clic puede caer sobre la categoría vecina en vez de la que se veía al apuntar.
-      if (!drag.current.active && !hovered.current) {
-        track.scrollLeft += 0.5;
+      if (!drag.current.active && !hovered.current && unitRef.current) {
+        pos.current += SPEED * dt;
         wrap();
+        track.scrollLeft = pos.current;
       }
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
+    return () => {
+      cancelAnimationFrame(raf);
+      observer.disconnect();
+    };
   }, []);
 
   const onPointerDown = (e) => {
     const track = trackRef.current;
-    drag.current = { active: true, moved: false, startX: e.clientX, startScroll: track.scrollLeft, pointerId: e.pointerId };
+    drag.current = { active: true, moved: false, startX: e.clientX, startScroll: pos.current, pointerId: e.pointerId };
     track.setPointerCapture(e.pointerId);
   };
   const onPointerMove = (e) => {
     if (!drag.current.active) return;
     const dx = e.clientX - drag.current.startX;
     if (Math.abs(dx) > 4) drag.current.moved = true;
-    trackRef.current.scrollLeft = drag.current.startScroll - dx;
+    pos.current = drag.current.startScroll - dx;
     wrap();
+    trackRef.current.scrollLeft = pos.current;
+    // Si la fila dio la vuelta durante el arrastre, el punto de partida se corre lo mismo para seguir al dedo.
+    drag.current.startScroll = pos.current + dx;
   };
   const endDrag = () => {
     drag.current.active = false;
@@ -86,9 +115,16 @@ export default function CatCarousel({ cats, onSelect, activeId, className = '' }
       onPointerMove={onPointerMove}
       onPointerUp={endDrag}
       onPointerCancel={endDrag}
+      onLostPointerCapture={endDrag}
       onClick={onClick}
-      onMouseEnter={() => { hovered.current = true; }}
-      onMouseLeave={() => { hovered.current = false; }}
+      // Solo con mouse: en el celular un toque también dispara "entrar" pero nunca "salir", y la fila
+      // se quedaba pausada para siempre después de tocarla.
+      onPointerEnter={(e) => { if (e.pointerType === 'mouse') hovered.current = true; }}
+      onPointerLeave={() => { hovered.current = false; }}
+      // Rueda del mouse o deslizar con el trackpad mueven la fila por su cuenta: se sigue desde ahí.
+      onScroll={(e) => {
+        if (Math.abs(e.currentTarget.scrollLeft - pos.current) > 2) pos.current = e.currentTarget.scrollLeft;
+      }}
     >
       {items.map(({ id, label, color, Icon, loop }) => (
         <button
