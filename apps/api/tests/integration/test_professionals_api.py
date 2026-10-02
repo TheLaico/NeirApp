@@ -1121,6 +1121,24 @@ class TestPlanes:
         assert inbox["items"][0]["kind"] == "plan_activated"
         assert "21 de octubre" in inbox["items"][0]["body"]
 
+    async def test_el_admin_ve_la_solicitud_aunque_no_haya_armado_su_perfil(
+        self, client: httpx.AsyncClient, app: FastAPI
+    ) -> None:
+        admin = await _admin(client, app)
+        pro = await _professional(client, admin, "laura@correo.com", plan=None)
+        assert (await _ask_plan(client, pro, "pro")).status_code == 201
+
+        rows = (await client.get(f"{API}/professionals/admin/plans", headers=_bearer(admin))).json()
+        assert len(rows) == 1
+        row = rows[0]
+        assert (row["display_name"], row["email"], row["has_profile"]) == (
+            "Ana Gómez",
+            "laura@correo.com",
+            False,
+        )
+        assert row["phone"] == "3001234567"
+        assert row["status"]["pending"]["plan"] == "pro"
+
     async def test_el_admin_rechaza_el_pago_con_un_motivo(
         self, client: httpx.AsyncClient, app: FastAPI
     ) -> None:

@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from typing import Protocol
 from uuid import UUID
 
@@ -21,10 +22,23 @@ class ProfileRepository(Protocol):
     async def list_all(self) -> list[ProfessionalProfile]: ...
 
 
+@dataclass(frozen=True)
+class Account:
+    """Datos de la cuenta (no del perfil público): para el administrador."""
+
+    name: str
+    email: str
+    phone: str
+
+
 class AccessPort(Protocol):
     """Quién tiene hoy acceso de profesional (el administrador puede quitarlo cuando quiera)."""
 
     async def professional_ids(self) -> set[UUID]: ...
+
+    async def account(self, user_id: UUID) -> Account | None:
+        """Nombre, correo y celular de la cuenta; None si ya no existe."""
+        ...
 
 
 class CategoryRepository(Protocol):

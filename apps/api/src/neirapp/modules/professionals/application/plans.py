@@ -4,6 +4,7 @@ from uuid import UUID
 
 from neirapp.modules.professionals.application.ports import (
     AccessPort,
+    Account,
     NotificationRepository,
     ProfileRepository,
     SubscriptionRepository,
@@ -143,35 +144,58 @@ class CancelPlanRequest:
 
 @dataclass(frozen=True)
 class ProfessionalPlanRow:
-    """Para el administrador: un profesional con perfil, su plan y su solicitud pendiente."""
+    """Para el administrador: un profesional, su plan y su solicitud pendiente. `profile` es None
+    si todavía no armó su perfil (puede pedir un plan antes de hacerlo)."""
 
-    profile: ProfessionalProfile
+    user_id: UUID
+    profile: ProfessionalProfile | None
+    account: Account | None
     status: PlanStatus
+
+    @property
+    def name(self) -> str:
+        if self.profile:
+            return self.profile.display_name
+        return self.account.name if self.account else ""
 
 
 class ListProfessionalPlans:
-    """Todos los perfiles (publicados o no) con su plan; primero los que tienen un pago por
-    confirmar."""
+    """Los profesionales con perfil o con alguna solicitud de plan, con su plan; primero los que
+    tienen un pago por confirmar."""
 
     def __init__(
-        self, repo: SubscriptionRepository, profiles: ProfileRepository, clock: Clock
+        self,
+        repo: SubscriptionRepository,
+        profiles: ProfileRepository,
+        access: AccessPort,
+        clock: Clock,
     ) -> None:
         self._repo = repo
         self._profiles = profiles
+        self._access = access
         self._clock = clock
 
     async def __call__(self) -> list[ProfessionalPlanRow]:
         now = self._clock.now()
+        profiles = {p.user_id: p for p in await self._profiles.list_all()}
+        with_plans = {s.user_id for s in await self._repo.list_pending()} | {
+            s.user_id for s in await self._repo.list_active()
+        }
         rows = [
-            ProfessionalPlanRow(p, _status(await self._repo.list_for(p.user_id), now))
-            for p in await self._profiles.list_all()
+            ProfessionalPlanRow(
+                user_id,
+                profiles.get(user_id),
+                await self._access.account(user_id),
+                _status(await self._repo.list_for(user_id), now),
+            )
+            for user_id in profiles.keys() | with_plans
         ]
         return sorted(
             rows,
             key=lambda r: (
                 r.status.pending is None,
                 r.status.pending.requested_at if r.status.pending else now,
-                r.profile.full_name.lower(),
+                r.name.lower(),
             ),
         )
 

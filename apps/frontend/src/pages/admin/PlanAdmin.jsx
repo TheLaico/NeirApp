@@ -28,8 +28,11 @@ export default function PlanAdmin({ onChanged }) {
     }
   }, []);
 
+  // Se revisa cada minuto: así aparecen las solicitudes nuevas sin recargar la página.
   useEffect(() => {
     load();
+    const timer = setInterval(load, 60000);
+    return () => clearInterval(timer);
   }, [load]);
 
   const run = async (key, action, done) => {
@@ -92,7 +95,9 @@ export default function PlanAdmin({ onChanged }) {
                           {row.display_name} · Plan {p.plan_name} ({formatCop(p.price_cop)})
                         </strong>
                         <span>
+                          {row.email && `${row.email} · `}
                           {p.payment_reference ? `Comprobante: ${p.payment_reference}` : 'Sin comprobante'} · pedido el {day(p.requested_at)}
+                          {!row.has_profile && ' · aún no arma su perfil'}
                           {row.status.current && ` · hoy tiene ${row.status.current.plan_name}`}
                         </span>
                       </div>
@@ -149,7 +154,11 @@ export default function PlanAdmin({ onChanged }) {
                   <li key={row.user_id} className="a-store-row a-plan-row">
                     <div className="a-store-info">
                       <strong>{row.display_name}</strong>
-                      <span>{current ? `Activo hasta el ${dayLabel(paidUntil(row.status))}` : 'Sin plan: no aparece en el directorio'}</span>
+                      <span>
+                        {row.email && `${row.email} · `}
+                        {current ? `Activo hasta el ${dayLabel(paidUntil(row.status))}` : 'Sin plan: no aparece en el directorio'}
+                        {!row.has_profile && ' · aún no arma su perfil'}
+                      </span>
                     </div>
                     <span className={`a-badge plan-${current ? current.plan : 'none'}`}>{current ? PLAN_NAMES[current.plan] : 'Sin plan'}</span>
                     <select aria-label={`Plan para ${row.display_name}`} value={pick} onChange={(e) => setChosen((c) => ({ ...c, [row.user_id]: e.target.value }))}>

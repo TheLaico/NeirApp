@@ -1,6 +1,7 @@
 import { ArrowLeft, Bike, Briefcase, LayoutDashboard, LogOut, MapPinned, MessageSquarePlus, ShieldCheck, Store, Truck, UserCog } from 'lucide-react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { canAccessAdmin, ROLES } from '../../config/roles.js';
+import { professionalsApi } from '../../features/professionals/api.js';
 import { useNavigate, usePath } from '../../lib/router.jsx';
 import './admin.css';
 
@@ -28,6 +29,25 @@ export default function AdminLayout({ user, onLogout, title, subtitle, actions, 
     document.body.classList.add('is-home');
     return () => document.body.classList.remove('is-home');
   }, []);
+
+  // Pagos de planes por confirmar: se marcan en "Gestión de profesionales" para que no se pasen por alto.
+  const [pendingPlans, setPendingPlans] = useState(0);
+  const allowed = canAccessAdmin(user);
+  useEffect(() => {
+    if (!allowed) return undefined;
+    let alive = true;
+    const check = () =>
+      professionalsApi
+        .adminPlans()
+        .then((rows) => alive && setPendingPlans(rows.filter((r) => r.status.pending).length))
+        .catch(() => {});
+    check();
+    const timer = setInterval(check, 60000);
+    return () => {
+      alive = false;
+      clearInterval(timer);
+    };
+  }, [allowed]);
 
   if (!canAccessAdmin(user)) {
     return (
@@ -66,6 +86,11 @@ export default function AdminLayout({ user, onLogout, title, subtitle, actions, 
             >
               <Icon size={19} aria-hidden="true" />
               {label}
+              {to === '/admin/profesionales' && pendingPlans > 0 && (
+                <span className="a-count" aria-label={`${pendingPlans} pagos de planes por confirmar`}>
+                  {pendingPlans}
+                </span>
+              )}
             </button>
           ))}
         </nav>

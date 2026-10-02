@@ -681,24 +681,25 @@ class GrantPlanBody(BaseModel):
 class ProfessionalPlanResponse(BaseModel):
     user_id: UUID
     display_name: str
-    phone: str
-    category_id: str
-    subcategory_id: str
+    email: str
+    phone: str  # 10 dígitos, sin el +57
+    has_profile: bool
     is_featured: bool
     is_listed: bool
     status: PlanStatusResponse
 
     @classmethod
     def from_row(cls, row: ProfessionalPlanRow) -> "ProfessionalPlanResponse":
-        p = row.profile
+        p, account = row.profile, row.account
+        phone = p.phone if p else (account.phone if account else "")
         return cls(
-            user_id=p.user_id,
-            display_name=p.display_name,
-            phone=p.phone,
-            category_id=p.category_id,
-            subcategory_id=p.subcategory_id,
-            is_featured=p.is_featured,
-            is_listed=p.is_listed,
+            user_id=row.user_id,
+            display_name=row.name or "Cuenta eliminada",
+            email=account.email if account else "",
+            phone=phone.removeprefix("+57"),
+            has_profile=p is not None,
+            is_featured=bool(p and p.is_featured),
+            is_listed=bool(p and p.is_listed),
             status=PlanStatusResponse.from_status(row.status),
         )
 

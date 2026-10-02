@@ -171,3 +171,5 @@
 .a-badge.plan-none { background: #f3e3dc; color: #9b3d28; }
 .a-plan-row { flex-wrap: wrap; }
 .a-plan-row select { height: 38px; padding: 0 10px; border: 1.5px solid var(--line); border-radius: 10px; background: #fff; font: inherit; font-size: 14px; }
+.admin-nav svg { flex: none; }
+.admin-nav .a-count { flex: none; margin-left: auto; }

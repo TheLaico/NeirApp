@@ -416,7 +416,7 @@ def build_professionals(
         get_my_plan=GetMyPlan(subscriptions, clock),
         request_plan=RequestPlan(subscriptions, clock),
         cancel_plan_request=CancelPlanRequest(subscriptions, clock),
-        list_professional_plans=ListProfessionalPlans(subscriptions, repo, clock),
+        list_professional_plans=ListProfessionalPlans(subscriptions, repo, access, clock),
         approve_plan_request=ApprovePlanRequest(subscriptions, notifications, clock),
         reject_plan_request=RejectPlanRequest(subscriptions, notifications, clock),
         grant_plan=GrantPlan(subscriptions, notifications, clock),
