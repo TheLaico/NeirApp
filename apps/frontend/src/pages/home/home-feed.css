@@ -97,13 +97,11 @@
 .feed-map-card {
   position: relative; margin: 18px 20px 0; width: calc(100% - 40px); border-radius: 20px; overflow: hidden;
   box-shadow: 0 4px 16px rgba(35, 52, 43, 0.12); transition: transform 0.18s, box-shadow 0.18s;
-  /* El PNG trae un margen transparente grande (18.7% arriba, 10.1% abajo) que dejaba ver el fondo de la
-     página como espacio en blanco. Esta proporción es la del recorte real de la ilustración (sin ese
-     margen); junto con `object-fit: cover` de abajo, recorta justo ese sobrante en vez de mostrarlo. */
-  aspect-ratio: 1745 / 630;
+  /* Misma proporción que card-ver-mapa.png (1774×887), para que la imagen se vea completa, sin recortes. */
+  aspect-ratio: 1774 / 887;
 }
 .feed-map-card:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(35, 52, 43, 0.18); }
-.feed-map-card img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% 65%; }
+.feed-map-card img { display: block; width: 100%; height: 100%; object-fit: contain; }
 .feed-map-btn {
   position: absolute; left: 26px; bottom: 22px; display: inline-flex; align-items: center; gap: 8px;
   height: 44px; padding: 0 22px; border-radius: 999px; background: var(--g); color: #fff;
