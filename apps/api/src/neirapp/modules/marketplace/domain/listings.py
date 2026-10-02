@@ -16,7 +16,7 @@ from neirapp.modules.marketplace.domain.errors import (
 MAX_TITLE = 80
 MAX_DESCRIPTION = 1000
 MAX_QUANTITY = 999
-MAX_PRICE = 1_000_000_000
+MAX_PRICE = 100_000_000_000  # Hasta 100 mil millones: hay fincas y edificios caros
 MAX_PHOTOS = 8
 MAX_LISTINGS_PER_SELLER = 30
 # Solo fotos subidas a la app (POST /uploads/images): nombre aleatorio de 32 caracteres hex.
@@ -35,16 +35,16 @@ class RentPeriod(StrEnum):
 
 
 class ListingCategory(StrEnum):
-    LIVING = "living"  # Salas y sofás
-    DINING = "dining"  # Comedores
-    BEDROOM = "bedroom"  # Camas y colchones
-    WARDROBE = "wardrobe"  # Armarios y clósets
-    OFFICE = "office"  # Escritorios y oficina
-    CHAIRS = "chairs"  # Sillas y poltronas
-    TABLES = "tables"  # Mesas
-    KITCHEN = "kitchen"  # Cocina
-    OUTDOOR = "outdoor"  # Exterior y jardín
-    DECOR = "decor"  # Decoración
+    HOUSE = "house"  # Casas
+    APARTMENT = "apartment"  # Apartamentos
+    BUILDING = "building"  # Edificios
+    COMMERCIAL = "commercial"  # Locales comerciales
+    OFFICE = "office"  # Oficinas y consultorios
+    FARM = "farm"  # Fincas y casas campestres
+    LOT = "lot"  # Lotes y terrenos
+    WAREHOUSE = "warehouse"  # Bodegas
+    ROOM = "room"  # Habitaciones
+    PARKING = "parking"  # Parqueaderos
     OTHER = "other"
 
 
@@ -111,7 +111,7 @@ class ListingData:
 
 @dataclass
 class Listing:
-    """Un mueble que alguien ofrece en venta o alquiler. NeirAPP solo media: el trato y el pago
+    """Un inmueble que alguien ofrece en venta o alquiler. NeirAPP solo media: el trato y el pago
     se hacen por WhatsApp. Se ve mientras el vendedor la tenga activa, tenga el mes pagado y el
     equipo no la haya retirado."""
 

@@ -8,7 +8,7 @@ import AdminLayout from './AdminLayout.jsx';
 const when = (iso) => new Date(iso).toLocaleDateString('es-CO', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
 
 /**
- * MarquetNeira (admin): confirmar los pagos de publicación ($ 10.000 al mes por mueble) y revisar las publicaciones
+ * MarquetNeira (admin): confirmar los pagos de publicación ($ 10.000 al mes por inmueble) y revisar las publicaciones
  * reportadas — descartar los reportes si está bien, o retirarla contándole el motivo al vendedor.
  */
 export default function AdminMarketplacePage({ user, onLogout }) {
@@ -55,7 +55,7 @@ export default function AdminMarketplacePage({ user, onLogout }) {
   };
 
   return (
-    <AdminLayout user={user} onLogout={onLogout} title="MarquetNeira" subtitle="Confirma los pagos de las publicaciones de muebles y revisa las que reportaron los clientes.">
+    <AdminLayout user={user} onLogout={onLogout} title="MarquetNeira" subtitle="Confirma los pagos de las publicaciones de inmuebles y revisa las que reportaron los clientes.">
       {error && (
         <p className="a-err" role="alert">
           {error}
@@ -69,7 +69,7 @@ export default function AdminMarketplacePage({ user, onLogout }) {
 
       <section className="a-card">
         <h2>Pagos por confirmar {payments.list.length > 0 && <span className="a-count">{payments.list.length}</span>}</h2>
-        <p className="a-card-hint">Cada publicación cuesta {formatCop(10000)} al mes. Al confirmar, el mueble se ve 30 días en MarquetNeira.</p>
+        <p className="a-card-hint">Cada publicación cuesta {formatCop(10000)} al mes. Al confirmar, el inmueble se ve 30 días en MarquetNeira.</p>
         {payments.loading ? (
           <p className="a-empty">Cargando…</p>
         ) : payments.error ? (
@@ -179,7 +179,7 @@ export default function AdminMarketplacePage({ user, onLogout }) {
                       }}
                     >
                       <label htmlFor={`mq-rm-${listing.id}`}>Motivo (lo verá el vendedor)</label>
-                      <input id={`mq-rm-${listing.id}`} value={note} maxLength={200} placeholder="Ej: La publicación no corresponde a un mueble" onChange={(e) => setNote(e.target.value)} autoFocus />
+                      <input id={`mq-rm-${listing.id}`} value={note} maxLength={200} placeholder="Ej: La publicación no corresponde a un inmueble" onChange={(e) => setNote(e.target.value)} autoFocus />
                       <button type="submit" className="a-btn danger" disabled={busy === key || note.trim().length < 5}>
                         Retirar publicación
                       </button>

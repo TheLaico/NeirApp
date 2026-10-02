@@ -13,15 +13,15 @@ def _photo(n: int) -> str:
     return f"/api/v1/uploads/images/{n:032x}.webp"
 
 
-SOFA = {
-    "title": "Sofá moderno en L",
+CASA = {
+    "title": "Casa de dos pisos en el centro",
     "kind": "sale",
-    "category": "living",
-    "description": "Sofá gris de tres puestos con chaise longue, poco uso, sin manchas.",
+    "category": "house",
+    "description": "Casa de tres habitaciones, dos baños, patio y garaje, cerca del parque.",
     "quantity": 1,
     "photos": [_photo(1), _photo(2)],
     "whatsapp": "310 123 4567",
-    "price_cop": 1_250_000,
+    "price_cop": 3_500_000_000,  # más de un entero de 32 bits
     "negotiable": True,
 }
 
@@ -30,7 +30,7 @@ async def _create(
     client: httpx.AsyncClient, tokens: dict[str, Any], **changes: Any
 ) -> dict[str, Any]:
     response = await client.post(
-        f"{M}/me/listings", json={**SOFA, **changes}, headers=_bearer(tokens)
+        f"{M}/me/listings", json={**CASA, **changes}, headers=_bearer(tokens)
     )
     assert response.status_code == 201, response.text
     return response.json()  # type: ignore[no-any-return]
@@ -85,7 +85,7 @@ class TestPublicar:
 
         pending = (await client.get(f"{M}/admin/payments", headers=_bearer(admin))).json()
         assert [(p["listing_title"], p["amount_cop"], p["reference"]) for p in pending] == [
-            ("Sofá moderno en L", 10000, "Nequi M123")
+            ("Casa de dos pisos en el centro", 10000, "Nequi M123")
         ]
         approved = await client.put(
             f"{M}/admin/payments/{payment_id}/approve", headers=_bearer(admin)
@@ -96,6 +96,7 @@ class TestPublicar:
         public = (await client.get(f"{M}/listings/{listing['id']}")).json()
         assert public["seller_name"] == "Ana"  # solo el nombre de pila
         assert public["negotiable"] is True
+        assert public["price_cop"] == 3_500_000_000
         notice = (await _inbox(client, seller))[0]
         assert notice["kind"] == "listing_activated"
         assert "21 de octubre" in notice["body"]
@@ -125,7 +126,7 @@ class TestPublicar:
         }
         for code, changes in cases.items():
             response = await client.post(
-                f"{M}/me/listings", json={**SOFA, **changes}, headers=_bearer(seller)
+                f"{M}/me/listings", json={**CASA, **changes}, headers=_bearer(seller)
             )
             assert response.json()["code"] == code, code
         # Sin precio vale si lo negocia por chat.
@@ -153,7 +154,9 @@ class TestPublicar:
         seller = await _register(client, "vendedor@correo.com")
         other = await _register(client, "otro@correo.com")
         first = await _published(client, admin, seller)
-        second = await _published(client, admin, seller, title="Comedor de madera", kind="rent")
+        second = await _published(
+            client, admin, seller, title="Apartamento amoblado", kind="rent", category="apartment"
+        )
 
         paused = await client.put(
             f"{M}/me/listings/{first}/active", json={"is_active": False}, headers=_bearer(seller)
@@ -253,4 +256,4 @@ class TestReportes:
         ):
             response = await client.request(method, f"{M}{url}", json={}, headers=_bearer(customer))
             assert response.status_code == 403, url
-        assert (await client.post(f"{M}/me/listings", json=SOFA)).status_code == 401
+        assert (await client.post(f"{M}/me/listings", json=CASA)).status_code == 401

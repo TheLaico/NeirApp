@@ -95,7 +95,7 @@ class TestSubirImagenes:
         ).json()["tokens"]
 
         assert (await _upload(client, merchant, PNG)).status_code == 201
-        # Cualquiera publica muebles en MarquetNeira, así que también sube fotos.
+        # Cualquiera publica inmuebles en MarquetNeira, así que también sube fotos.
         assert (await _upload(client, customer, PNG)).status_code == 201
         assert (await client.post(UPLOAD, content=PNG)).status_code == 401
 

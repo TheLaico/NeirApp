@@ -84,7 +84,7 @@ export default function ReportDialog({ listing, onClose }) {
               <span>
                 Cuéntanos más <span className="mq-optional">{reason === 'other' ? '' : '(opcional)'}</span>
               </span>
-              <textarea rows={3} maxLength={500} value={details} placeholder="Ej: pide el pago por adelantado y no muestra el mueble" onChange={(e) => setDetails(e.target.value)} />
+              <textarea rows={3} maxLength={500} value={details} placeholder="Ej: pide el pago por adelantado y no muestra el inmueble" onChange={(e) => setDetails(e.target.value)} />
             </label>
             {error && (
               <p className="mq-error" role="alert">

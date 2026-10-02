@@ -1,4 +1,4 @@
-import { Armchair, BedDouble, Box, BriefcaseBusiness, CookingPot, DoorClosed, Flower2, Lamp, Sofa, Table2, Trees, UtensilsCrossed } from 'lucide-react';
+import { BedSingle, Box, BriefcaseBusiness, Building, Building2, House, LandPlot, SquareParking, Store, Trees, Warehouse } from 'lucide-react';
 import { formatCop } from '../../lib/money.js';
 import { usePersistentState } from '../../lib/usePersistentState.js';
 
@@ -7,19 +7,19 @@ export const LISTING_FEE = 10000;
 export const LISTING_DAYS = 30;
 
 export const CATEGORIES = [
-  { id: 'living', label: 'Salas y sofás', Icon: Sofa },
-  { id: 'dining', label: 'Comedores', Icon: UtensilsCrossed },
-  { id: 'bedroom', label: 'Camas y colchones', Icon: BedDouble },
-  { id: 'wardrobe', label: 'Armarios y clósets', Icon: DoorClosed },
-  { id: 'office', label: 'Escritorios y oficina', Icon: BriefcaseBusiness },
-  { id: 'chairs', label: 'Sillas y poltronas', Icon: Armchair },
-  { id: 'tables', label: 'Mesas', Icon: Table2 },
-  { id: 'kitchen', label: 'Cocina', Icon: CookingPot },
-  { id: 'outdoor', label: 'Exterior y jardín', Icon: Trees },
-  { id: 'decor', label: 'Decoración', Icon: Lamp },
+  { id: 'house', label: 'Casas', Icon: House },
+  { id: 'apartment', label: 'Apartamentos', Icon: Building2 },
+  { id: 'building', label: 'Edificios', Icon: Building },
+  { id: 'commercial', label: 'Locales comerciales', Icon: Store },
+  { id: 'office', label: 'Oficinas y consultorios', Icon: BriefcaseBusiness },
+  { id: 'farm', label: 'Fincas y casas campestres', Icon: Trees },
+  { id: 'lot', label: 'Lotes y terrenos', Icon: LandPlot },
+  { id: 'warehouse', label: 'Bodegas', Icon: Warehouse },
+  { id: 'room', label: 'Habitaciones', Icon: BedSingle },
+  { id: 'parking', label: 'Parqueaderos', Icon: SquareParking },
   { id: 'other', label: 'Otros', Icon: Box },
 ];
-export const categoryOf = (id) => CATEGORIES.find((c) => c.id === id) ?? { id, label: 'Otros', Icon: Flower2 };
+export const categoryOf = (id) => CATEGORIES.find((c) => c.id === id) ?? CATEGORIES[CATEGORIES.length - 1];
 
 export const KINDS = { sale: 'Venta', rent: 'Alquiler' };
 export const RENT_PERIODS = [
@@ -37,12 +37,16 @@ export function priceLabel(item) {
   return `${base} / ${period.suffix}`;
 }
 
+// Rangos pensados para inmuebles: los primeros sirven para arriendos y los altos para ventas.
+const M = 1000000;
+const between = (lo, hi) => (i) => i.price_cop != null && i.price_cop > lo && i.price_cop <= hi;
 export const PRICE_RANGES = [
   { id: 'all', label: 'Cualquier precio', test: () => true },
-  { id: 'u200', label: 'Hasta $ 200.000', test: (i) => i.price_cop != null && i.price_cop <= 200000 },
-  { id: '200-500', label: '$ 200.000 a $ 500.000', test: (i) => i.price_cop != null && i.price_cop > 200000 && i.price_cop <= 500000 },
-  { id: '500-1m', label: '$ 500.000 a $ 1.000.000', test: (i) => i.price_cop != null && i.price_cop > 500000 && i.price_cop <= 1000000 },
-  { id: 'o1m', label: 'Más de $ 1.000.000', test: (i) => i.price_cop != null && i.price_cop > 1000000 },
+  { id: 'u1m', label: 'Hasta $ 1.000.000', test: between(0, M) },
+  { id: '1-3m', label: '$ 1.000.000 a $ 3.000.000', test: between(M, 3 * M) },
+  { id: '3-150m', label: '$ 3.000.000 a $ 150.000.000', test: between(3 * M, 150 * M) },
+  { id: '150-400m', label: '$ 150 a $ 400 millones', test: between(150 * M, 400 * M) },
+  { id: 'o400m', label: 'Más de $ 400 millones', test: (i) => i.price_cop != null && i.price_cop > 400 * M },
   { id: 'negotiable', label: 'Negociable', test: (i) => i.negotiable },
 ];
 
@@ -57,13 +61,13 @@ export const REPORT_REASONS = [
   { id: 'inappropriate', label: 'Contenido inapropiado u ofensivo' },
   { id: 'scam', label: 'Posible estafa o fraude' },
   { id: 'misleading', label: 'Información falsa o engañosa' },
-  { id: 'prohibited', label: 'No es un mueble o es un producto prohibido' },
+  { id: 'prohibited', label: 'No es un inmueble o es contenido prohibido' },
   { id: 'spam', label: 'Spam o publicación repetida' },
   { id: 'other', label: 'Otro motivo' },
 ];
 export const reasonLabel = (id) => REPORT_REASONS.find((r) => r.id === id)?.label ?? id;
 
-/** Chat de WhatsApp con el vendedor, con un saludo que menciona el mueble. */
+/** Chat de WhatsApp con el vendedor, con un saludo que menciona el inmueble. */
 export const sellerChat = (item) =>
   `https://wa.me/57${item.whatsapp}?text=${encodeURIComponent(`Hola${item.seller_name ? ` ${item.seller_name}` : ''}, vi tu publicación “${item.title}” en MarquetNeira y me interesa.`)}`;
 

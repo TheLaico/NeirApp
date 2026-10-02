@@ -339,7 +339,7 @@ async def restore_listing(listing_id: UUID, _admin: RequireAdmin, app: Marketpla
 
 @router.get("/listings", response_model=list[ListingResponse])
 async def list_public_listings(app: MarketplaceDep) -> list[ListingResponse]:
-    """Muebles publicados (activos y con el mes pagado), los más recientes primero."""
+    """Inmuebles publicados (activos y con el mes pagado), los más recientes primero."""
     return [ListingResponse.from_domain(item) for item in await app.list_public_listings()]
 
 

@@ -59,7 +59,7 @@ export default function ListingPage({ user, onLogout }) {
           <div className="mq-empty">
             <p role="alert">{state.error}</p>
             <button type="button" className="mq-btn outline" onClick={() => navigate('/marquetneira')}>
-              Ver otros muebles
+              Ver otros inmuebles
             </button>
           </div>
         ) : (
@@ -130,7 +130,7 @@ export default function ListingPage({ user, onLogout }) {
                 <ShieldCheck size={22} aria-hidden="true" />
                 <p>
                   <b>NeirAPP solo te conecta con el vendedor:</b> no hay pagos en la plataforma. Acuerda el precio, la entrega y el pago directamente por chat, y no
-                  pagues por adelantado sin ver el mueble.
+                  pagues por adelantado sin ver el inmueble.
                 </p>
               </div>
 

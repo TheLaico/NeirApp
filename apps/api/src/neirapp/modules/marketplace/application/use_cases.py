@@ -86,7 +86,7 @@ class ListMyListings:
 
 
 class CreateListing:
-    """Cualquier persona con cuenta publica un mueble. Queda guardada pero no se ve hasta pagar
+    """Cualquier persona con cuenta publica un inmueble. Queda guardada pero no se ve hasta pagar
     el primer mes."""
 
     def __init__(self, repo: ListingRepository, accounts: AccountsPort, clock: Clock) -> None:

@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { KINDS, priceLabel, sellerChat, unitsLabel } from '../../features/marketplace/model.js';
 
 /**
- * Tarjeta de un mueble: foto con el tipo (venta o alquiler), favorito y menú; nombre, precio, cuántos hay y los
+ * Tarjeta de un inmueble: foto con el tipo (venta o alquiler), favorito y menú; nombre, precio, cuántos hay y los
  * botones para verlo o escribirle al vendedor por WhatsApp. NeirAPP solo media: no hay pagos en la plataforma.
  */
 export default function ListingCard({ item, own, favorite, onFavorite, onOpen, onReport, onCopied }) {

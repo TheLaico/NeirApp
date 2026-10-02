@@ -14,7 +14,7 @@ import './marketplace.css';
 const normalize = (t) => t.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 
 /**
- * MarquetNeira: muebles que la gente de Neira vende o alquila. NeirAPP solo media; el trato se cierra por WhatsApp.
+ * MarquetNeira: inmuebles que la gente de Neira vende o alquila. NeirAPP solo media; el trato se cierra por WhatsApp.
  * Filtros: tipo (todos, venta, alquiler), precio, categoría y disponibilidad; el buscador de arriba busca por nombre.
  */
 export default function MarketplacePage({ user, onLogout }) {
@@ -79,14 +79,21 @@ export default function MarketplacePage({ user, onLogout }) {
         {/* Portada: el banner de MarquetNeira a todo el ancho, con la frase y los botones para publicar. */}
         <section className="mq-banner-card" aria-labelledby="mq-title">
           <h1 id="mq-title" className="mq-sr">
-            Muebles en Neira
+            Inmuebles en Neira
           </h1>
           <img className="mq-banner-img" src={banner} alt="MarquetNeira Inmobiliario" />
           <div className="mq-banner-foot">
-            <p>Compra o alquila muebles de vendedores locales</p>
+            <div className="mq-banner-text">
+              <p>Compra o alquila inmuebles de vendedores locales</p>
+              <p className="mq-banner-desc">
+                Encuentra casas, apartamentos, locales, fincas, lotes y más en Neira, publicados por sus propios dueños. Escríbeles directo por WhatsApp
+                para preguntar, visitar y acordar el precio. NeirAPP solo los conecta: no cobramos comisión ni manejamos pagos entre ustedes. ¿Tienes
+                un inmueble? Publícalo por $ 10.000 al mes.
+              </p>
+            </div>
             <div className="mq-hero-actions">
               <button type="button" className="mq-btn primary" onClick={() => navigate('/marquetneira/mis-publicaciones?nueva=1')}>
-                <Plus size={17} aria-hidden="true" /> Publicar un mueble
+                <Plus size={17} aria-hidden="true" /> Publicar un inmueble
               </button>
               <button type="button" className="mq-btn outline" onClick={() => navigate('/marquetneira/mis-publicaciones')}>
                 <Store size={17} aria-hidden="true" /> Mis publicaciones
@@ -95,7 +102,7 @@ export default function MarketplacePage({ user, onLogout }) {
           </div>
         </section>
 
-        <div className="mq-filters" role="toolbar" aria-label="Filtrar muebles">
+        <div className="mq-filters" role="toolbar" aria-label="Filtrar inmuebles">
           <span className="mq-filters-leaf left" aria-hidden="true">
             <Leaf fill="#3f8f4f" style={{ left: 0, top: -8, width: 34, '--r': '-20deg' }} />
             <Leaf fill="#e8a92c" style={{ left: 22, top: 4, width: 24, '--r': '30deg' }} />
@@ -124,7 +131,7 @@ export default function MarketplacePage({ user, onLogout }) {
         </div>
 
         {state.loading ? (
-          <p className="mq-empty">Cargando muebles…</p>
+          <p className="mq-empty">Cargando inmuebles…</p>
         ) : state.error ? (
           <div className="mq-empty">
             <p role="alert">{state.error}</p>
@@ -135,14 +142,14 @@ export default function MarketplacePage({ user, onLogout }) {
         ) : shown.length === 0 ? (
           <div className="mq-empty">
             <Sofa size={40} aria-hidden="true" />
-            <p>{filtering ? 'No hay muebles que coincidan con estos filtros.' : 'Todavía no hay muebles publicados. ¡Sé el primero en ofrecer el tuyo!'}</p>
+            <p>{filtering ? 'No hay inmuebles que coincidan con estos filtros.' : 'Todavía no hay inmuebles publicados. ¡Sé el primero en ofrecer el tuyo!'}</p>
             {filtering ? (
               <button type="button" className="mq-btn outline" onClick={clear}>
                 Quitar filtros
               </button>
             ) : (
               <button type="button" className="mq-btn primary" onClick={() => navigate('/marquetneira/mis-publicaciones?nueva=1')}>
-                <Plus size={17} aria-hidden="true" /> Publicar un mueble
+                <Plus size={17} aria-hidden="true" /> Publicar un inmueble
               </button>
             )}
           </div>

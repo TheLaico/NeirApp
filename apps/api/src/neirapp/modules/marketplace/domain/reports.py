@@ -12,7 +12,7 @@ class ReportReason(StrEnum):
     INAPPROPRIATE = "inappropriate"  # Contenido inapropiado u ofensivo
     SCAM = "scam"  # Posible estafa o fraude
     MISLEADING = "misleading"  # Información falsa o engañosa
-    PROHIBITED = "prohibited"  # No es un mueble o es un producto prohibido
+    PROHIBITED = "prohibited"  # No es un inmueble o es contenido prohibido
     SPAM = "spam"  # Spam o publicación repetida
     OTHER = "other"
 

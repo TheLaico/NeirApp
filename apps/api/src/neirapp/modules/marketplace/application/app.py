@@ -23,7 +23,7 @@ from neirapp.modules.marketplace.application.use_cases import (
 
 @dataclass(frozen=True)
 class MarketplaceApp:
-    """Fachada del módulo MarquetNeira (muebles en venta y alquiler)."""
+    """Fachada del módulo MarquetNeira (inmuebles en venta y alquiler)."""
 
     list_my_listings: ListMyListings
     create_listing: CreateListing

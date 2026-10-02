@@ -11,7 +11,7 @@ class InvalidListingTitle(ValidationError):
 
     @classmethod
     def default_message(cls) -> str:
-        return "Escribe el nombre del mueble (entre 3 y 80 caracteres)."
+        return "Escribe el nombre del inmueble (entre 3 y 80 caracteres)."
 
 
 class InvalidListingCategory(ValidationError):
@@ -43,7 +43,7 @@ class InvalidListingDescription(ValidationError):
 
     @classmethod
     def default_message(cls) -> str:
-        return "Cuenta cómo es el mueble (entre 10 y 1000 caracteres)."
+        return "Cuenta cómo es el inmueble (entre 10 y 1000 caracteres)."
 
 
 class InvalidListingPhotos(ValidationError):
@@ -51,7 +51,7 @@ class InvalidListingPhotos(ValidationError):
 
     @classmethod
     def default_message(cls) -> str:
-        return "Agrega entre 1 y 8 fotos del mueble."
+        return "Agrega entre 1 y 8 fotos del inmueble."
 
 
 class InvalidSellerPhone(ValidationError):

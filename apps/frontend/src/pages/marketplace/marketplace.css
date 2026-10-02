@@ -34,8 +34,10 @@
 /* ---------- Portada: card con el banner de MarquetNeira ---------- */
 .mq-banner-card { display: flex; flex-direction: column; align-items: center; gap: 10px; margin: 6px 0 20px; padding: 18px 24px 18px; overflow: hidden; border: 1px solid var(--line); border-radius: 26px; background: linear-gradient(115deg, #fbf8ee 0%, #f1f5e6 55%, #e8f0dc 100%); box-shadow: 0 6px 20px rgba(35, 52, 43, .09); }
 .mq-banner-img { display: block; width: 100%; max-width: 980px; height: auto; max-height: 300px; object-fit: contain; }
-.mq-banner-foot { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px 20px; width: 100%; padding-top: 12px; border-top: 1px solid var(--line); }
-.mq-banner-foot p { font-size: clamp(16px, 1.5vw, 20px); font-weight: 700; color: var(--g); }
+.mq-banner-foot { display: flex; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; gap: 12px 20px; width: 100%; padding-top: 12px; border-top: 1px solid var(--line); }
+.mq-banner-text { display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 260px; max-width: 820px; }
+.mq-banner-text p:first-child { font-size: clamp(16px, 1.5vw, 20px); font-weight: 800; color: var(--g); }
+.mq-banner-desc { font-size: 14.5px; line-height: 1.55; color: var(--ink); }
 .mq-hero-actions { display: flex; flex-wrap: wrap; gap: 10px; }
 .mq-filters .leaf { position: absolute; transform: rotate(var(--r, 0deg)); filter: drop-shadow(0 2px 4px rgba(35, 52, 43, .15)); }
 

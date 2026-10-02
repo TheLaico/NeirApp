@@ -470,9 +470,11 @@ en `/profesional` → "Mi perfil" y queda publicado en `/profesionales`.
   por correo o push.
 
 
-## Módulo `marketplace` — MarquetNeira (implementado)
+## Módulo `marketplace` — MarquetNeira Inmobiliario (implementado)
 
-Muebles en venta o alquiler entre personas de Neira. NeirAPP solo media: no hay pagos ni inventario
+Inmuebles en venta o alquiler entre personas de Neira (casas, apartamentos, edificios, locales,
+oficinas, fincas, lotes, bodegas, habitaciones y parqueaderos; migración 0031: categorías de
+inmuebles y precio en `BigInteger`, porque una finca pasa fácil de 2.147 millones). NeirAPP solo media: no hay pagos ni inventario
 en la plataforma; el trato se cierra por WhatsApp.
 
 - **Publicaciones** (`marketplace_listing`, migración 0030): cualquier cuenta publica nombre, venta o

@@ -2,7 +2,7 @@ import { authRequest } from '../../services/auth.js';
 
 const API = '/api/v1/marketplace';
 
-// MarquetNeira: muebles en venta o alquiler (módulo `marketplace` de la API).
+// MarquetNeira: inmuebles en venta o alquiler (módulo `marketplace` de la API).
 export const marketplaceApi = {
   list: () => authRequest(`${API}/listings`),
   get: (id) => authRequest(`${API}/listings/${id}`),

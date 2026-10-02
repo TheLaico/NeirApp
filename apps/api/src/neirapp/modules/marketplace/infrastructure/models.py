@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import JSON, String, Text, Uuid
+from sqlalchemy import JSON, BigInteger, String, Text, Uuid
 from sqlalchemy.orm import Mapped, mapped_column
 
 from neirapp.shared.infrastructure.db import Base, UTCDateTime
@@ -20,7 +20,7 @@ class ListingModel(Base):
     description: Mapped[str] = mapped_column(Text)
     quantity: Mapped[int] = mapped_column()
     whatsapp: Mapped[str] = mapped_column(String(10))
-    price_cop: Mapped[int | None] = mapped_column(default=None)
+    price_cop: Mapped[int | None] = mapped_column(BigInteger, default=None)
     negotiable: Mapped[bool] = mapped_column(default=False)
     rent_period: Mapped[str] = mapped_column(String(10), default="month")
     photos: Mapped[list[str]] = mapped_column(JSON, default=list)

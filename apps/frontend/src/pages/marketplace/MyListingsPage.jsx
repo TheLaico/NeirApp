@@ -24,7 +24,7 @@ function statusOf(item) {
 }
 
 /**
- * "Mis publicaciones" de MarquetNeira: cualquiera publica sus muebles, los edita, los pausa (vendido, sin unidades)
+ * "Mis publicaciones" de MarquetNeira: cualquiera publica sus inmuebles, los edita, los pausa (vendido, sin unidades)
  * o los elimina, y paga $ 10.000 al mes por cada uno para que se vean. NeirAPP no maneja inventario.
  */
 export default function MyListingsPage({ user, onLogout }) {
@@ -103,11 +103,11 @@ export default function MyListingsPage({ user, onLogout }) {
           <div>
             <h1>Mis publicaciones</h1>
             <p>
-              Publicar cuesta <b>{formatCop(LISTING_FEE)} al mes</b> por cada mueble. NeirAPP solo te conecta con los compradores: el trato y el pago los haces tú por WhatsApp.
+              Publicar cuesta <b>{formatCop(LISTING_FEE)} al mes</b> por cada inmueble. NeirAPP solo te conecta con los compradores: el trato y el pago los haces tú por WhatsApp.
             </p>
           </div>
           <button type="button" className="mq-btn primary" onClick={() => setEditing('new')}>
-            <Plus size={17} aria-hidden="true" /> Publicar un mueble
+            <Plus size={17} aria-hidden="true" /> Publicar un inmueble
           </button>
         </header>
 
@@ -129,9 +129,9 @@ export default function MyListingsPage({ user, onLogout }) {
         ) : state.list.length === 0 ? (
           <div className="mq-empty">
             <Sofa size={40} aria-hidden="true" />
-            <p>Todavía no has publicado muebles. ¿Tienes alguno para vender o alquilar?</p>
+            <p>Todavía no has publicado inmuebles. ¿Tienes alguno para vender o alquilar?</p>
             <button type="button" className="mq-btn primary" onClick={() => setEditing('new')}>
-              <Plus size={17} aria-hidden="true" /> Publicar un mueble
+              <Plus size={17} aria-hidden="true" /> Publicar un inmueble
             </button>
           </div>
         ) : (
@@ -247,7 +247,7 @@ function PayDialog({ item, onSend, onClose }) {
     <div className="mq-scrim" onClick={onClose}>
       <div ref={box} className="mq-dialog" role="dialog" aria-modal="true" aria-labelledby="mq-pay-title" onClick={(e) => e.stopPropagation()}>
         <div className="mq-dialog-head">
-          <h2 id="mq-pay-title">{sent ? '¡Recibimos tu pago!' : renewing ? 'Renovar publicación' : 'Publicar tu mueble'}</h2>
+          <h2 id="mq-pay-title">{sent ? '¡Recibimos tu pago!' : renewing ? 'Renovar publicación' : 'Publicar tu inmueble'}</h2>
           <button type="button" className="mq-close" aria-label="Cerrar" onClick={onClose}>
             <X size={20} aria-hidden="true" />
           </button>
@@ -255,7 +255,7 @@ function PayDialog({ item, onSend, onClose }) {
         {sent ? (
           <div className="mq-done">
             <CheckCircle2 size={52} aria-hidden="true" />
-            <p>Estamos confirmando el pago de “{item.title}”. Cuando quede listo te avisamos en Notificaciones y tu mueble se verá en MarquetNeira por {LISTING_DAYS} días.</p>
+            <p>Estamos confirmando el pago de “{item.title}”. Cuando quede listo te avisamos en Notificaciones y tu inmueble se verá en MarquetNeira por {LISTING_DAYS} días.</p>
             <button type="button" className="mq-btn primary" onClick={onClose}>
               Entendido
             </button>

@@ -52,7 +52,7 @@ const FIELD_OF = {
 
 const digits = (s) => s.replace(/\D/g, '');
 
-/** Formulario para publicar o editar un mueble (ventana sobre "Mis publicaciones"). */
+/** Formulario para publicar o editar un inmueble (ventana sobre "Mis publicaciones"). */
 export default function ListingForm({ user, item, onSave, onClose }) {
   const [form, setForm] = useState(() => (item ? fromItem(item) : empty(user)));
   const [errors, setErrors] = useState({});
@@ -104,13 +104,13 @@ export default function ListingForm({ user, item, onSave, onClose }) {
 
   const validate = () => {
     const found = {};
-    if (form.photos.length === 0) found.photos = 'Agrega al menos una foto del mueble.';
-    if (form.title.trim().length < 3) found.title = 'Escribe el nombre del mueble.';
+    if (form.photos.length === 0) found.photos = 'Agrega al menos una foto del inmueble.';
+    if (form.title.trim().length < 3) found.title = 'Escribe el nombre del inmueble.';
     if (!form.category) found.category = 'Elige una categoría.';
     if (!form.negotiable && !digits(form.price)) found.price = 'Escribe el precio o marca que lo negocias por chat.';
     if (form.price && !(Number(digits(form.price)) > 0)) found.price = 'Escribe un precio válido.';
     if (!(Number(form.quantity) >= 1 && Number(form.quantity) <= 999)) found.quantity = 'Entre 1 y 999.';
-    if (form.description.trim().length < 10) found.description = 'Cuenta cómo es el mueble (al menos 10 letras).';
+    if (form.description.trim().length < 10) found.description = 'Cuenta cómo es el inmueble (al menos 10 letras).';
     if (!/^3\d{9}$/.test(digits(form.whatsapp).replace(/^57(?=\d{10}$)/, ''))) found.whatsapp = 'Escribe un WhatsApp de 10 dígitos.';
     return found;
   };
@@ -150,7 +150,7 @@ export default function ListingForm({ user, item, onSave, onClose }) {
     <div className="mq-scrim" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
       <div ref={box} className="mq-dialog wide" role="dialog" aria-modal="true" aria-labelledby="mq-form-title">
         <div className="mq-dialog-head">
-          <h2 id="mq-form-title">{item ? 'Editar publicación' : 'Publicar un mueble'}</h2>
+          <h2 id="mq-form-title">{item ? 'Editar publicación' : 'Publicar un inmueble'}</h2>
           <button type="button" className="mq-close" aria-label="Cerrar" onClick={onClose}>
             <X size={20} aria-hidden="true" />
           </button>
@@ -205,8 +205,8 @@ export default function ListingForm({ user, item, onSave, onClose }) {
           </fieldset>
 
           <label className="mq-field">
-            Nombre del mueble
-            <input value={form.title} maxLength={80} placeholder="Ej: Sofá moderno en L" aria-invalid={Boolean(errors.title)} onChange={(e) => set({ title: e.target.value })} />
+            Nombre del inmueble
+            <input value={form.title} maxLength={80} placeholder="Ej: Casa campestre de 3 habitaciones" aria-invalid={Boolean(errors.title)} onChange={(e) => set({ title: e.target.value })} />
             {errors.title && <small className="mq-error">{errors.title}</small>}
           </label>
 
@@ -229,7 +229,7 @@ export default function ListingForm({ user, item, onSave, onClose }) {
               {form.kind === 'rent' ? 'Precio del alquiler' : 'Precio'} {form.negotiable && <span className="mq-optional">(opcional)</span>}
               <span className="mq-money">
                 <span aria-hidden="true">$</span>
-                <input inputMode="numeric" value={priceText} placeholder="0" aria-invalid={Boolean(errors.price)} onChange={(e) => set({ price: digits(e.target.value).slice(0, 10) })} />
+                <input inputMode="numeric" value={priceText} placeholder="0" aria-invalid={Boolean(errors.price)} onChange={(e) => set({ price: digits(e.target.value).slice(0, 12) })} />
               </span>
               {errors.price && <small className="mq-error">{errors.price}</small>}
             </label>
@@ -276,7 +276,7 @@ export default function ListingForm({ user, item, onSave, onClose }) {
 
           <label className="mq-field">
             Descripción
-            <textarea rows={4} maxLength={MAX_DESCRIPTION} value={form.description} placeholder="Material, medidas, estado, si incluye transporte…" aria-invalid={Boolean(errors.description)} onChange={(e) => set({ description: e.target.value })} />
+            <textarea rows={4} maxLength={MAX_DESCRIPTION} value={form.description} placeholder="Área, habitaciones, baños, estado, servicios incluidos, cómo llegar…" aria-invalid={Boolean(errors.description)} onChange={(e) => set({ description: e.target.value })} />
             <small className="mq-count">
               {form.description.length}/{MAX_DESCRIPTION}
             </small>
