@@ -4,6 +4,7 @@ from typing import Protocol, Self
 from uuid import UUID
 
 from neirapp.modules.stores.domain.entities import Product, Store, StoreCategory
+from neirapp.modules.stores.domain.promotions import ProductPromotion
 
 
 class StoreRepository(Protocol):
@@ -48,12 +49,25 @@ class ProductRepository(Protocol):
     async def delete(self, product_id: UUID) -> None: ...
 
 
+class PromotionRepository(Protocol):
+    async def save(self, promotion: ProductPromotion) -> None: ...
+
+    async def get(self, promotion_id: UUID) -> ProductPromotion | None: ...
+
+    async def list_by_store(self, store_id: UUID) -> list[ProductPromotion]: ...
+
+    async def list_all(self) -> list[ProductPromotion]: ...
+
+
 class UnitOfWork(Protocol):
     @property
     def stores(self) -> StoreRepository: ...
 
     @property
     def products(self) -> ProductRepository: ...
+
+    @property
+    def promotions(self) -> PromotionRepository: ...
 
     async def __aenter__(self) -> Self: ...
 

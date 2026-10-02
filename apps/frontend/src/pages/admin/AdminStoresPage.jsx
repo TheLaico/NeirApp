@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useAdminStores } from '../../features/stores/api.js';
 import { usePath } from '../../lib/router.jsx';
 import AdminLayout from './AdminLayout.jsx';
+import PromotedProductsAdmin from './PromotedProductsAdmin.jsx';
 import RecommendedStores from './RecommendedStores.jsx';
 import StoreAdminEditor from './StoreAdminEditor.jsx';
 import StoreForm from './StoreForm.jsx';
@@ -52,6 +53,8 @@ export default function AdminStoresPage({ user, onLogout }) {
       )}
 
       {status === 'ok' && stores.length > 0 && <RecommendedStores stores={stores.filter((s) => s.is_approved && s.is_listed)} onChanged={refresh} />}
+
+      {status === 'ok' && stores.length > 0 && <PromotedProductsAdmin />}
 
       <ul className="a-store-list">
         {status === 'ok' && stores.length === 0 && <li className="a-empty">Todavía no hay tiendas.</li>}

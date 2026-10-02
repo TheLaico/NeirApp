@@ -113,12 +113,25 @@ export default function MapPage({ user, onLogout }) {
     scrollToCatalog();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Llegada desde "Ver mapa" o una marca del inicio con una tienda concreta (?tienda=<id>).
+  // Llegada desde "Ver mapa" o una marca del inicio con una tienda concreta (?tienda=<id>). Desde "Productos
+  // recomendados" llega además el producto (?producto=<id>): se abre su ficha, lista para agregarlo al carrito.
   const [deepLinkId] = useState(() => new URLSearchParams(window.location.search).get('tienda'));
+  const [deepLinkProduct] = useState(() => new URLSearchParams(window.location.search).get('producto'));
   useEffect(() => {
     if (!deepLinkId || status !== 'ok') return;
     const store = stores.find((s) => s.id === deepLinkId);
-    if (store) openStore(store);
+    if (store) {
+      openStore(store);
+      if (deepLinkProduct) {
+        fetch(`/api/v1/stores/${store.id}/products`)
+          .then((res) => (res.ok ? res.json() : []))
+          .then((list) => {
+            const found = list.find((p) => p.id === deepLinkProduct);
+            if (found) setProduct(found);
+          })
+          .catch(() => {});
+      }
+    }
     window.history.replaceState(null, '', '/mapa');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deepLinkId, status, stores]);

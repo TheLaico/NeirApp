@@ -32,6 +32,9 @@ from neirapp.modules.stores.presentation.schemas import (
     CreateProductRequest,
     CreateStoreRequest,
     ProductResponse,
+    PromotionResponse,
+    RejectPromotionRequest,
+    RequestPromotionRequest,
     ScheduleResponse,
     SearchResultResponse,
     SetProductAvailabilityRequest,
@@ -343,3 +346,80 @@ async def search_products(
         SearchProductsQuery(text=q, category=category, max_price_cop=max_price_cop, sort=sort)
     )
     return [SearchResultResponse.from_domain(stores.clock.now(), r) for r in results]
+
+
+# --- Productos destacados -----------------------------------------------------
+# El comerciante paga $ 7.000 por fuera y reporta el comprobante; el administrador lo confirma y el
+# producto sale 30 días en "Productos recomendados" del inicio, en la categoría de su tienda.
+
+
+@router.get("/products/promoted", response_model=list[SearchResultResponse])
+async def list_promoted_products(stores: StoresDep) -> list[SearchResultResponse]:
+    """Público: los productos destacados hoy (con su tienda, para filtrar por categoría)."""
+    results = await stores.list_promoted_products()
+    return [SearchResultResponse.from_domain(stores.clock.now(), r) for r in results]
+
+
+@router.get("/stores/{store_id}/promotions", response_model=list[PromotionResponse])
+async def list_my_promotions(
+    store_id: UUID, user: CurrentUser, stores: StoresDep
+) -> list[PromotionResponse]:
+    views = await stores.list_my_promotions(store_id, user.id)
+    now = stores.clock.now()
+    return [PromotionResponse.from_view(now, v) for v in views]
+
+
+@router.post(
+    "/stores/{store_id}/promotions",
+    response_model=PromotionResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def request_promotion(
+    store_id: UUID, body: RequestPromotionRequest, user: CurrentUser, stores: StoresDep
+) -> PromotionResponse:
+    """El dueño reporta que pagó para destacar uno de sus productos."""
+    view = await stores.request_promotion(store_id, user.id, body.product_id, body.reference)
+    return PromotionResponse.from_view(stores.clock.now(), view)
+
+
+@router.delete("/stores/{store_id}/promotions/{promotion_id}", response_model=PromotionResponse)
+async def cancel_promotion(
+    store_id: UUID, promotion_id: UUID, user: CurrentUser, stores: StoresDep
+) -> PromotionResponse:
+    """Cancela un pago que todavía no se ha revisado."""
+    view = await stores.cancel_promotion(store_id, user.id, promotion_id)
+    return PromotionResponse.from_view(stores.clock.now(), view)
+
+
+@router.get("/admin/product-promotions", response_model=list[PromotionResponse])
+async def list_promotions_for_admin(
+    _admin: RequireAdmin, stores: StoresDep
+) -> list[PromotionResponse]:
+    views = await stores.list_promotions_for_admin()
+    now = stores.clock.now()
+    return [PromotionResponse.from_view(now, v) for v in views]
+
+
+@router.post("/admin/product-promotions/{promotion_id}/approve", response_model=PromotionResponse)
+async def approve_promotion(
+    promotion_id: UUID, _admin: RequireAdmin, stores: StoresDep
+) -> PromotionResponse:
+    view = await stores.approve_promotion(promotion_id)
+    return PromotionResponse.from_view(stores.clock.now(), view)
+
+
+@router.post("/admin/product-promotions/{promotion_id}/reject", response_model=PromotionResponse)
+async def reject_promotion(
+    promotion_id: UUID, body: RejectPromotionRequest, _admin: RequireAdmin, stores: StoresDep
+) -> PromotionResponse:
+    view = await stores.reject_promotion(promotion_id, body.note)
+    return PromotionResponse.from_view(stores.clock.now(), view)
+
+
+@router.post("/admin/product-promotions/{promotion_id}/end", response_model=PromotionResponse)
+async def end_promotion(
+    promotion_id: UUID, _admin: RequireAdmin, stores: StoresDep
+) -> PromotionResponse:
+    """Deja de destacar el producto desde ya."""
+    view = await stores.end_promotion(promotion_id)
+    return PromotionResponse.from_view(stores.clock.now(), view)

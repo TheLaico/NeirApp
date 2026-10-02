@@ -1,4 +1,9 @@
-from neirapp.shared.domain.errors import NotFoundError, PermissionDeniedError, ValidationError
+from neirapp.shared.domain.errors import (
+    ConflictError,
+    NotFoundError,
+    PermissionDeniedError,
+    ValidationError,
+)
 
 
 class StoreNotFound(NotFoundError):
@@ -122,3 +127,51 @@ class InvalidStorePosition(ValidationError):
     @classmethod
     def default_message(cls) -> str:
         return "Para cambiar la posición envía la latitud y la longitud juntas."
+
+
+class InvalidPromotionReference(ValidationError):
+    code = "invalid_promotion_reference"
+
+    @classmethod
+    def default_message(cls) -> str:
+        return "El comprobante puede tener hasta 120 caracteres."
+
+
+class InvalidPromotionTransition(ConflictError):
+    code = "invalid_promotion_transition"
+
+    @classmethod
+    def default_message(cls) -> str:
+        return "Este pago ya fue revisado."
+
+
+class PromotionPending(ConflictError):
+    code = "promotion_pending"
+
+    @classmethod
+    def default_message(cls) -> str:
+        return "Ya enviaste el pago para destacar este producto; estamos confirmándolo."
+
+
+class PromotionNotFound(NotFoundError):
+    code = "promotion_not_found"
+
+    @classmethod
+    def default_message(cls) -> str:
+        return "Pago no encontrado."
+
+
+class MissingPromotionNote(ValidationError):
+    code = "missing_promotion_note"
+
+    @classmethod
+    def default_message(cls) -> str:
+        return "Escribe el motivo."
+
+
+class ProductNotPromotable(ValidationError):
+    code = "product_not_promotable"
+
+    @classmethod
+    def default_message(cls) -> str:
+        return "Solo se destacan productos disponibles, que se puedan agregar al carrito."

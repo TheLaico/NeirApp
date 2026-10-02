@@ -80,3 +80,23 @@ class StoreProductModel(Base):
     image_url: Mapped[str | None] = mapped_column(String(2048))
     is_available: Mapped[bool] = mapped_column(default=True)
     created_at: Mapped[datetime] = mapped_column(UTCDateTime)
+
+
+class StoreProductPromotionModel(Base):
+    """Pago para destacar un producto en "Productos recomendados" (ver domain/promotions.py)."""
+
+    __tablename__ = "store_product_promotions"
+
+    id: Mapped[UUID] = mapped_column(Uuid, primary_key=True)
+    store_id: Mapped[UUID] = mapped_column(ForeignKey("stores.id", ondelete="CASCADE"), index=True)
+    product_id: Mapped[UUID] = mapped_column(
+        ForeignKey("store_products.id", ondelete="CASCADE"), index=True
+    )
+    status: Mapped[str] = mapped_column(String(10), index=True)
+    amount_cop: Mapped[int] = mapped_column(Integer)
+    reference: Mapped[str] = mapped_column(String(120))
+    note: Mapped[str] = mapped_column(String(300))
+    requested_at: Mapped[datetime] = mapped_column(UTCDateTime)
+    reviewed_at: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    starts_at: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    expires_at: Mapped[datetime | None] = mapped_column(UTCDateTime, index=True)

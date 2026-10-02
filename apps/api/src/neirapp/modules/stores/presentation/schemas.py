@@ -4,7 +4,9 @@ from uuid import UUID
 from pydantic import BaseModel, Field
 
 from neirapp.modules.stores.application.dto import ProductWithStore
+from neirapp.modules.stores.application.promotions import PromotionView
 from neirapp.modules.stores.domain.entities import Product, Store, StoreCategory
+from neirapp.modules.stores.domain.promotions import PromotionStatus
 from neirapp.modules.stores.domain.schedule import ClosedReason, local_time
 
 
@@ -203,4 +205,54 @@ class SearchResultResponse(BaseModel):
         return cls(
             product=ProductResponse.from_domain(result.product),
             store=StoreResponse.from_domain(now, result.store),
+        )
+
+
+class RequestPromotionRequest(BaseModel):
+    product_id: UUID
+    reference: str = Field(default="", max_length=120, description="Comprobante del pago.")
+
+
+class RejectPromotionRequest(BaseModel):
+    note: str = Field(min_length=1, max_length=300)
+
+
+class PromotionResponse(BaseModel):
+    """Un pago para destacar un producto. `product`/`store` son `None` si ya se borraron."""
+
+    id: UUID
+    store_id: UUID
+    product_id: UUID
+    status: PromotionStatus
+    amount_cop: int
+    reference: str
+    note: str
+    requested_at: datetime
+    reviewed_at: datetime | None
+    starts_at: datetime | None
+    expires_at: datetime | None
+    is_active: bool
+    product: ProductResponse | None
+    store_name: str | None
+    store_category: StoreCategory | None
+
+    @classmethod
+    def from_view(cls, now: datetime, view: PromotionView) -> "PromotionResponse":
+        p = view.promotion
+        return cls(
+            id=p.id,
+            store_id=p.store_id,
+            product_id=p.product_id,
+            status=p.status,
+            amount_cop=p.amount_cop,
+            reference=p.reference,
+            note=p.note,
+            requested_at=p.requested_at,
+            reviewed_at=p.reviewed_at,
+            starts_at=p.starts_at,
+            expires_at=p.expires_at,
+            is_active=p.is_active(now),
+            product=ProductResponse.from_domain(view.product) if view.product else None,
+            store_name=view.store.name if view.store else None,
+            store_category=view.store.category if view.store else None,
         )

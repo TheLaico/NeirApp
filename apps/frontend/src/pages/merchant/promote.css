@@ -1,0 +1,15 @@
+/* "Destacar productos" del panel del comerciante (PromoteView). */
+.cr-card h2 svg { vertical-align: -3px; }
+.pm-step { display: block; margin-bottom: 6px; font-size: 14px; }
+.pm-methods { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.pm-methods li { display: flex; justify-content: space-between; gap: 10px; padding: 10px 14px; border-radius: 12px; background: #f1f4e6; font-size: 14px; }
+.pm-item { display: flex; align-items: center; gap: 12px; }
+.pm-item > div { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.pm-item strong { font-size: 15px; color: #14392a; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pm-item small { font-size: 12.5px; }
+.pm-status { display: inline-flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 700; }
+.pm-status.ok { color: var(--g); }
+.pm-status.wait { color: #a86a00; }
+.pm-status.bad { color: #9b3d28; }
+.pm-status.muted { color: var(--muted); }
+.pm-cancel.cr-btn { width: auto; flex: none; }

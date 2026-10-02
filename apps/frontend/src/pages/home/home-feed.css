@@ -162,6 +162,41 @@
   font-size: 12px; font-weight: 700; color: var(--ink);
 }
 .feed-brand-rating.muted { color: var(--muted); font-weight: 600; }
+/* Tiendas que recomienda el administrador: etiqueta dorada abajo, sobre el logo. */
+.feed-brand-rec {
+  position: absolute; left: 50%; bottom: 6px; transform: translateX(-50%); display: inline-flex; align-items: center; gap: 3px;
+  padding: 2px 8px; border-radius: 999px; background: linear-gradient(120deg, #e8a92c, #f6d36b); color: #3d2a00;
+  font-size: 10.5px; font-weight: 800; white-space: nowrap; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+}
+
+/* ---------- Productos recomendados (pagados por los comerciantes) ---------- */
+.feed-chips { display: flex; gap: 8px; margin-bottom: 12px; overflow-x: auto; scrollbar-width: none; }
+.feed-chips::-webkit-scrollbar { display: none; }
+.feed-chips button {
+  flex: none; min-height: 34px; padding: 0 14px; border: 1.5px solid #c3cdb8; border-radius: 999px; background: #fff;
+  color: var(--ink); font: inherit; font-size: 13.5px; font-weight: 600; cursor: pointer;
+}
+.feed-chips button.on { border-color: var(--orange); background: var(--orange); color: #fff; }
+.feed-products {
+  list-style: none; padding: 0 0 4px; display: grid; grid-auto-flow: column; grid-auto-columns: 160px; gap: 12px;
+  overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: thin;
+}
+.feed-products li { scroll-snap-align: start; }
+.feed-product {
+  display: flex; flex-direction: column; width: 100%; height: 100%; padding: 0; overflow: hidden; border: 1px solid var(--line);
+  border-radius: 16px; background: var(--card); font: inherit; color: var(--ink); text-align: left; cursor: pointer;
+  transition: box-shadow 0.15s, transform 0.15s;
+}
+.feed-product:hover { box-shadow: 0 6px 16px rgba(35, 52, 43, 0.12); transform: translateY(-1px); }
+.feed-product-img { display: grid; place-items: center; width: 100%; aspect-ratio: 1; background: #eef1e2; }
+.feed-product-img img { width: 100%; height: 100%; object-fit: cover; }
+.feed-product-info { display: flex; flex-direction: column; gap: 2px; padding: 9px 11px 11px; min-width: 0; }
+.feed-product-info strong {
+  font-size: 13.5px; line-height: 1.25; color: #14392a; overflow: hidden;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2;
+}
+.feed-product-price { font-size: 14px; font-weight: 800; color: var(--orange); }
+.feed-product-store { font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 .feed-more-list { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 10px; }
 .feed-more-item {

@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from neirapp.modules.stores.infrastructure.repositories import (
     SqlAlchemyProductRepository,
+    SqlAlchemyPromotionRepository,
     SqlAlchemyStoreRepository,
 )
 
@@ -18,6 +19,7 @@ class SqlAlchemyUnitOfWork:
         self._session = self._session_factory()
         self.stores = SqlAlchemyStoreRepository(self._session)
         self.products = SqlAlchemyProductRepository(self._session)
+        self.promotions = SqlAlchemyPromotionRepository(self._session)
         return self
 
     async def __aexit__(

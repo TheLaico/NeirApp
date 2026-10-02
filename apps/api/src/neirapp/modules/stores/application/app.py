@@ -9,6 +9,16 @@ from neirapp.modules.stores.application.products import (
     SetProductAvailability,
     UpdateProduct,
 )
+from neirapp.modules.stores.application.promotions import (
+    ApprovePromotion,
+    CancelPromotion,
+    EndPromotion,
+    ListMyPromotions,
+    ListPromotedProducts,
+    ListPromotionsForAdmin,
+    RejectPromotion,
+    RequestPromotion,
+)
 from neirapp.modules.stores.application.stores import (
     AddClosedDate,
     AdminCreateStore,
@@ -58,3 +68,13 @@ class StoresApp:
     delete_product: DeleteProduct
     search_products: SearchProducts
     get_product_raw: GetProductRaw
+
+    # Productos destacados (pagos de $ 7.000 que confirma el administrador).
+    list_my_promotions: ListMyPromotions
+    request_promotion: RequestPromotion
+    cancel_promotion: CancelPromotion
+    list_promoted_products: ListPromotedProducts
+    list_promotions_for_admin: ListPromotionsForAdmin
+    approve_promotion: ApprovePromotion
+    reject_promotion: RejectPromotion
+    end_promotion: EndPromotion

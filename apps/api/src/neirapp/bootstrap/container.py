@@ -269,6 +269,16 @@ from neirapp.modules.stores.application.products import (
     SetProductAvailability,
     UpdateProduct,
 )
+from neirapp.modules.stores.application.promotions import (
+    ApprovePromotion,
+    CancelPromotion,
+    EndPromotion,
+    ListMyPromotions,
+    ListPromotedProducts,
+    ListPromotionsForAdmin,
+    RejectPromotion,
+    RequestPromotion,
+)
 from neirapp.modules.stores.application.stores import (
     AddClosedDate,
     AdminCreateStore,
@@ -408,6 +418,14 @@ def build_stores(session_factory: async_sessionmaker[Any], clock: Clock | None =
         delete_product=DeleteProduct(uow_factory),
         search_products=SearchProducts(uow_factory),
         get_product_raw=GetProductRaw(uow_factory),
+        list_my_promotions=ListMyPromotions(uow_factory),
+        request_promotion=RequestPromotion(uow_factory, clock),
+        cancel_promotion=CancelPromotion(uow_factory),
+        list_promoted_products=ListPromotedProducts(uow_factory, clock),
+        list_promotions_for_admin=ListPromotionsForAdmin(uow_factory),
+        approve_promotion=ApprovePromotion(uow_factory, clock),
+        reject_promotion=RejectPromotion(uow_factory, clock),
+        end_promotion=EndPromotion(uow_factory, clock),
     )
 
 

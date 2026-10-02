@@ -48,6 +48,7 @@ export function normalizeStore(store) {
   return {
     id: store.id,
     name: store.name,
+    category: store.category,
     label: CATEGORY_LABEL[store.category] ?? 'Tienda',
     group,
     rating: store.rating,

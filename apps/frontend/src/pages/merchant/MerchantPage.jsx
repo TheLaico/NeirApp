@@ -16,6 +16,7 @@ import { NAV, NoticesCard, PromoCard, TodayCard } from './desktop/widgets.jsx';
 import HistoryView from './HistoryView.jsx';
 import OrdersView from './OrdersView.jsx';
 import ProductsView from './ProductsView.jsx';
+import PromoteView from './PromoteView.jsx';
 import ReviewsView from './ReviewsView.jsx';
 import ScheduleView from './ScheduleView.jsx';
 import StoreView from './StoreView.jsx';
@@ -87,6 +88,8 @@ export default function MerchantPage({ user, onLogout }) {
     content = null; // el Resumen se arma más abajo, distinto en escritorio y en celular
   } else if (view === 'products') {
     content = <ProductsView store={store} query={query} />;
+  } else if (view === 'promote') {
+    content = <PromoteView store={store} />;
   } else if (view === 'store') {
     content = <StoreView key={store.id} store={store} onChanged={mine.refresh} />;
   } else if (view === 'schedule') {

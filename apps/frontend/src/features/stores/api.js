@@ -94,6 +94,32 @@ export function useStoreSchedule(storeId) {
   return schedule;
 }
 
+// Productos destacados: el comerciante paga $ 7.000 y su producto sale en "Productos recomendados" del inicio
+// durante PROMOTION_DAYS días, una vez el administrador confirma el pago (mismos valores que la API).
+export const PROMOTION_FEE_COP = 7000;
+export const PROMOTION_DAYS = 30;
+
+/** Productos destacados hoy (público), con su tienda normalizada. status: 'loading' | 'ok' | 'error' */
+export function usePromotedProducts() {
+  const [state, setState] = useState({ items: [], status: 'loading' });
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch(`${API}/products/promoted`, { signal: controller.signal })
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
+      .then((data) => setState({ items: data.map((r) => ({ product: r.product, store: normalizeStore(r.store) })), status: 'ok' }))
+      .catch((err) => {
+        if (err.name !== 'AbortError') setState({ items: [], status: 'error' });
+      });
+    return () => controller.abort();
+  }, []);
+
+  return state;
+}
+
 // Endpoints que exigen sesión: los usa el panel de administrador y el del comerciante.
 export const storesApi = {
   // Solo administrador: cambia el dueño (owner_email), la posición (lat, lng) o si aparece en el mapa (is_listed).
@@ -103,6 +129,16 @@ export const storesApi = {
   // Solo administrador: crea la tienda de un comerciante (por su correo); nace aprobada.
   adminCreate: (body) => authRequest(`${API}/admin/stores`, { method: 'POST', body }),
   mine: () => authRequest(`${API}/stores/me`),
+  // Productos destacados: los pagos de la tienda, reportar uno nuevo y cancelar el que sigue en revisión.
+  promotions: (storeId) => authRequest(`${API}/stores/${storeId}/promotions`),
+  requestPromotion: (storeId, productId, reference) =>
+    authRequest(`${API}/stores/${storeId}/promotions`, { method: 'POST', body: { product_id: productId, reference } }),
+  cancelPromotion: (storeId, promotionId) => authRequest(`${API}/stores/${storeId}/promotions/${promotionId}`, { method: 'DELETE' }),
+  // Solo administrador: confirmar, rechazar o quitar los pagos para destacar productos.
+  adminPromotions: () => authRequest(`${API}/admin/product-promotions`),
+  approvePromotion: (id) => authRequest(`${API}/admin/product-promotions/${id}/approve`, { method: 'POST' }),
+  rejectPromotion: (id, note) => authRequest(`${API}/admin/product-promotions/${id}/reject`, { method: 'POST', body: { note } }),
+  endPromotion: (id) => authRequest(`${API}/admin/product-promotions/${id}/end`, { method: 'POST' }),
   // Perfil de la tienda: name, category, description, image_url ('' quita la foto).
   update: (storeId, body) => authRequest(`${API}/stores/${storeId}`, { method: 'PATCH', body }),
   setOpen: (storeId, isOpen) => authRequest(`${API}/stores/${storeId}/open`, { method: 'PATCH', body: { is_open: isOpen } }),

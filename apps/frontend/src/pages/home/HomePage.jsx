@@ -16,7 +16,9 @@ import { Leaf } from '../../components/common/Leaf.jsx';
 import cardVerMapa from '../../assets/card-ver-mapa.png';
 import fondoBuscador from '../../assets/fondo-buscador.png';
 import { useProfessionalDirectory } from '../../features/professionals/directory.js';
-import { useStores } from '../../features/stores/api.js';
+import { usePromotedProducts, useStores } from '../../features/stores/api.js';
+import { CATEGORY_LABEL } from '../../features/stores/categories.jsx';
+import { formatCop } from '../../lib/money.js';
 import { useNavigate } from '../../lib/router.jsx';
 import { TOP_CATS, categoryPath } from './categories.jsx';
 import './home-feed.css';
@@ -169,6 +171,53 @@ function RecommendedProfessionals({ onOpen, onSeeAll }) {
   );
 }
 
+/**
+ * "Productos recomendados": los que los comerciantes pagaron por destacar ($ 7.000, ver "Destacar productos" en su
+ * panel). Se filtran por la categoría de la tienda y, al tocarlos, se abre el producto en el mapa listo para el carrito.
+ */
+function RecommendedProducts({ onOpen }) {
+  const { items } = usePromotedProducts();
+  const [category, setCategory] = useState('all');
+  const categories = [...new Set(items.map((i) => i.store.category))].filter((c) => CATEGORY_LABEL[c]);
+  if (items.length === 0) return null;
+  const shown = category === 'all' ? items : items.filter((i) => i.store.category === category);
+  return (
+    <section className="feed-section" aria-labelledby="feed-products">
+      <header className="feed-section-head">
+        <h2 id="feed-products">Productos recomendados</h2>
+      </header>
+      {categories.length > 1 && (
+        <div className="feed-chips" role="group" aria-label="Filtrar por categoría">
+          {['all', ...categories].map((c) => (
+            <button key={c} type="button" className={category === c ? 'on' : ''} aria-pressed={category === c} onClick={() => setCategory(c)}>
+              {c === 'all' ? 'Todos' : CATEGORY_LABEL[c]}
+            </button>
+          ))}
+        </div>
+      )}
+      <ul className="feed-products">
+        {shown.map(({ product, store }) => {
+          const { Icon } = store;
+          return (
+            <li key={product.id}>
+              <button type="button" className="feed-product" onClick={() => onOpen({ product, store })}>
+                <span className="feed-product-img" style={product.image_url ? undefined : { background: store.color }}>
+                  {product.image_url ? <img src={product.image_url} alt="" loading="lazy" /> : <Icon size={30} color="#fff" aria-hidden="true" />}
+                </span>
+                <span className="feed-product-info">
+                  <strong>{product.name}</strong>
+                  <span className="feed-product-price">{formatCop(product.price_cop)}</span>
+                  <span className="feed-product-store">{store.name}</span>
+                </span>
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  );
+}
+
 function BrandCard({ store, onOpen }) {
   const { Icon } = store;
   return (
@@ -180,6 +229,11 @@ function BrandCard({ store, onOpen }) {
           <img className="feed-brand-logo" src={store.logo_url} alt="" loading="lazy" />
         ) : (
           <Icon size={34} color="#fff" aria-hidden="true" />
+        )}
+        {store.recommended_position != null && (
+          <span className="feed-brand-rec">
+            <Crown size={11} aria-hidden="true" /> Recomendado
+          </span>
         )}
         {store.rating ? (
           <span className="feed-brand-rating">
@@ -214,6 +268,9 @@ export default function HomePage({ user, onLogout }) {
   const brands = useMemo(() => {
     const q = normalize(query.trim());
     const matches = stores.filter((s) => !q || normalize(`${s.name} ${s.label}`).includes(q));
+    // Las recomendadas por el administrador van primero, en su orden; después, las demás.
+    const rank = (s) => s.recommended_position ?? Infinity;
+    matches.sort((a, b) => rank(a) - rank(b));
     // Sin búsqueda activa, solo se destacan unas pocas; con búsqueda, se ven todos los resultados.
     return filtering ? matches : matches.slice(0, 6);
   }, [stores, query, filtering]);
@@ -325,6 +382,8 @@ export default function HomePage({ user, onLogout }) {
             ))}
           </div>
         </section>
+
+        {!filtering && <RecommendedProducts onOpen={({ product, store }) => navigate(`/mapa?tienda=${store.id}&producto=${product.id}`)} />}
 
         <RecommendedProfessionals onOpen={(p) => navigate(`/profesionales/perfil?id=${p.id}`)} onSeeAll={() => navigate('/profesionales')} />
 

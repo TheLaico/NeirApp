@@ -5,12 +5,14 @@ from sqlalchemy import ColumnElement, asc, case, delete, desc, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from neirapp.modules.stores.domain.entities import Product, Store, StoreCategory
+from neirapp.modules.stores.domain.promotions import ProductPromotion, PromotionStatus
 from neirapp.modules.stores.domain.schedule import ClosedDate, DayHours, StoreSchedule
 from neirapp.modules.stores.infrastructure.models import (
     StoreClosedDateModel,
     StoreHoursModel,
     StoreModel,
     StoreProductModel,
+    StoreProductPromotionModel,
 )
 
 
@@ -294,3 +296,61 @@ class SqlAlchemyProductRepository:
         await self._session.execute(
             delete(StoreProductModel).where(StoreProductModel.id == product_id)
         )
+
+
+def _to_promotion(model: StoreProductPromotionModel) -> ProductPromotion:
+    return ProductPromotion(
+        id=model.id,
+        store_id=model.store_id,
+        product_id=model.product_id,
+        status=PromotionStatus(model.status),
+        amount_cop=model.amount_cop,
+        reference=model.reference,
+        note=model.note,
+        requested_at=model.requested_at,
+        reviewed_at=model.reviewed_at,
+        starts_at=model.starts_at,
+        expires_at=model.expires_at,
+    )
+
+
+class SqlAlchemyPromotionRepository:
+    def __init__(self, session: AsyncSession) -> None:
+        self._session = session
+
+    async def save(self, promotion: ProductPromotion) -> None:
+        model = await self._session.get(StoreProductPromotionModel, promotion.id)
+        if model is None:
+            model = StoreProductPromotionModel(id=promotion.id)
+            self._session.add(model)
+        model.store_id = promotion.store_id
+        model.product_id = promotion.product_id
+        model.status = promotion.status.value
+        model.amount_cop = promotion.amount_cop
+        model.reference = promotion.reference
+        model.note = promotion.note
+        model.requested_at = promotion.requested_at
+        model.reviewed_at = promotion.reviewed_at
+        model.starts_at = promotion.starts_at
+        model.expires_at = promotion.expires_at
+        await self._session.flush()
+
+    async def get(self, promotion_id: UUID) -> ProductPromotion | None:
+        model = await self._session.get(StoreProductPromotionModel, promotion_id)
+        return _to_promotion(model) if model else None
+
+    async def list_by_store(self, store_id: UUID) -> list[ProductPromotion]:
+        result = await self._session.execute(
+            select(StoreProductPromotionModel)
+            .where(StoreProductPromotionModel.store_id == store_id)
+            .order_by(desc(StoreProductPromotionModel.requested_at))
+        )
+        return [_to_promotion(m) for m in result.scalars()]
+
+    async def list_all(self) -> list[ProductPromotion]:
+        result = await self._session.execute(
+            select(StoreProductPromotionModel).order_by(
+                desc(StoreProductPromotionModel.requested_at)
+            )
+        )
+        return [_to_promotion(m) for m in result.scalars()]

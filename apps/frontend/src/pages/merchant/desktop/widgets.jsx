@@ -11,6 +11,7 @@ export const NAV = [
   { key: 'dashboard', label: 'Resumen', icon: 'home' },
   { key: 'orders', label: 'Pedidos', icon: 'bag' },
   { key: 'products', label: 'Mis productos', icon: 'box' },
+  { key: 'promote', label: 'Destacar productos', icon: 'award' },
   { key: 'store', label: 'Mi tienda', icon: 'shop' },
   { key: 'schedule', label: 'Horarios', icon: 'calendar' },
   { key: 'reviews', label: 'Calificaciones', icon: 'star' },
