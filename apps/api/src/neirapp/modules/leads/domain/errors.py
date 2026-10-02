@@ -31,3 +31,43 @@ class LeadNotFound(NotFoundError):
     @classmethod
     def default_message(cls) -> str:
         return "Solicitud no encontrada."
+
+
+class InvalidApplicationRole(ValidationError):
+    code = "invalid_application_role"
+
+    @classmethod
+    def default_message(cls) -> str:
+        return "Elige cómo quieres formar parte de NeirAPP."
+
+
+class InvalidDocumentNumber(ValidationError):
+    code = "invalid_document_number"
+
+    @classmethod
+    def default_message(cls) -> str:
+        return "Escribe tu número de documento (entre 5 y 15 dígitos)."
+
+
+class InvalidContactEmail(ValidationError):
+    code = "invalid_contact_email"
+
+    @classmethod
+    def default_message(cls) -> str:
+        return "Escribe un correo electrónico válido."
+
+
+class MissingCompanyName(ValidationError):
+    code = "missing_company_name"
+
+    @classmethod
+    def default_message(cls) -> str:
+        return "Escribe el nombre de la empresa o del negocio."
+
+
+class InvalidApplicationDetails(ValidationError):
+    code = "invalid_application_details"
+
+    @classmethod
+    def default_message(cls) -> str:
+        return "Revisa los datos del formulario: alguno es demasiado largo."

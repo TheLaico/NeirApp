@@ -190,3 +190,20 @@
 @media (max-width: 800px) { .a-lg-banner { grid-template-columns: 1fr; } }
 .a-lg-actions { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 10px; }
 .a-lg-plan { display: inline-flex; flex-wrap: wrap; gap: 8px; }
+
+/* ---------- Solicitudes de "¿Quieres formar parte de NeirAPP?" (RoleApplications.jsx) ---------- */
+.a-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 6px; }
+.a-chips button {
+  min-height: 34px; padding: 0 12px; border: 1.5px solid #c3cdb8; border-radius: 999px; background: #fff;
+  font: inherit; font-size: 13px; font-weight: 600; color: var(--ink); cursor: pointer;
+}
+.a-chips button.on { border-color: var(--g); background: #e6efdc; color: var(--g); }
+.a-store-info .ra-role { font-weight: 700; color: var(--g); }
+.ra-contact { flex-wrap: wrap; gap: 4px 14px !important; }
+.ra-contact a { display: inline-flex; align-items: center; gap: 4px; color: var(--g); font-weight: 600; }
+.ra-details { margin-top: 10px; padding: 12px 14px; border-radius: 12px; background: #f4f6ec; }
+.ra-details dl { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px 16px; margin: 0 0 10px; }
+.ra-details dt { font-size: 12px; font-weight: 700; color: var(--muted); }
+.ra-details dd { margin: 0; font-size: 14px; color: var(--ink); }
+.ra-message { margin-bottom: 10px; font-size: 14px; font-style: italic; color: var(--ink); }
+.ra-details .a-badge { display: inline-flex; align-items: center; gap: 4px; align-self: center; }

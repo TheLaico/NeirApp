@@ -59,6 +59,9 @@ async function request(path, { method = 'GET', body, token } = {}) {
   return data;
 }
 
+/** Para endpoints públicos (sin sesión), con el mismo manejo de errores que el resto de la API. */
+export const publicRequest = (path, options) => request(path, options);
+
 export const getSession = () => {
   const stored = readStored();
   return stored?.user ? { ...stored.user, role: uiRole(stored.user.email, stored.user.roles) } : null;

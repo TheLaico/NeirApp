@@ -83,8 +83,16 @@ from neirapp.modules.incidents.infrastructure.unit_of_work import (
     SqlAlchemyUnitOfWork as IncidentsSqlAlchemyUnitOfWork,
 )
 from neirapp.modules.leads.application.app import LeadsApp
+from neirapp.modules.leads.application.applications import (
+    ListApplications,
+    SetApplicationContacted,
+    SubmitApplication,
+)
 from neirapp.modules.leads.application.leads import ListLeads, SetLeadContacted, SubmitLead
-from neirapp.modules.leads.infrastructure.store import SqlAlchemyLeadStore
+from neirapp.modules.leads.infrastructure.store import (
+    SqlAlchemyApplicationStore,
+    SqlAlchemyLeadStore,
+)
 from neirapp.modules.lodging.application import plans as lodging_plans
 from neirapp.modules.lodging.application import use_cases as lodging
 from neirapp.modules.lodging.application.app import LodgingApp
@@ -700,10 +708,15 @@ def build_rides(
 
 def build_leads(session_factory: async_sessionmaker[Any], clock: Clock | None = None) -> LeadsApp:
     store = SqlAlchemyLeadStore(session_factory)
+    applications = SqlAlchemyApplicationStore(session_factory)
+    clock = clock or SystemClock()
     return LeadsApp(
-        submit_lead=SubmitLead(store, clock or SystemClock()),
+        submit_lead=SubmitLead(store, clock),
         list_leads=ListLeads(store),
         set_lead_contacted=SetLeadContacted(store),
+        submit_application=SubmitApplication(applications, clock),
+        list_applications=ListApplications(applications),
+        set_application_contacted=SetApplicationContacted(applications),
     )
 
 

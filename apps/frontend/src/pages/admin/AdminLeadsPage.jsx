@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { usePolled } from '../../features/courier/api.js';
 import { leadsApi } from '../../features/leads/api.js';
 import AdminLayout from './AdminLayout.jsx';
+import RoleApplications from './RoleApplications.jsx';
 
 const date = (iso) => new Date(iso).toLocaleString('es-CO', { dateStyle: 'medium', timeStyle: 'short' });
 
@@ -31,8 +32,10 @@ export default function AdminLeadsPage({ user, onLogout }) {
       user={user}
       onLogout={onLogout}
       title="Solicitudes"
-      subtitle="Negocios que dejaron sus datos para que un asesor se ponga en contacto. Márcalos cuando ya los hayas llamado."
+      subtitle="Personas que quieren formar parte de NeirAPP y negocios que dejaron sus datos para que un asesor se ponga en contacto."
     >
+      <RoleApplications />
+
       <section className="a-card">
         <h2>
           Negocios interesados{data ? ` (${data.length})` : ''}

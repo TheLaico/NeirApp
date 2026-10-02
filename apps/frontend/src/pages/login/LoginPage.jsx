@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import AuthScreen from '../../components/auth/AuthScreen.jsx';
+import JoinMenu from '../../components/auth/JoinMenu.jsx';
 import Field from '../../components/auth/Field.jsx';
 import SocialButtons from '../../components/auth/SocialButtons.jsx';
 import SubmitButton from '../../components/auth/SubmitButton.jsx';
@@ -39,6 +40,7 @@ export default function LoginPage({ onGoRegister, onSuccess }) {
   return (
     <AuthScreen
       variant="login"
+      topSlot={<JoinMenu />}
       title="Iniciar sesión"
       subtitle={
         <>
