@@ -9,9 +9,14 @@ function StoreCard({ store, onSelect }) {
   const { Icon } = store;
   return (
     <button type="button" className="store-card" onClick={() => onSelect(store)}>
-      <span className="store-ico" style={{ background: store.color }}>
-        <Icon size={34} color="#fff" aria-hidden="true" />
-      </span>
+      {/* El logo que sube el comerciante en "Mi tienda"; sin logo, el ícono y el color de su categoría. */}
+      {store.logo_url ? (
+        <img className="store-ico store-logo" src={store.logo_url} alt="" loading="lazy" />
+      ) : (
+        <span className="store-ico" style={{ background: store.color }}>
+          <Icon size={34} color="#fff" aria-hidden="true" />
+        </span>
+      )}
       <span className="store-info">
         <strong>{store.name}</strong>
         <span className="store-cat">{store.label}</span>
