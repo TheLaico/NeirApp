@@ -1,4 +1,4 @@
-import { Building2, ChevronDown, LocateFixed, Menu, Minus, Mountain, Plus, X } from 'lucide-react';
+import { Building2, ChevronDown, List, LocateFixed, Map as MapIcon, Menu, Minus, Mountain, Plus, X } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import HeroSearch from '../../components/common/HeroSearch.jsx';
 import AppShell from '../../components/layout/AppShell.jsx';
@@ -14,6 +14,7 @@ import { useStores } from '../../features/stores/api.js';
 import { GROUPS } from '../../features/stores/categories.jsx';
 import { usePersistentState } from '../../lib/usePersistentState.js';
 import MapSearchResults from './MapSearchResults.jsx';
+import StoreListView from './StoreListView.jsx';
 import StorePanel from './StorePanel.jsx';
 
 const normalize = (t) => t.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
@@ -75,6 +76,8 @@ function useProductHits(query) {
 export default function MapPage({ user, onLogout }) {
   const { stores, status } = useStores();
   const [group, setGroup] = useState(null);
+  // Vista del centro: el mapa (por defecto) o las mismas tiendas en lista.
+  const [view, setView] = useState('map');
   const [query, setQuery] = useState('');
   const { prefs } = useSettings();
   const [showHint, setShowHint] = useState(prefs.mapHint);
@@ -283,10 +286,21 @@ export default function MapPage({ user, onLogout }) {
         cats={MAP_GROUPS}
         activeCat={group}
         onSelectCat={(id) => setGroup(group === id ? null : id)}
-      />
+      >
+        <div className={`view-toggle ${view}`} role="group" aria-label="Ver las tiendas en">
+          <span className="view-toggle-thumb" aria-hidden="true" />
+          <button type="button" aria-pressed={view === 'map'} onClick={() => setView('map')}>
+            <MapIcon size={18} aria-hidden="true" /> Mapa
+          </button>
+          <button type="button" aria-pressed={view === 'list'} onClick={() => setView('list')}>
+            <List size={18} aria-hidden="true" /> Lista
+          </button>
+        </div>
+      </HeroSearch>
 
       <main className="map-cell">
-        <section className="map-card" aria-label="Mapa de Neira">
+        <div className={`map-stage ${view}`}>
+        <section className="map-card" aria-label="Mapa de Neira" aria-hidden={view === 'list' || undefined}>
           <NeiraMap stores={visible} onSelectStore={openStore} onMapReady={onMapReady} showBuildings={showBuildings} theme={theme} className="map" />
           <MapAmbience />
 
@@ -418,6 +432,8 @@ export default function MapPage({ user, onLogout }) {
             <ChevronDown size={24} />
           </button>
         </section>
+        <StoreListView stores={visible} status={status} productsByStore={hits.byStore} onOpen={openStore} hidden={view !== 'list'} />
+        </div>
       </main>
 
       <StorePanel

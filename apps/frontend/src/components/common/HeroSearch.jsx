@@ -23,6 +23,8 @@ export default function HeroSearch({
   activeCat,
   onSelectCat,
   className = '',
+  // Lo que va debajo de las categorías (en el mapa: el selector Mapa | Lista).
+  children,
 }) {
   const [listening, setListening] = useState(false);
   const [focused, setFocused] = useState(false);
@@ -84,6 +86,7 @@ export default function HeroSearch({
           <CatCarousel cats={cats} activeId={activeCat} onSelect={onSelectCat} />
         </div>
       )}
+      {children}
     </section>
   );
 }
