@@ -5,6 +5,7 @@ import PanelDesktop from '../../components/panel/PanelDesktop.jsx';
 import PanelMobile from '../../components/panel/PanelMobile.jsx';
 import { canAccessAdmin } from '../../config/roles.js';
 import { lodgingApi } from '../../features/lodging/api.js';
+import { isActive } from '../../features/lodging/model.js';
 import { useNotifications } from '../../features/notifications/NotificationsContext.jsx';
 import { useNavigate } from '../../lib/router.jsx';
 import { useMediaQuery } from '../../lib/useMediaQuery.js';
@@ -15,6 +16,7 @@ import '../supplier/supplier-panel.css';
 import '../lodging/lodging.css';
 import HomeView from './HomeView.jsx';
 import HotelFormView from './HotelFormView.jsx';
+import PlanView from './PlanView.jsx';
 import ReservationsView from './ReservationsView.jsx';
 import ReviewsView from './ReviewsView.jsx';
 import './hotel-panel.css';
@@ -26,9 +28,10 @@ const NAV = [
   { key: 'hotel', label: 'Mi hotel', icon: 'shop' },
   { key: 'reservations', label: 'Reservas', icon: 'calendar' },
   { key: 'reviews', label: 'Reseñas', icon: 'star' },
+  { key: 'plan', label: 'Plan', icon: 'wallet' },
   { key: 'notifications', label: 'Notificaciones', icon: 'bell' },
 ];
-const TABS = NAV.slice(0, 4);
+const TABS = NAV.filter((n) => n.key !== 'notifications' && n.key !== 'reviews');
 
 /**
  * Panel del hospedaje: su información (fotos, servicios, ubicación en el mapa, precio), las solicitudes de reserva
@@ -43,7 +46,7 @@ export default function HotelPanelPage({ user, onLogout }) {
     return NAV.some((n) => n.key === section) ? section : 'home';
   });
   const { serverUnread: unread, reload: reloadNotices } = useNotifications();
-  const [state, setState] = useState({ hotel: null, reservations: [], reviews: [], loading: true, error: '' });
+  const [state, setState] = useState({ hotel: null, reservations: [], reviews: [], billing: null, loading: true, error: '' });
 
   const load = useCallback(async () => {
     try {
@@ -51,8 +54,10 @@ export default function HotelPanelPage({ user, onLogout }) {
         if (err.status === 404) return null;
         throw err;
       });
-      const [reservations, reviews] = hotel ? await Promise.all([lodgingApi.hotelReservations(), lodgingApi.myReviews()]) : [[], []];
-      setState({ hotel, reservations, reviews, loading: false, error: '' });
+      const [reservations, reviews, billing] = hotel
+        ? await Promise.all([lodgingApi.hotelReservations(), lodgingApi.myReviews(), lodgingApi.plan()])
+        : [[], [], await lodgingApi.plan()];
+      setState({ hotel, reservations, reviews, billing, loading: false, error: '' });
     } catch (err) {
       setState((s) => ({ ...s, loading: false, error: err.message }));
     }
@@ -66,7 +71,9 @@ export default function HotelPanelPage({ user, onLogout }) {
     if (allowed && unread > 0) load();
   }, [allowed, unread, load]);
 
-  const { hotel, reservations, reviews } = state;
+  const { hotel, reservations, reviews, billing } = state;
+  const listed = isActive(billing?.listing.until);
+  const setBilling = (b) => setState((s) => ({ ...s, billing: b }));
   const pending = reservations.filter((r) => r.status === 'pending').length;
   const unanswered = reviews.filter((r) => !r.reply).length;
 
@@ -107,25 +114,35 @@ export default function HotelPanelPage({ user, onLogout }) {
     content = <ReservationsView hotel={hotel} reservations={reservations} onChange={replaceReservation} onGo={setView} />;
   } else if (view === 'reviews') {
     content = <ReviewsView hotel={hotel} reviews={reviews} onChange={replaceReview} onGo={setView} />;
+  } else if (view === 'plan') {
+    content = (
+      <PlanView
+        hotel={hotel}
+        billing={billing}
+        onPay={async (kind, reference) => setBilling(await lodgingApi.pay(kind, reference))}
+        onCancel={async (id) => setBilling(await lodgingApi.cancelPayment(id))}
+        onGo={setView}
+      />
+    );
   } else if (view === 'notifications') {
     content = (
       <NotificationsView
         onGo={setView}
         onNavigate={navigate}
         panelPath="/hotel"
-        about="Aquí te avisamos de nuevas reservas, cancelaciones y reseñas de tus huéspedes."
+        about="Aquí te avisamos de nuevas reservas, cancelaciones, reseñas de tus huéspedes y cuando confirmemos tus pagos."
         empty="Todavía no tienes notificaciones. Cuando un turista pida una reserva o te califique, te avisaremos aquí."
       />
     );
   } else {
-    content = <HomeView user={user} hotel={hotel} pending={pending} unanswered={unanswered} onGo={setView} onPublic={() => navigate(hotel ? `/hospedaje/hotel?id=${hotel.id}` : '/hospedaje')} />;
+    content = <HomeView user={user} hotel={hotel} billing={billing} pending={pending} unanswered={unanswered} onGo={setView} onPublic={() => navigate(hotel ? `/hospedaje/hotel?id=${hotel.id}` : '/hospedaje')} />;
   }
 
   const shell = {
     user,
-    profile: { name: hotel?.name || user.name, image: hotel?.photos?.[0], Icon: BedDouble, roleLabel: hotel?.is_recommended ? 'Hotel · Recomendado' : 'Hotel' },
+    profile: { name: hotel?.name || user.name, image: hotel?.photos?.[0], Icon: BedDouble, roleLabel: hotel?.is_recommended ? 'Hotel · Destacado' : listed ? 'Hotel · Plan activo' : 'Hotel' },
     nav: NAV,
-    badges: { notifications: unread, reservations: pending, reviews: unanswered },
+    badges: { notifications: unread, reservations: pending, reviews: unanswered, plan: hotel && !listed && !billing?.listing.pending ? 1 : 0 },
     view,
     onSelect: (key) => {
       setView(key);

@@ -19,8 +19,15 @@ export const lodgingApi = {
   hotelReservations: () => authRequest(`${API}/me/reservations`),
   confirm: (id, note) => authRequest(`${API}/me/reservations/${id}/confirm`, { method: 'PUT', body: { note } }),
   decline: (id, note) => authRequest(`${API}/me/reservations/${id}/decline`, { method: 'PUT', body: { note } }),
+  // Planes: aparecer ($ 25.000 al mes) y destacado ($ 4.900 al mes). El hotel reporta el pago y el admin lo confirma.
+  plan: () => authRequest(`${API}/me/plan`),
+  pay: (kind, reference) => authRequest(`${API}/me/plan/payments`, { method: 'POST', body: { kind, reference } }),
+  cancelPayment: (id) => authRequest(`${API}/me/plan/payments/${id}/cancel`, { method: 'PUT', body: {} }),
   // Solo administrador.
   adminHotels: () => authRequest(`${API}/admin/hotels`),
-  setRecommended: (id, recommended, bannerUrl) =>
-    authRequest(`${API}/admin/hotels/${id}/recommended`, { method: 'PUT', body: { recommended, banner_url: bannerUrl } }),
+  approvePayment: (id) => authRequest(`${API}/admin/payments/${id}/approve`, { method: 'PUT', body: {} }),
+  rejectPayment: (id, note) => authRequest(`${API}/admin/payments/${id}/reject`, { method: 'PUT', body: { note } }),
+  grantMonth: (id, kind) => authRequest(`${API}/admin/hotels/${id}/grant-month`, { method: 'POST', body: { kind } }),
+  endPlan: (id, kind) => authRequest(`${API}/admin/hotels/${id}/end`, { method: 'PUT', body: { kind } }),
+  setBanner: (id, bannerUrl) => authRequest(`${API}/admin/hotels/${id}/banner`, { method: 'PUT', body: { banner_url: bannerUrl } }),
 };

@@ -164,3 +164,51 @@ class NotYourHotel(PermissionDeniedError):
     @classmethod
     def default_message(cls) -> str:
         return "Esto es del hospedaje y solo lo puede hacer su dueño."
+
+
+class InvalidPaymentReference(ValidationError):
+    code = "invalid_hotel_payment_reference"
+
+    @classmethod
+    def default_message(cls) -> str:
+        return "El comprobante puede tener hasta 120 caracteres."
+
+
+class InvalidPaymentTransition(ConflictError):
+    code = "invalid_hotel_payment_transition"
+
+    @classmethod
+    def default_message(cls) -> str:
+        return "Este pago ya fue revisado."
+
+
+class PaymentPending(ConflictError):
+    code = "hotel_payment_pending"
+
+    @classmethod
+    def default_message(cls) -> str:
+        return "Ya enviaste ese pago; estamos confirmándolo."
+
+
+class PaymentNotFound(NotFoundError):
+    code = "hotel_payment_not_found"
+
+    @classmethod
+    def default_message(cls) -> str:
+        return "Pago no encontrado."
+
+
+class MissingNote(ValidationError):
+    code = "missing_hotel_payment_note"
+
+    @classmethod
+    def default_message(cls) -> str:
+        return "Escribe el motivo."
+
+
+class HotelRequired(ValidationError):
+    code = "hotel_profile_required"
+
+    @classmethod
+    def default_message(cls) -> str:
+        return "Primero crea la ficha de tu hotel en Mi hotel."

@@ -68,3 +68,11 @@
   .htp-map { height: 280px; }
   .htp-score .htp-tabs { margin-left: 0; }
 }
+
+/* Plan */
+.htp-plans { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; align-items: start; }
+.htp-plan .spp-plan-tag { display: inline-flex; align-items: center; gap: 5px; }
+.htp-plan.featured { border-color: #e8a92c; background: linear-gradient(160deg, #fff 0%, #fdf6e3 100%); box-shadow: 0 10px 26px rgba(232, 169, 44, .16); }
+.htp-plan.featured .spp-plan-tag { background: #e8a92c; color: #3d2a00; }
+.htp-plan .spp-banner { font-size: 13.5px; }
+@media (max-width: 900px) { .htp-plans { grid-template-columns: 1fr; } }

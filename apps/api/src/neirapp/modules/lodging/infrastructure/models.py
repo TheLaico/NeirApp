@@ -28,7 +28,8 @@ class HotelModel(Base):
     check_in: Mapped[str] = mapped_column(String(5), default="15:00")
     check_out: Mapped[str] = mapped_column(String(5), default="12:00")
     is_listed: Mapped[bool] = mapped_column(default=True)
-    is_recommended: Mapped[bool] = mapped_column(default=False)
+    paid_until: Mapped[datetime | None] = mapped_column(UTCDateTime, default=None)
+    featured_until: Mapped[datetime | None] = mapped_column(UTCDateTime, default=None)
     banner_url: Mapped[str] = mapped_column(String(300), default="")
     created_at: Mapped[datetime] = mapped_column(UTCDateTime)
     updated_at: Mapped[datetime] = mapped_column(UTCDateTime)
@@ -67,3 +68,19 @@ class ReservationModel(Base):
     hotel_note: Mapped[str] = mapped_column(String(300), default="")
     created_at: Mapped[datetime] = mapped_column(UTCDateTime)
     updated_at: Mapped[datetime] = mapped_column(UTCDateTime)
+
+
+class HotelPaymentModel(Base):
+    __tablename__ = "lodging_payment"
+
+    id: Mapped[UUID] = mapped_column(Uuid, primary_key=True)
+    hotel_id: Mapped[UUID] = mapped_column(Uuid, index=True)
+    kind: Mapped[str] = mapped_column(String(10))
+    status: Mapped[str] = mapped_column(String(10), index=True)
+    amount_cop: Mapped[int] = mapped_column()
+    reference: Mapped[str] = mapped_column(String(120), default="")
+    note: Mapped[str] = mapped_column(String(300), default="")
+    requested_at: Mapped[datetime] = mapped_column(UTCDateTime)
+    reviewed_at: Mapped[datetime | None] = mapped_column(UTCDateTime, default=None)
+    starts_at: Mapped[datetime | None] = mapped_column(UTCDateTime, default=None)
+    expires_at: Mapped[datetime | None] = mapped_column(UTCDateTime, default=None)

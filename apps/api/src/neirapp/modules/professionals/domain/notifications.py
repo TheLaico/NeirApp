@@ -60,6 +60,9 @@ class NotificationKind(StrEnum):
     RESERVATION_DECLINED = "reservation_declined"  # Al huésped
     HOTEL_REVIEW_NEW = "hotel_review_new"  # Al hospedaje
     HOTEL_REVIEW_REPLY = "hotel_review_reply"  # A quien escribió la reseña
+    HOTEL_PLAN_ACTIVATED = "hotel_plan_activated"  # Al hotel: ya aparece
+    HOTEL_FEATURED = "hotel_featured"  # Al hotel: está destacado
+    HOTEL_PAYMENT_REJECTED = "hotel_payment_rejected"  # Al hotel
 
 
 @dataclass

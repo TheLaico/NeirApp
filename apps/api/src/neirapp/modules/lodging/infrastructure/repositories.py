@@ -5,10 +5,12 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from neirapp.modules.lodging.domain.hotels import Amenity, Hotel, HotelKind
+from neirapp.modules.lodging.domain.payments import HotelPayment, PaymentStatus, PlanKind
 from neirapp.modules.lodging.domain.reservations import Reservation, ReservationStatus
 from neirapp.modules.lodging.domain.reviews import Rating, Review
 from neirapp.modules.lodging.infrastructure.models import (
     HotelModel,
+    HotelPaymentModel,
     HotelReviewModel,
     ReservationModel,
 )
@@ -28,7 +30,8 @@ _HOTEL_FIELDS = (
     "check_in",
     "check_out",
     "is_listed",
-    "is_recommended",
+    "paid_until",
+    "featured_until",
     "banner_url",
     "created_at",
     "updated_at",
@@ -201,3 +204,61 @@ class SqlAlchemyReservationRepository:
 
     async def list_for_hotel(self, hotel_id: UUID) -> list[Reservation]:
         return await self._list(ReservationModel.hotel_id, hotel_id)
+
+
+_PAYMENT_FIELDS = (
+    "hotel_id",
+    "amount_cop",
+    "reference",
+    "note",
+    "requested_at",
+    "reviewed_at",
+    "starts_at",
+    "expires_at",
+)
+
+
+def _payment(m: HotelPaymentModel) -> HotelPayment:
+    return HotelPayment(
+        id=m.id,
+        kind=PlanKind(m.kind),
+        status=PaymentStatus(m.status),
+        **{name: getattr(m, name) for name in _PAYMENT_FIELDS},
+    )
+
+
+class SqlAlchemyPaymentRepository:
+    def __init__(self, session_factory: async_sessionmaker[Any]) -> None:
+        self._session_factory = session_factory
+
+    async def get(self, payment_id: UUID) -> HotelPayment | None:
+        async with self._session_factory() as session:
+            model = await session.get(HotelPaymentModel, payment_id)
+            return _payment(model) if model else None
+
+    async def save(self, payment: HotelPayment) -> None:
+        async with self._session_factory() as session:
+            model = await session.get(HotelPaymentModel, payment.id)
+            if model is None:
+                model = HotelPaymentModel(id=payment.id)
+                session.add(model)
+            for name in _PAYMENT_FIELDS:
+                setattr(model, name, getattr(payment, name))
+            model.kind = payment.kind.value
+            model.status = payment.status.value
+            await session.commit()
+
+    async def _list(self, *where: Any) -> list[HotelPayment]:
+        async with self._session_factory() as session:
+            result = await session.execute(
+                select(HotelPaymentModel)
+                .where(*where)
+                .order_by(HotelPaymentModel.requested_at.desc())
+            )
+            return [_payment(m) for m in result.scalars()]
+
+    async def list_for(self, hotel_id: UUID) -> list[HotelPayment]:
+        return await self._list(HotelPaymentModel.hotel_id == hotel_id)
+
+    async def list_all(self) -> list[HotelPayment]:
+        return await self._list()

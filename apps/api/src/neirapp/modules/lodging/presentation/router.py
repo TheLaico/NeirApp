@@ -7,13 +7,22 @@ from pydantic import BaseModel, Field
 
 from neirapp.modules.identity.domain.entities import Role, User
 from neirapp.modules.identity.presentation.dependencies import CurrentUser, require_roles
-from neirapp.modules.lodging.application.use_cases import HotelCard, HotelRow, ReservationView
+from neirapp.modules.lodging.application.plans import Billing, HotelRow, Plan
+from neirapp.modules.lodging.application.use_cases import HotelCard, ReservationView
 from neirapp.modules.lodging.domain.hotels import (
     MAX_DESCRIPTION,
     MAX_PHOTOS,
     Amenity,
     HotelData,
     HotelKind,
+)
+from neirapp.modules.lodging.domain.payments import (
+    MAX_REFERENCE,
+    PLAN_DAYS,
+    PLAN_FEES_COP,
+    HotelPayment,
+    PaymentStatus,
+    PlanKind,
 )
 from neirapp.modules.lodging.domain.reservations import (
     Reservation,
@@ -69,7 +78,7 @@ class HotelResponse(BaseModel):
     check_in: str
     check_out: str
     is_listed: bool
-    is_recommended: bool
+    is_recommended: bool  # Plan Destacado al día: sale en "Hoteles recomendados"
     banner_url: str
     rating: float
     reviews_count: int
@@ -96,7 +105,7 @@ class HotelResponse(BaseModel):
             check_in=h.check_in,
             check_out=h.check_out,
             is_listed=h.is_listed,
-            is_recommended=h.is_recommended,
+            is_recommended=card.featured,
             banner_url=h.banner_url,
             rating=card.rating.average,
             reviews_count=card.rating.count,
@@ -217,17 +226,93 @@ class MyReservationResponse(ReservationResponse):
         return cls(**base, hotel=hotel)
 
 
+class PaymentResponse(BaseModel):
+    id: UUID
+    kind: PlanKind
+    status: PaymentStatus
+    amount_cop: int
+    reference: str
+    note: str
+    requested_at: datetime
+    starts_at: datetime | None
+    expires_at: datetime | None
+
+    @classmethod
+    def from_domain(cls, p: HotelPayment) -> "PaymentResponse":
+        return cls(
+            id=p.id,
+            kind=p.kind,
+            status=p.status,
+            amount_cop=p.amount_cop,
+            reference=p.reference,
+            note=p.note,
+            requested_at=p.requested_at,
+            starts_at=p.starts_at,
+            expires_at=p.expires_at,
+        )
+
+
+def _pay(p: HotelPayment | None) -> PaymentResponse | None:
+    return PaymentResponse.from_domain(p) if p else None
+
+
+class PlanResponse(BaseModel):
+    kind: PlanKind
+    fee_cop: int
+    days: int = PLAN_DAYS
+    until: datetime | None
+    pending: PaymentResponse | None
+    rejected: PaymentResponse | None
+
+    @classmethod
+    def from_domain(cls, plan: Plan) -> "PlanResponse":
+        return cls(
+            kind=plan.kind,
+            fee_cop=PLAN_FEES_COP[plan.kind],
+            until=plan.until,
+            pending=_pay(plan.pending),
+            rejected=_pay(plan.rejected),
+        )
+
+
+class BillingResponse(BaseModel):
+    listing: PlanResponse
+    featured: PlanResponse
+    history: list[PaymentResponse]
+
+    @classmethod
+    def from_domain(cls, b: Billing) -> "BillingResponse":
+        return cls(
+            listing=PlanResponse.from_domain(b.listing),
+            featured=PlanResponse.from_domain(b.featured),
+            history=[PaymentResponse.from_domain(p) for p in b.history],
+        )
+
+
 class HotelRowResponse(BaseModel):
     hotel: HotelResponse
+    billing: BillingResponse
     has_access: bool
 
     @classmethod
     def from_row(cls, row: HotelRow) -> "HotelRowResponse":
-        return cls(hotel=HotelResponse.from_card(row.card), has_access=row.has_access)
+        return cls(
+            hotel=HotelResponse.from_card(row.card),
+            billing=BillingResponse.from_domain(row.billing),
+            has_access=row.has_access,
+        )
 
 
-class RecommendedBody(BaseModel):
-    recommended: bool
+class PaymentBody(BaseModel):
+    kind: PlanKind
+    reference: str = Field(default="", max_length=MAX_REFERENCE * 2)
+
+
+class KindBody(BaseModel):
+    kind: PlanKind
+
+
+class BannerBody(BaseModel):
     banner_url: str = Field(default="", max_length=300)
 
 
@@ -330,19 +415,73 @@ async def decline_reservation(
     return ReservationResponse.from_domain(reservation)
 
 
+# --- Planes del hotel ----------------------------------------------------------------------
+
+
+@router.get("/me/plan", response_model=BillingResponse)
+async def get_my_billing(user: RequireHotel, app: LodgingDep) -> BillingResponse:
+    """Hasta cuándo aparece y está destacado, los pagos en revisión y el historial."""
+    return BillingResponse.from_domain(await app.get_my_billing(user.id))
+
+
+@router.post("/me/plan/payments", response_model=BillingResponse, status_code=201)
+async def request_plan_payment(
+    body: PaymentBody, user: RequireHotel, app: LodgingDep
+) -> BillingResponse:
+    """Reporta el pago de un mes ($ 25.000 aparecer, $ 4.900 destacado); el admin lo confirma."""
+    billing = await app.request_plan_payment(user.id, body.kind, body.reference)
+    return BillingResponse.from_domain(billing)
+
+
+@router.put("/me/plan/payments/{payment_id}/cancel", response_model=BillingResponse)
+async def cancel_plan_payment(
+    payment_id: UUID, user: RequireHotel, app: LodgingDep
+) -> BillingResponse:
+    return BillingResponse.from_domain(await app.cancel_plan_payment(user.id, payment_id))
+
+
 # --- Administrador --------------------------------------------------------------------------
 
 
 @router.get("/admin/hotels", response_model=list[HotelRowResponse])
 async def list_hotels_for_admin(_admin: RequireAdmin, app: LodgingDep) -> list[HotelRowResponse]:
-    """Todos los hospedajes (también los ocultos), primero los recomendados."""
+    """Todos los hoteles con sus planes; primero los que tienen un pago por confirmar."""
     return [HotelRowResponse.from_row(r) for r in await app.list_hotels_for_admin()]
 
 
-@router.put("/admin/hotels/{hotel_id}/recommended", response_model=HotelResponse)
-async def set_recommended(
-    hotel_id: UUID, body: RecommendedBody, _admin: RequireAdmin, app: LodgingDep
+@router.put("/admin/payments/{payment_id}/approve", response_model=PaymentResponse)
+async def approve_plan_payment(
+    payment_id: UUID, _admin: RequireAdmin, app: LodgingDep
+) -> PaymentResponse:
+    return PaymentResponse.from_domain(await app.approve_plan_payment(payment_id))
+
+
+@router.put("/admin/payments/{payment_id}/reject", response_model=PaymentResponse)
+async def reject_plan_payment(
+    payment_id: UUID, body: NoteBody, _admin: RequireAdmin, app: LodgingDep
+) -> PaymentResponse:
+    return PaymentResponse.from_domain(await app.reject_plan_payment(payment_id, body.note))
+
+
+@router.post("/admin/hotels/{hotel_id}/grant-month", response_model=PaymentResponse)
+async def grant_plan_month(
+    hotel_id: UUID, body: KindBody, _admin: RequireAdmin, app: LodgingDep
+) -> PaymentResponse:
+    """Activa un mes de un plan sin pago reportado (cortesía o pago por otro medio)."""
+    return PaymentResponse.from_domain(await app.grant_plan_month(hotel_id, body.kind))
+
+
+@router.put("/admin/hotels/{hotel_id}/end", response_model=HotelResponse)
+async def end_plan(
+    hotel_id: UUID, body: KindBody, _admin: RequireAdmin, app: LodgingDep
 ) -> HotelResponse:
-    """Decide si sale en "Hoteles recomendados" y la imagen de fondo de su banner."""
-    card = await app.set_recommended(hotel_id, body.recommended, body.banner_url)
-    return HotelResponse.from_card(card)
+    """Quita un plan desde hoy."""
+    return HotelResponse.from_card(await app.end_plan(hotel_id, body.kind))
+
+
+@router.put("/admin/hotels/{hotel_id}/banner", response_model=HotelResponse)
+async def set_banner(
+    hotel_id: UUID, body: BannerBody, _admin: RequireAdmin, app: LodgingDep
+) -> HotelResponse:
+    """La imagen de fondo de su banner en "Hoteles recomendados" (vacío: usa su foto principal)."""
+    return HotelResponse.from_card(await app.set_banner(hotel_id, body.banner_url))

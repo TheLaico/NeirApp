@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from datetime import date, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from uuid import UUID
 
 from neirapp.modules.lodging.application.ports import (
@@ -57,11 +57,18 @@ class HotelCard:
 
     hotel: Hotel
     rating: Rating
+    featured: bool  # Sale en "Hoteles recomendados" (plan Destacado al día)
 
 
-async def _public_hotel(hotels: HotelRepository, access: AccessPort, hotel_id: UUID) -> Hotel:
+def _card(hotel: Hotel, rating: Rating, now: datetime) -> HotelCard:
+    return HotelCard(hotel, rating, hotel.is_featured(now))
+
+
+async def _public_hotel(
+    hotels: HotelRepository, access: AccessPort, hotel_id: UUID, now: datetime
+) -> Hotel:
     hotel = await hotels.get(hotel_id)
-    if hotel is None or not hotel.is_listed or hotel_id not in await access.hotel_ids():
+    if hotel is None or not hotel.is_public(now) or hotel_id not in await access.hotel_ids():
         raise HotelNotFound()
     return hotel
 
@@ -74,13 +81,15 @@ async def _own_hotel(hotels: HotelRepository, user_id: UUID) -> Hotel:
 
 
 class GetMyHotel:
-    def __init__(self, hotels: HotelRepository, reviews: ReviewRepository) -> None:
+    def __init__(self, hotels: HotelRepository, reviews: ReviewRepository, clock: Clock) -> None:
         self._hotels = hotels
         self._reviews = reviews
+        self._clock = clock
 
     async def __call__(self, user_id: UUID) -> HotelCard:
         hotel = await _own_hotel(self._hotels, user_id)
-        return HotelCard(hotel, Rating.of(await self._reviews.list_for(user_id)))
+        rating = Rating.of(await self._reviews.list_for(user_id))
+        return _card(hotel, rating, self._clock.now())
 
 
 class SaveMyHotel:
@@ -99,32 +108,38 @@ class SaveMyHotel:
         else:
             hotel.update(data, now)
         await self._hotels.save(hotel)
-        return HotelCard(hotel, Rating.of(await self._reviews.list_for(user_id)))
+        return _card(hotel, Rating.of(await self._reviews.list_for(user_id)), now)
 
 
 class ListHotels:
-    """Lo que ven los turistas: hospedajes autorizados y visibles. Primero los recomendados, luego
-    los mejor calificados."""
+    """Lo que ven los turistas: hospedajes autorizados, con el mes pagado y visibles. Primero los
+    destacados (recomendados), luego los mejor calificados."""
 
     def __init__(
-        self, hotels: HotelRepository, reviews: ReviewRepository, access: AccessPort
+        self,
+        hotels: HotelRepository,
+        reviews: ReviewRepository,
+        access: AccessPort,
+        clock: Clock,
     ) -> None:
         self._hotels = hotels
         self._reviews = reviews
         self._access = access
+        self._clock = clock
 
     async def __call__(self) -> list[HotelCard]:
         allowed = await self._access.hotel_ids()
         ratings = await self._reviews.ratings()
+        now = self._clock.now()
         cards = [
-            HotelCard(h, ratings.get(h.user_id, Rating(0.0, 0)))
+            _card(h, ratings.get(h.user_id, Rating(0.0, 0)), now)
             for h in await self._hotels.list_all()
-            if h.user_id in allowed and h.is_listed
+            if h.user_id in allowed and h.is_public(now)
         ]
         return sorted(
             cards,
             key=lambda c: (
-                not c.hotel.is_recommended,
+                not c.featured,
                 -c.rating.average,
                 -c.rating.count,
                 c.hotel.name.lower(),
@@ -134,27 +149,38 @@ class ListHotels:
 
 class GetHotel:
     def __init__(
-        self, hotels: HotelRepository, reviews: ReviewRepository, access: AccessPort
+        self,
+        hotels: HotelRepository,
+        reviews: ReviewRepository,
+        access: AccessPort,
+        clock: Clock,
     ) -> None:
         self._hotels = hotels
         self._reviews = reviews
         self._access = access
+        self._clock = clock
 
     async def __call__(self, hotel_id: UUID) -> HotelCard:
-        hotel = await _public_hotel(self._hotels, self._access, hotel_id)
-        return HotelCard(hotel, Rating.of(await self._reviews.list_for(hotel_id)))
+        now = self._clock.now()
+        hotel = await _public_hotel(self._hotels, self._access, hotel_id, now)
+        return _card(hotel, Rating.of(await self._reviews.list_for(hotel_id)), now)
 
 
 class ListHotelReviews:
     def __init__(
-        self, hotels: HotelRepository, reviews: ReviewRepository, access: AccessPort
+        self,
+        hotels: HotelRepository,
+        reviews: ReviewRepository,
+        access: AccessPort,
+        clock: Clock,
     ) -> None:
         self._hotels = hotels
         self._reviews = reviews
         self._access = access
+        self._clock = clock
 
     async def __call__(self, hotel_id: UUID) -> list[Review]:
-        await _public_hotel(self._hotels, self._access, hotel_id)
+        await _public_hotel(self._hotels, self._access, hotel_id, self._clock.now())
         return await self._reviews.list_for(hotel_id)
 
 
@@ -178,10 +204,10 @@ class RateHotel:
     async def __call__(
         self, hotel_id: UUID, user_id: UUID, author: str, stars: int, comment: str
     ) -> Review:
-        hotel = await _public_hotel(self._hotels, self._access, hotel_id)
+        now = self._clock.now()
+        hotel = await _public_hotel(self._hotels, self._access, hotel_id, now)
         if hotel.user_id == user_id:
             raise CannotReviewOwnHotel()
-        now = self._clock.now()
         review = await self._reviews.get_by(hotel_id, user_id)
         is_new = review is None
         if review is None:
@@ -286,7 +312,7 @@ class RequestReservation:
     async def __call__(
         self, hotel_id: UUID, customer_id: UUID, name: str, data: ReservationData
     ) -> ReservationView:
-        hotel = await _public_hotel(self._hotels, self._access, hotel_id)
+        hotel = await _public_hotel(self._hotels, self._access, hotel_id, self._clock.now())
         if hotel.user_id == customer_id:
             raise CannotBookOwnHotel()
         mine = await self._reservations.list_for_customer(customer_id)
@@ -403,43 +429,3 @@ class AnswerReservation:
         await self._reservations.save(reservation)
         await self._notifier.notify(reservation.customer_id, kind, title, body, MY_RESERVATIONS)
         return reservation
-
-
-@dataclass(frozen=True)
-class HotelRow:
-    """Para el administrador: un hospedaje con su calificación y si su cuenta tiene acceso."""
-
-    card: HotelCard
-    has_access: bool
-
-
-class ListHotelsForAdmin:
-    def __init__(
-        self, hotels: HotelRepository, reviews: ReviewRepository, access: AccessPort
-    ) -> None:
-        self._hotels = hotels
-        self._reviews = reviews
-        self._access = access
-
-    async def __call__(self) -> list[HotelRow]:
-        allowed = await self._access.hotel_ids()
-        ratings = await self._reviews.ratings()
-        rows = [
-            HotelRow(HotelCard(h, ratings.get(h.user_id, Rating(0.0, 0))), h.user_id in allowed)
-            for h in await self._hotels.list_all()
-        ]
-        return sorted(rows, key=lambda r: (not r.card.hotel.is_recommended, r.card.hotel.name))
-
-
-class SetRecommended:
-    """El administrador decide si un hospedaje sale en "Hoteles recomendados" y con qué fondo."""
-
-    def __init__(self, hotels: HotelRepository, reviews: ReviewRepository) -> None:
-        self._hotels = hotels
-        self._reviews = reviews
-
-    async def __call__(self, hotel_id: UUID, recommended: bool, banner_url: str) -> HotelCard:
-        hotel = await _own_hotel(self._hotels, hotel_id)
-        hotel.set_recommended(recommended, banner_url)
-        await self._hotels.save(hotel)
-        return HotelCard(hotel, Rating.of(await self._reviews.list_for(hotel_id)))

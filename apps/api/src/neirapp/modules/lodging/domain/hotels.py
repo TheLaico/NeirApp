@@ -116,8 +116,8 @@ class HotelData:
 @dataclass
 class Hotel:
     """Un hospedaje de Neira (hotel, finca hotel, hostal, cabañas…). Aparece en Hospedaje mientras
-    su cuenta siga autorizada y no se oculte. El administrador decide cuáles son recomendados y con
-    qué imagen de fondo sale su banner."""
+    tenga el mes pagado ($ 25.000), su cuenta siga autorizada y no se oculte. Con el plan Destacado
+    ($ 4.900 al mes) sale en "Hoteles recomendados"; el administrador elige el fondo del banner."""
 
     user_id: UUID
     name: str
@@ -138,8 +138,10 @@ class Hotel:
     check_in: str = "15:00"
     check_out: str = "12:00"
     is_listed: bool = True
-    # Los decide el administrador desde su panel.
-    is_recommended: bool = False
+    # Hasta cuándo tiene pagado aparecer y destacarse (los confirma el administrador).
+    paid_until: datetime | None = None
+    featured_until: datetime | None = None
+    # Lo elige el administrador desde su panel.
     banner_url: str = ""
 
     @classmethod
@@ -189,9 +191,18 @@ class Hotel:
         self.is_listed = data.is_listed
         self.updated_at = now
 
-    def set_recommended(self, recommended: bool, banner_url: str) -> None:
+    def is_paid(self, now: datetime) -> bool:
+        return self.paid_until is not None and self.paid_until > now
+
+    def is_public(self, now: datetime) -> bool:
+        return self.is_listed and self.is_paid(now)
+
+    def is_featured(self, now: datetime) -> bool:
+        """Sale en "Hoteles recomendados": tiene el plan Destacado y además aparece."""
+        return self.featured_until is not None and self.featured_until > now and self.is_paid(now)
+
+    def set_banner(self, banner_url: str) -> None:
         banner_url = banner_url.strip()
         if banner_url and not _UPLOADED.match(banner_url):
             raise InvalidHotelPhotos("Sube la imagen del banner desde la app.")
-        self.is_recommended = recommended
         self.banner_url = banner_url

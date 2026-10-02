@@ -1,4 +1,4 @@
-import { BadgeCheck, CalendarCheck, CalendarClock, CalendarPlus, CalendarX, Crown, FileWarning, Flag, MessageSquareReply, ReceiptText, ShieldOff, Sofa, Star, Warehouse } from 'lucide-react';
+import { BadgeCheck, BedDouble, CalendarCheck, CalendarClock, CalendarPlus, CalendarX, Crown, FileWarning, Flag, MessageSquareReply, ReceiptText, ShieldOff, Sofa, Sparkles, Star, Warehouse } from 'lucide-react';
 
 // Íconos y color de los avisos que vienen de la API (citas, certificados y planes de profesionales).
 export const SERVER_KINDS = {
@@ -23,4 +23,7 @@ export const SERVER_KINDS = {
   reservation_cancelled: { Icon: CalendarX, tone: 'bad' },
   hotel_review_new: { Icon: Star, tone: 'new' },
   hotel_review_reply: { Icon: MessageSquareReply, tone: 'info' },
+  hotel_plan_activated: { Icon: BedDouble, tone: 'good' },
+  hotel_featured: { Icon: Sparkles, tone: 'good' },
+  hotel_payment_rejected: { Icon: ReceiptText, tone: 'bad' },
 };

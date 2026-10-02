@@ -32,9 +32,15 @@ STAY = {"check_in": "2026-10-01", "check_out": "2026-10-03", "guests": 2, "phone
 
 
 async def _hotel(
-    client: httpx.AsyncClient, admin: dict[str, Any], email: str, **changes: Any
+    client: httpx.AsyncClient,
+    admin: dict[str, Any],
+    email: str,
+    *,
+    paid: bool = True,
+    **changes: Any,
 ) -> tuple[dict[str, Any], str]:
-    """Autoriza el correo como hospedaje, registra la cuenta y publica su hotel."""
+    """Autoriza el correo como hospedaje, registra la cuenta, crea su hotel y (si `paid`) el admin
+    le activa un mes del plan para aparecer."""
     granted = await client.post(
         f"{API}/identity/admin/role-grants",
         json={"email": email, "role": "hotel"},
@@ -44,7 +50,15 @@ async def _hotel(
     owner = await _register(client, email)
     saved = await client.put(f"{L}/me", json={**HOTEL, **changes}, headers=_bearer(owner))
     assert saved.status_code == 200, saved.text
-    return owner, saved.json()["id"]
+    hotel_id = saved.json()["id"]
+    if paid:
+        granted = await client.post(
+            f"{L}/admin/hotels/{hotel_id}/grant-month",
+            json={"kind": "listing"},
+            headers=_bearer(admin),
+        )
+        assert granted.status_code == 200, granted.text
+    return owner, hotel_id
 
 
 async def _inbox(client: httpx.AsyncClient, who: dict[str, Any]) -> list[str]:
@@ -109,31 +123,132 @@ class TestHoteles:
         assert rows[0]["has_access"] is False
 
 
-class TestRecomendados:
-    async def test_el_admin_elige_los_recomendados_y_su_banner(
+class TestPlanes:
+    async def test_sin_pagar_no_aparece_y_al_confirmar_si(
+        self, client: httpx.AsyncClient, app: FastAPI, clock: FakeClock
+    ) -> None:
+        admin = await _admin(client, app)
+        owner, hotel_id = await _hotel(client, admin, "reservas@mirador.co", paid=False)
+        assert (await client.get(f"{L}/hotels")).json() == []
+        assert (await client.get(f"{L}/hotels/{hotel_id}")).status_code == 404
+
+        plan = (await client.get(f"{L}/me/plan", headers=_bearer(owner))).json()
+        assert plan["listing"]["fee_cop"] == 25000
+        assert plan["featured"]["fee_cop"] == 4900
+        assert plan["listing"]["until"] is None
+
+        sent = await client.post(
+            f"{L}/me/plan/payments",
+            json={"kind": "listing", "reference": "Nequi M123"},
+            headers=_bearer(owner),
+        )
+        assert sent.status_code == 201, sent.text
+        pending = sent.json()["listing"]["pending"]
+        assert pending["amount_cop"] == 25000
+        again = await client.post(
+            f"{L}/me/plan/payments", json={"kind": "listing"}, headers=_bearer(owner)
+        )
+        assert again.json()["code"] == "hotel_payment_pending"
+
+        rows = (await client.get(f"{L}/admin/hotels", headers=_bearer(admin))).json()
+        assert rows[0]["billing"]["listing"]["pending"]["id"] == pending["id"]
+        approved = await client.put(
+            f"{L}/admin/payments/{pending['id']}/approve", headers=_bearer(admin)
+        )
+        assert approved.json()["expires_at"].startswith("2026-10-21")
+        assert len((await client.get(f"{L}/hotels")).json()) == 1
+        assert "hotel_plan_activated" in await _inbox(client, owner)
+
+        # Al vencer deja de aparecer.
+        clock.advance(days=31)
+        assert (await client.get(f"{L}/hotels")).json() == []
+
+    async def test_destacado_sale_primero_como_recomendado(
         self, client: httpx.AsyncClient, app: FastAPI
     ) -> None:
         admin = await _admin(client, app)
         await _hotel(client, admin, "a@hotel.co", name="Altos de Neira")
-        _, finca = await _hotel(client, admin, "b@hotel.co", name="Finca El Paraíso")
+        finca_owner, finca = await _hotel(client, admin, "b@hotel.co", name="Finca El Paraíso")
 
-        url = f"{L}/admin/hotels/{finca}/recommended"
-        bad = await client.put(
-            url, json={"recommended": True, "banner_url": "https://x.co/b.jpg"},
-            headers=_bearer(admin),
-        )  # fmt: skip
-        assert bad.status_code == 422
-        ok = await client.put(
-            url, json={"recommended": True, "banner_url": _image(9)}, headers=_bearer(admin)
+        sent = await client.post(
+            f"{L}/me/plan/payments", json={"kind": "featured"}, headers=_bearer(finca_owner)
         )
-        assert ok.json()["is_recommended"] is True
-        assert ok.json()["banner_url"] == _image(9)
+        pending = sent.json()["featured"]["pending"]
+        assert pending["amount_cop"] == 4900
+        listed = (await client.get(f"{L}/hotels")).json()
+        assert [h["is_recommended"] for h in listed] == [False, False]
 
+        await client.put(f"{L}/admin/payments/{pending['id']}/approve", headers=_bearer(admin))
         listed = (await client.get(f"{L}/hotels")).json()
         assert [h["name"] for h in listed] == ["Finca El Paraíso", "Altos de Neira"]
+        assert listed[0]["is_recommended"] is True
+        assert "hotel_featured" in await _inbox(client, finca_owner)
+
+        bad = await client.put(
+            f"{L}/admin/hotels/{finca}/banner",
+            json={"banner_url": "https://x.co/b.jpg"},
+            headers=_bearer(admin),
+        )
+        assert bad.status_code == 422
+        banner = await client.put(
+            f"{L}/admin/hotels/{finca}/banner",
+            json={"banner_url": _image(9)},
+            headers=_bearer(admin),
+        )
+        assert banner.json()["banner_url"] == _image(9)
+
+        # Sin el plan para aparecer, el destacado no sirve: no sale.
+        await client.put(
+            f"{L}/admin/hotels/{finca}/end", json={"kind": "listing"}, headers=_bearer(admin)
+        )
+        assert [h["name"] for h in (await client.get(f"{L}/hotels")).json()] == ["Altos de Neira"]
+
         tourist = await _register(client, "ana@correo.co")
-        denied = await client.put(url, json={"recommended": False}, headers=_bearer(tourist))
+        denied = await client.put(
+            f"{L}/admin/hotels/{finca}/banner", json={"banner_url": ""}, headers=_bearer(tourist)
+        )
         assert denied.status_code == 403
+
+    async def test_rechazar_y_cancelar_pagos(
+        self, client: httpx.AsyncClient, app: FastAPI, clock: FakeClock
+    ) -> None:
+        admin = await _admin(client, app)
+        owner, _ = await _hotel(client, admin, "reservas@mirador.co", paid=False)
+        url = f"{L}/me/plan/payments"
+        first = (await client.post(url, json={"kind": "listing"}, headers=_bearer(owner))).json()
+        cancelled = await client.put(
+            f"{url}/{first['listing']['pending']['id']}/cancel", headers=_bearer(owner)
+        )
+        assert cancelled.json()["listing"]["pending"] is None
+        clock.advance(minutes=1)
+
+        second = (await client.post(url, json={"kind": "listing"}, headers=_bearer(owner))).json()
+        pid = second["listing"]["pending"]["id"]
+        empty = await client.put(
+            f"{L}/admin/payments/{pid}/reject", json={"note": ""}, headers=_bearer(admin)
+        )
+        assert empty.status_code == 422
+        await client.put(
+            f"{L}/admin/payments/{pid}/reject",
+            json={"note": "No encontramos el pago"},
+            headers=_bearer(admin),
+        )
+        plan = (await client.get(f"{L}/me/plan", headers=_bearer(owner))).json()
+        assert plan["listing"]["rejected"]["note"] == "No encontramos el pago"
+        assert "hotel_payment_rejected" in await _inbox(client, owner)
+
+    async def test_sin_ficha_no_puede_pagar(self, client: httpx.AsyncClient, app: FastAPI) -> None:
+        admin = await _admin(client, app)
+        await client.post(
+            f"{API}/identity/admin/role-grants",
+            json={"email": "nuevo@hotel.co", "role": "hotel"},
+            headers=_bearer(admin),
+        )
+        owner = await _register(client, "nuevo@hotel.co")
+        sent = await client.post(
+            f"{L}/me/plan/payments", json={"kind": "listing"}, headers=_bearer(owner)
+        )
+        assert sent.json()["code"] == "hotel_profile_required"
 
 
 class TestResenas:
