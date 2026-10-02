@@ -1,4 +1,4 @@
-import { BadgeCheck, CalendarCheck, CalendarClock, CalendarPlus, CalendarX, Crown, FileWarning, Flag, ReceiptText, ShieldOff, Sofa } from 'lucide-react';
+import { BadgeCheck, CalendarCheck, CalendarClock, CalendarPlus, CalendarX, Crown, FileWarning, Flag, ReceiptText, ShieldOff, Sofa, Warehouse } from 'lucide-react';
 
 // Íconos y color de los avisos que vienen de la API (citas, certificados y planes de profesionales).
 export const SERVER_KINDS = {
@@ -15,4 +15,6 @@ export const SERVER_KINDS = {
   listing_payment_rejected: { Icon: ReceiptText, tone: 'bad' },
   listing_removed: { Icon: ShieldOff, tone: 'bad' },
   listing_reported: { Icon: Flag, tone: 'bad' },
+  supplier_activated: { Icon: Warehouse, tone: 'good' },
+  supplier_payment_rejected: { Icon: ReceiptText, tone: 'bad' },
 };

@@ -4,7 +4,6 @@ import { useNotifications } from '../../features/notifications/NotificationsCont
 import { SERVER_KINDS } from '../../features/notifications/kinds.js';
 import { sinceLabel } from '../../features/professionals/appointments.js';
 
-const SECTION = /^\/profesional\?seccion=(\w+)$/;
 
 // "Hoy", "Ayer" o "Antes", según la fecha del aviso en este dispositivo.
 function groupOf(iso) {
@@ -18,16 +17,24 @@ function groupOf(iso) {
 
 /**
  * "Notificaciones" del panel del profesional: solicitudes nuevas o canceladas y certificados revisados. Al tocar un
- * aviso se marca como leído y se abre la sección correspondiente del panel (`onGo`).
+ * aviso se marca como leído y se abre la sección correspondiente del panel (`onGo`). Sirve también para el panel del
+ * proveedor: `panelPath` es la ruta del panel y `about`/`empty` los textos de qué se avisa.
  */
-export default function NotificationsView({ onGo, onNavigate }) {
+export default function NotificationsView({
+  onGo,
+  onNavigate,
+  panelPath = '/profesional',
+  about = 'Aquí te avisamos de nuevas solicitudes, citas canceladas y certificados revisados.',
+  empty = empty,
+}) {
   const { serverItems: items, serverUnread: unread, markRead, markAllRead, remove, clear } = useNotifications();
   const [onlyUnread, setOnlyUnread] = useState(false);
   const shown = onlyUnread ? items.filter((n) => !n.read) : items;
 
   const open = (n) => {
     markRead(n.id);
-    const section = n.link?.match(SECTION)?.[1];
+    const [path, query] = (n.link ?? '').split('?');
+    const section = path === panelPath ? new URLSearchParams(query).get('seccion') : null;
     if (section) onGo(section);
     else if (n.link) onNavigate(n.link);
   };
@@ -45,7 +52,7 @@ export default function NotificationsView({ onGo, onNavigate }) {
       <div className="sv-head">
         <div>
           <h1>Notificaciones</h1>
-          <p>{unread > 0 ? `Tienes ${unread} ${unread === 1 ? 'aviso sin leer' : 'avisos sin leer'}.` : 'Estás al día. Aquí te avisamos de nuevas solicitudes, citas canceladas y certificados revisados.'}</p>
+          <p>{unread > 0 ? `Tienes ${unread} ${unread === 1 ? 'aviso sin leer' : 'avisos sin leer'}.` : `Estás al día. ${about}`}</p>
         </div>
       </div>
 

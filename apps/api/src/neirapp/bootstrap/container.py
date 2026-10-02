@@ -266,13 +266,24 @@ from neirapp.modules.stores.infrastructure.unit_of_work import (
 )
 from neirapp.modules.suppliers.application.app import SuppliersApp
 from neirapp.modules.suppliers.application.use_cases import (
+    ApproveSubscriptionPayment,
+    CancelSubscriptionPayment,
+    EndSubscription,
+    GetMySubscription,
     GetMySupplier,
     GetSupplier,
+    GrantSubscriptionMonth,
     ListSuppliers,
+    ListSupplierSubscriptions,
+    RejectSubscriptionPayment,
+    RequestSubscriptionPayment,
     SaveMySupplier,
 )
 from neirapp.modules.suppliers.infrastructure.identity_adapter import (
     IdentityAccessAdapter as SupplierAccessAdapter,
+)
+from neirapp.modules.suppliers.infrastructure.repositories import (
+    SqlAlchemyPaymentRepository as SqlAlchemySupplierPaymentRepository,
 )
 from neirapp.modules.suppliers.infrastructure.repositories import SqlAlchemySupplierRepository
 from neirapp.modules.wallet.application.app import WalletApp
@@ -498,16 +509,29 @@ def build_marketplace(
 
 
 def build_suppliers(
-    session_factory: async_sessionmaker[Any], identity: IdentityApp, clock: Clock | None = None
+    session_factory: async_sessionmaker[Any],
+    identity: IdentityApp,
+    professionals: ProfessionalsApp,
+    clock: Clock | None = None,
 ) -> SuppliersApp:
     clock = clock or SystemClock()
     repo = SqlAlchemySupplierRepository(session_factory)
+    payments = SqlAlchemySupplierPaymentRepository(session_factory)
     access = SupplierAccessAdapter(identity)
+    notifier = NotificationsAdapter(professionals)
     return SuppliersApp(
         get_my_supplier=GetMySupplier(repo),
         save_my_supplier=SaveMySupplier(repo, clock),
-        list_suppliers=ListSuppliers(repo, access),
-        get_supplier=GetSupplier(repo, access),
+        list_suppliers=ListSuppliers(repo, access, clock),
+        get_supplier=GetSupplier(repo, access, clock),
+        get_my_subscription=GetMySubscription(repo, payments),
+        request_subscription_payment=RequestSubscriptionPayment(repo, payments, clock),
+        cancel_subscription_payment=CancelSubscriptionPayment(repo, payments),
+        list_supplier_subscriptions=ListSupplierSubscriptions(repo, payments),
+        approve_subscription_payment=ApproveSubscriptionPayment(repo, payments, notifier, clock),
+        reject_subscription_payment=RejectSubscriptionPayment(repo, payments, notifier, clock),
+        grant_subscription_month=GrantSubscriptionMonth(repo, payments, notifier, clock),
+        end_subscription=EndSubscription(repo, clock),
     )
 
 

@@ -1,5 +1,13 @@
 import { Apple, Box, Cpu, Hammer, HardHat, HeartPulse, Lamp, Package, PenLine, Shirt, Sparkles, Sprout } from 'lucide-react';
 
+// Suscripción: igual que `SUBSCRIPTION_FEE_COP` de la API.
+export const SUBSCRIPTION_FEE = 24900;
+export const SUBSCRIPTION_DAYS = 30;
+
+/** "21 de octubre". */
+export const dayLabel = (iso) => new Date(iso).toLocaleDateString('es-CO', { day: 'numeric', month: 'long' });
+export const isPaid = (paidUntil) => Boolean(paidUntil) && new Date(paidUntil) > new Date();
+
 // Categorías de proveedores (iguales a `SupplierCategory` de la API). Las primeras salen como botones; el resto en "Más".
 export const CATEGORIES = [
   { id: 'food', label: 'Alimentos y bebidas', Icon: Apple, color: '#2d7a3d' },

@@ -50,6 +50,9 @@ class NotificationKind(StrEnum):
     LISTING_PAYMENT_REJECTED = "listing_payment_rejected"  # Al vendedor
     LISTING_REMOVED = "listing_removed"  # Al vendedor
     LISTING_REPORTED = "listing_reported"  # A los administradores
+    # De Proveedores.
+    SUPPLIER_ACTIVATED = "supplier_activated"  # A la empresa
+    SUPPLIER_PAYMENT_REJECTED = "supplier_payment_rejected"  # A la empresa
 
 
 @dataclass

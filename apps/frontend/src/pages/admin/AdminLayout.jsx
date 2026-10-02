@@ -1,8 +1,9 @@
-import { ArrowLeft, Bike, Briefcase, LayoutDashboard, LogOut, MapPinned, MessageSquarePlus, ShieldCheck, Sofa, Store, Truck, UserCog } from 'lucide-react';
+import { ArrowLeft, Bike, Briefcase, LayoutDashboard, LogOut, MapPinned, MessageSquarePlus, ShieldCheck, Sofa, Store, Truck, UserCog, Warehouse } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { canAccessAdmin, ROLES } from '../../config/roles.js';
 import { marketplaceApi } from '../../features/marketplace/api.js';
 import { professionalsApi } from '../../features/professionals/api.js';
+import { suppliersApi } from '../../features/suppliers/api.js';
 import { useNavigate, usePath } from '../../lib/router.jsx';
 import './admin.css';
 
@@ -13,6 +14,7 @@ const ITEMS = [
   { to: '/admin/repartidores', label: 'Repartidores', Icon: Bike },
   { to: '/admin/profesionales', label: 'Gestión de profesionales', Icon: Briefcase },
   { to: '/admin/marquetneira', label: 'MarquetNeira', Icon: Sofa },
+  { to: '/admin/proveedores', label: 'Proveedores', Icon: Warehouse },
   { to: '/admin/mapa', label: 'Mapa en vivo', Icon: MapPinned },
   { to: '/admin/envios', label: 'Envíos', Icon: Truck },
   { to: '/admin/solicitudes', label: 'Solicitudes', Icon: MessageSquarePlus },
@@ -36,6 +38,8 @@ export default function AdminLayout({ user, onLogout, title, subtitle, actions, 
   const [pendingPlans, setPendingPlans] = useState(0);
   // Y en MarquetNeira: pagos de publicación por confirmar más publicaciones reportadas.
   const [marketTodo, setMarketTodo] = useState(0);
+  // Y en Proveedores: pagos de suscripción por confirmar.
+  const [supplierTodo, setSupplierTodo] = useState(0);
   const allowed = canAccessAdmin(user);
   useEffect(() => {
     if (!allowed) return undefined;
@@ -49,11 +53,18 @@ export default function AdminLayout({ user, onLogout, title, subtitle, actions, 
       Promise.all([marketplaceApi.pendingPayments(), marketplaceApi.reports()])
         .then(([payments, reports]) => alive && setMarketTodo(payments.length + reports.length))
         .catch(() => {});
+    const checkSuppliers = () =>
+      suppliersApi
+        .adminSubscriptions()
+        .then((rows) => alive && setSupplierTodo(rows.filter((r) => r.subscription.pending).length))
+        .catch(() => {});
     check();
     checkMarket();
+    checkSuppliers();
     const timer = setInterval(() => {
       check();
       checkMarket();
+      checkSuppliers();
     }, 60000);
     return () => {
       alive = false;
@@ -98,6 +109,11 @@ export default function AdminLayout({ user, onLogout, title, subtitle, actions, 
             >
               <Icon size={19} aria-hidden="true" />
               {label}
+              {to === '/admin/proveedores' && supplierTodo > 0 && (
+                <span className="a-count" aria-label={`${supplierTodo} pagos de proveedores por confirmar`}>
+                  {supplierTodo}
+                </span>
+              )}
               {to === '/admin/marquetneira' && marketTodo > 0 && (
                 <span className="a-count" aria-label={`${marketTodo} pendientes en MarquetNeira`}>
                   {marketTodo}

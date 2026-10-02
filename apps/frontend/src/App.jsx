@@ -15,6 +15,7 @@ import AdminShippingPage from './pages/admin/AdminShippingPage.jsx';
 import AdminOverviewPage from './pages/admin/AdminOverviewPage.jsx';
 import AdminMarketplacePage from './pages/admin/AdminMarketplacePage.jsx';
 import AdminProfessionalsPage from './pages/admin/AdminProfessionalsPage.jsx';
+import AdminSuppliersPage from './pages/admin/AdminSuppliersPage.jsx';
 import AdminRolesPage from './pages/admin/AdminRolesPage.jsx';
 import AdminStoresPage from './pages/admin/AdminStoresPage.jsx';
 import CheckoutPage from './pages/checkout/CheckoutPage.jsx';
@@ -35,7 +36,7 @@ import ProfessionalsPage from './pages/professionals/ProfessionalsPage.jsx';
 import ListingPage from './pages/marketplace/ListingPage.jsx';
 import MarketplacePage from './pages/marketplace/MarketplacePage.jsx';
 import MyListingsPage from './pages/marketplace/MyListingsPage.jsx';
-import MySupplierPage from './pages/suppliers/MySupplierPage.jsx';
+import SupplierPanelPage from './pages/supplier/SupplierPanelPage.jsx';
 import SuppliersPage from './pages/suppliers/SuppliersPage.jsx';
 import SubcategoryProfessionalsPage from './pages/professionals/SubcategoryProfessionalsPage.jsx';
 import RegisterPage from './pages/register/RegisterPage.jsx';
@@ -55,7 +56,8 @@ const ROUTES = {
   '/marquetneira/producto': ListingPage,
   '/marquetneira/mis-publicaciones': MyListingsPage,
   '/proveedores': SuppliersPage,
-  '/proveedores/mi-empresa': MySupplierPage,
+  '/proveedores/mi-empresa': SupplierPanelPage,
+  '/proveedor': SupplierPanelPage,
   '/favoritos': FavoritesPage,
   '/pedidos': OrdersPage,
   '/checkout': CheckoutPage,
@@ -65,6 +67,7 @@ const ROUTES = {
   '/admin/repartidores': AdminCouriersPage,
   '/admin/profesionales': AdminProfessionalsPage,
   '/admin/marquetneira': AdminMarketplacePage,
+  '/admin/proveedores': AdminSuppliersPage,
   '/admin/envios': AdminShippingPage,
   '/admin/mapa': AdminLiveMapPage,
   '/admin/solicitudes': AdminLeadsPage,

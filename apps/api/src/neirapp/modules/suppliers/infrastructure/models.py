@@ -27,5 +27,21 @@ class SupplierModel(Base):
     cover_url: Mapped[str] = mapped_column(String(300), default="")
     catalog_url: Mapped[str] = mapped_column(String(300), default="")
     is_listed: Mapped[bool] = mapped_column(default=True)
+    paid_until: Mapped[datetime | None] = mapped_column(UTCDateTime, default=None)
     created_at: Mapped[datetime] = mapped_column(UTCDateTime)
     updated_at: Mapped[datetime] = mapped_column(UTCDateTime)
+
+
+class SupplierPaymentModel(Base):
+    __tablename__ = "suppliers_payment"
+
+    id: Mapped[UUID] = mapped_column(Uuid, primary_key=True)
+    supplier_id: Mapped[UUID] = mapped_column(Uuid, index=True)
+    status: Mapped[str] = mapped_column(String(10), index=True)
+    amount_cop: Mapped[int] = mapped_column()
+    reference: Mapped[str] = mapped_column(String(120), default="")
+    note: Mapped[str] = mapped_column(String(300), default="")
+    requested_at: Mapped[datetime] = mapped_column(UTCDateTime)
+    reviewed_at: Mapped[datetime | None] = mapped_column(UTCDateTime, default=None)
+    starts_at: Mapped[datetime | None] = mapped_column(UTCDateTime, default=None)
+    expires_at: Mapped[datetime | None] = mapped_column(UTCDateTime, default=None)

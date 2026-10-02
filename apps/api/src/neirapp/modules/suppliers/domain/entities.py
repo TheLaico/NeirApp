@@ -146,6 +146,8 @@ class Supplier:
     cover_url: str = ""
     catalog_url: str = ""
     is_listed: bool = True
+    # Hasta cuándo tiene pagada la suscripción (la confirma el administrador). Sin pagar no aparece.
+    paid_until: datetime | None = None
 
     @classmethod
     def create(cls, user_id: UUID, data: SupplierData, now: datetime) -> "Supplier":
@@ -179,3 +181,9 @@ class Supplier:
         self.catalog_url = _image(data.catalog_url)
         self.is_listed = data.is_listed
         self.updated_at = now
+
+    def is_paid(self, now: datetime) -> bool:
+        return self.paid_until is not None and self.paid_until > now
+
+    def is_public(self, now: datetime) -> bool:
+        return self.is_listed and self.is_paid(now)

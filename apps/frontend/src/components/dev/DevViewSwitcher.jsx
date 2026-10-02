@@ -1,4 +1,4 @@
-import { Bike, BriefcaseBusiness, Code2, ShieldCheck, Store, UserRound, X } from 'lucide-react';
+import { Bike, BriefcaseBusiness, Building2, Code2, ShieldCheck, Store, UserRound, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { canAccessAdmin } from '../../config/roles.js';
 import { useNavigate, usePath } from '../../lib/router.jsx';
@@ -6,10 +6,11 @@ import './dev-switcher.css';
 
 // Vista de cada rol. Se decide por la ruta, así el botón sirve igual en cualquier pantalla.
 const VIEWS = [
-  { key: 'customer', label: 'Cliente', to: '/', Icon: UserRound, match: (p) => !/^\/(admin|repartidor|comercio|profesional(\/|$))/.test(p) },
+  { key: 'customer', label: 'Cliente', to: '/', Icon: UserRound, match: (p) => !/^\/(admin|repartidor|comercio|profesional(\/|$)|proveedor(\/|$))/.test(p) && p !== '/proveedores/mi-empresa' },
   { key: 'courier', label: 'Repartidor', to: '/repartidor', Icon: Bike, match: (p) => p.startsWith('/repartidor') },
   { key: 'merchant', label: 'Comerciante', to: '/comercio', Icon: Store, match: (p) => p.startsWith('/comercio') },
   { key: 'professional', label: 'Profesional', to: '/profesional', Icon: BriefcaseBusiness, match: (p) => /^\/profesional(\/|$)/.test(p) },
+  { key: 'supplier', label: 'Proveedor', to: '/proveedor', Icon: Building2, match: (p) => /^\/proveedor(\/|$)/.test(p) || p === '/proveedores/mi-empresa' },
   { key: 'admin', label: 'Administrador', to: '/admin', Icon: ShieldCheck, match: (p) => p.startsWith('/admin') },
 ];
 

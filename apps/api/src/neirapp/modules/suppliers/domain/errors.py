@@ -1,4 +1,4 @@
-from neirapp.shared.domain.errors import NotFoundError, ValidationError
+from neirapp.shared.domain.errors import ConflictError, NotFoundError, ValidationError
 
 
 class InvalidCompanyName(ValidationError):
@@ -71,3 +71,51 @@ class SupplierNotFound(NotFoundError):
     @classmethod
     def default_message(cls) -> str:
         return "Proveedor no encontrado."
+
+
+class InvalidPaymentReference(ValidationError):
+    code = "invalid_supplier_payment_reference"
+
+    @classmethod
+    def default_message(cls) -> str:
+        return "El comprobante puede tener hasta 120 caracteres."
+
+
+class InvalidPaymentTransition(ConflictError):
+    code = "invalid_supplier_payment_transition"
+
+    @classmethod
+    def default_message(cls) -> str:
+        return "Este pago ya fue revisado."
+
+
+class PaymentPending(ConflictError):
+    code = "supplier_payment_pending"
+
+    @classmethod
+    def default_message(cls) -> str:
+        return "Ya enviaste un pago; estamos confirmándolo."
+
+
+class PaymentNotFound(NotFoundError):
+    code = "supplier_payment_not_found"
+
+    @classmethod
+    def default_message(cls) -> str:
+        return "Pago no encontrado."
+
+
+class MissingNote(ValidationError):
+    code = "missing_note"
+
+    @classmethod
+    def default_message(cls) -> str:
+        return "Escribe el motivo."
+
+
+class ProfileRequired(ValidationError):
+    code = "supplier_profile_required"
+
+    @classmethod
+    def default_message(cls) -> str:
+        return "Primero crea el perfil de tu empresa en Mi empresa."

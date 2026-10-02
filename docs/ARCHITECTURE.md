@@ -513,10 +513,18 @@ visibilidad y los clientes las contactan directamente.
   empaques u otros), descripción, teléfono, WhatsApp, correo, dirección, página web, Facebook e
   Instagram (acepta el enlace o "@usuario"), logo, portada y **catálogo** (una imagen tipo brochure),
   y si se muestra o no (`is_listed`).
-- **Endpoints**: `GET/PUT /suppliers/me` (proveedor o admin); `GET /suppliers?category=` y
-  `GET /suppliers/{user_id}` (públicos: solo cuentas que siguen autorizadas y no ocultaron su perfil).
+- **Suscripción** (migración 0033: `paid_until` y `suppliers_payment`): $ 24.900 al mes para
+  aparecer y publicar el catálogo. Igual que en MarquetNeira: la empresa reporta el pago
+  (`POST /suppliers/me/subscription/payments`), el administrador lo confirma o lo rechaza
+  (`PUT /suppliers/admin/payments/{id}/approve|reject`) y cada mes vale 30 días (renovar suma al final).
+  El admin también puede activar un mes o quitar la suscripción (`POST /suppliers/admin/{id}/grant-month`,
+  `PUT /suppliers/admin/{id}/end`). Avisos `supplier_activated` y `supplier_payment_rejected`.
+- **Endpoints**: `GET/PUT /suppliers/me` y `GET /suppliers/me/subscription` (proveedor o admin);
+  `GET /suppliers/admin/subscriptions` (admin); `GET /suppliers?category=` y `GET /suppliers/{user_id}`
+  (públicos: cuentas autorizadas, con la suscripción al día y visibles).
 - En el frontend: `/proveedores` (directorio con categorías, contacto, redes, "Ver catálogo" y
-  paginación de 6) y `/proveedores/mi-empresa`.
+  paginación de 6), el panel del proveedor `/proveedor` (Inicio, Mi empresa, Catálogo, Suscripción y
+  Notificaciones) y `/admin/proveedores`. El proveedor también está en la vista de desarrollo.
 
 ## Frontend
 

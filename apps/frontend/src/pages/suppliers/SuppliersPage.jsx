@@ -66,7 +66,7 @@ export default function SuppliersPage({ user, onLogout }) {
               Apoyemos lo nuestro
             </span>
             {isSupplier && (
-              <button type="button" className="sp-btn primary" onClick={() => navigate('/proveedores/mi-empresa')}>
+              <button type="button" className="sp-btn primary" onClick={() => navigate('/proveedor')}>
                 <Settings size={16} aria-hidden="true" /> Administrar mi empresa
               </button>
             )}

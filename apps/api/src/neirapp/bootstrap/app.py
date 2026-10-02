@@ -66,7 +66,9 @@ def create_app(settings: Settings | None = None, clock: Clock | None = None) -> 
     app.state.pricing = build_pricing(session_factory)
     app.state.leads = build_leads(session_factory, clock)
     app.state.professionals = build_professionals(session_factory, app.state.identity, clock)
-    app.state.suppliers = build_suppliers(session_factory, app.state.identity, clock)
+    app.state.suppliers = build_suppliers(
+        session_factory, app.state.identity, app.state.professionals, clock
+    )
     app.state.marketplace = build_marketplace(
         session_factory, app.state.identity, app.state.professionals, clock
     )
