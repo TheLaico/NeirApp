@@ -565,6 +565,35 @@ estadía: muestra los hoteles (lista y mapa), reúne las reseñas y lleva las so
   `/hospedaje/mis-reservas`, el panel del hotel `/hotel` (Inicio, Mi hotel, Reservas, Reseñas, Plan y
   Notificaciones) y `/admin/hospedaje`. El hotel también está en la vista de desarrollo.
 
+## Módulo `venues` — Reservas (implementado)
+
+Lugares de Neira que se reservan: restaurantes, cafés, bares, canchas, salones de eventos, centros
+recreativos, spas, tours y otros. Igual que Hospedaje (lista, mapa, reseñas con respuesta y
+solicitudes que el lugar confirma o rechaza), pero la reserva es por **día, hora y personas**.
+
+- **Acceso**: rol `venue` ("Establecimiento", asignable por correo). Cada cuenta tiene un lugar
+  (`venues_venue`, migración 0036): tipo, frase, descripción, dirección, punto en el mapa, contacto,
+  servicios, hasta 12 fotos, **horario** (días de atención y hora de apertura y cierre; si cierra
+  después de medianoche, la madrugada cuenta como parte del día en que abrió), máximo de personas
+  por reserva y precio "desde" (por persona, por hora o por reserva; 0 = a consultar). Sale en
+  Reservas mientras la cuenta tenga el rol (o sea admin) y no se oculte. Por ahora no tiene plan pago.
+- **Destacados**: los elige el administrador, con el fondo de su banner
+  (`PUT /venues/admin/places/{id}/featured`); salen primero y en el carrusel de arriba.
+- **Reservas** (`venues_booking`): `POST /venues/places/{id}/bookings` con `day`, `at` ("HH:MM"),
+  `people`, celular y mensaje. Se valida contra el horario del lugar (`venue_closed`), su capacidad
+  (`too_many_people`), que no sea en el pasado (hora de Colombia) ni a más de 180 días; máximo 3
+  pendientes por lugar. El lugar confirma o rechaza (`PUT /venues/me/bookings/{id}/confirm|decline`)
+  y el cliente puede cancelar (`PUT /venues/bookings/{id}/cancel`).
+- **Reseñas** (`venues_review`): como en Hospedaje (1 a 5 estrellas, una por persona, respuesta del
+  lugar). Avisos `booking_new`, `booking_confirmed`, `booking_declined`, `booking_cancelled`,
+  `venue_review_new` y `venue_review_reply`.
+- En el frontend: `/reservas` (destacados, lista o mapa con el mismo `NeiraMap`, cada lugar con el
+  color de su tipo, y la ficha del elegido con "Cómo llegar"), `/reservas/lugar?id=` (fotos, horario
+  por día, servicios, ubicación, reservar y opiniones), `/reservas/mis-reservas`, el panel
+  `/establecimiento` (Inicio, Mi lugar, Reservas, Reseñas y Notificaciones; también en la vista de
+  desarrollo) y `/admin/reservas`. Reusa los componentes y estilos de Hospedaje (`HotelsMap` con
+  `markerOf`, estrellas, reseñas).
+
 ## Frontend
 
 `apps/web` (Vite + React 19 + TypeScript). Estructura *feature-based*:

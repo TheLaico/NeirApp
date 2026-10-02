@@ -26,4 +26,10 @@ export const SERVER_KINDS = {
   hotel_plan_activated: { Icon: BedDouble, tone: 'good' },
   hotel_featured: { Icon: Sparkles, tone: 'good' },
   hotel_payment_rejected: { Icon: ReceiptText, tone: 'bad' },
+  booking_new: { Icon: CalendarPlus, tone: 'new' },
+  booking_confirmed: { Icon: CalendarCheck, tone: 'good' },
+  booking_declined: { Icon: CalendarX, tone: 'bad' },
+  booking_cancelled: { Icon: CalendarX, tone: 'bad' },
+  venue_review_new: { Icon: Star, tone: 'new' },
+  venue_review_reply: { Icon: MessageSquareReply, tone: 'info' },
 };

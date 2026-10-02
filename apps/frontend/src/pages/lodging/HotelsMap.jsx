@@ -7,17 +7,18 @@ import { HOTEL_MARKER, directionsLink } from '../../features/lodging/model.js';
 import { useSettings } from '../../features/settings/SettingsContext.jsx';
 
 /**
- * El mismo mapa de Neira del inicio (relieve, día/noche), pero solo con los hoteles. Al tocar un puntero se elige
+ * El mismo mapa de Neira del inicio (relieve, día/noche), pero solo con los hoteles (o los lugares de Reservas, con
+ * `markerOf`). Al tocar un puntero se elige
  * ese hotel; `focusKey` cambia cuando hay que volar hacia el elegido ("Ver en el mapa").
  */
-export default function HotelsMap({ hotels, selectedId, onSelect, onList, focusKey = 0, className = '' }) {
+export default function HotelsMap({ hotels, selectedId, onSelect, onList, focusKey = 0, className = '', markerOf = () => HOTEL_MARKER, allLabel = 'Ver todos los hoteles' }) {
   const { prefs } = useSettings();
   const theme = mapThemeFor(prefs.mapNightAuto);
   const mapRef = useRef(null);
 
   const markers = useMemo(
-    () => hotels.map((h) => ({ id: h.id, name: h.name, lat: h.lat, lng: h.lng, marker: HOTEL_MARKER, active: h.id === selectedId })),
-    [hotels, selectedId],
+    () => hotels.map((h) => ({ id: h.id, name: h.name, lat: h.lat, lng: h.lng, marker: markerOf(h), active: h.id === selectedId })),
+    [hotels, selectedId], // eslint-disable-line react-hooks/exhaustive-deps
   );
   const pick = useCallback((m) => onSelect?.(m.id), [onSelect]);
   const selected = hotels.find((h) => h.id === selectedId);
@@ -80,7 +81,7 @@ export default function HotelsMap({ hotels, selectedId, onSelect, onList, focusK
         <button type="button" aria-label="Alejar" onClick={() => mapRef.current?.zoomOut()}>
           <Minus size={20} aria-hidden="true" />
         </button>
-        <button type="button" aria-label="Ver todos los hoteles" onClick={fit}>
+        <button type="button" aria-label={allLabel} onClick={fit}>
           <LocateFixed size={20} aria-hidden="true" />
         </button>
       </div>

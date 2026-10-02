@@ -5,9 +5,9 @@ from neirapp.modules.professionals.domain.notifications import NotificationKind
 
 
 class NotificationsAdapter:
-    """Implementa el `NotifierPort` de MarquetNeira, Proveedores y Hospedaje con los avisos de
-    `professionals` (la campana es una sola). Vive en la composición para que ningún módulo
-    dependa del otro."""
+    """Implementa el `NotifierPort` de MarquetNeira, Proveedores, Hospedaje y Reservas con los
+    avisos de `professionals` (la campana es una sola). Vive en la composición para que ningún
+    módulo dependa del otro."""
 
     def __init__(self, professionals: ProfessionalsApp) -> None:
         self._professionals = professionals

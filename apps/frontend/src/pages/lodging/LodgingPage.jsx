@@ -228,8 +228,8 @@ function Recommended({ hotels, onOpen }) {
   );
 }
 
-export function AmenityIcons({ ids, max = 5, labels = true }) {
-  const list = amenitiesOf(ids);
+export function AmenityIcons({ ids, items, max = 5, labels = true }) {
+  const list = items ?? amenitiesOf(ids);
   const extra = list.length - max;
   return (
     <ul className={`lg-amenities${labels ? '' : ' compact'}`}>

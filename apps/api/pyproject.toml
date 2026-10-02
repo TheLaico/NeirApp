@@ -148,6 +148,15 @@ layers = [
 ]
 
 [[tool.importlinter.contracts]]
+name = "venues: capas"
+type = "layers"
+layers = [
+  "neirapp.modules.venues.presentation | neirapp.modules.venues.infrastructure",
+  "neirapp.modules.venues.application",
+  "neirapp.modules.venues.domain",
+]
+
+[[tool.importlinter.contracts]]
 name = "lodging: capas"
 type = "layers"
 layers = [
@@ -200,6 +209,7 @@ source_modules = [
   "neirapp.modules.marketplace.domain",
   "neirapp.modules.suppliers.domain",
   "neirapp.modules.lodging.domain",
+  "neirapp.modules.venues.domain",
   "neirapp.shared.domain",
 ]
 forbidden_modules = ["fastapi", "sqlalchemy", "pydantic", "jwt", "argon2", "starlette"]
@@ -221,6 +231,7 @@ source_modules = [
   "neirapp.modules.marketplace.application",
   "neirapp.modules.suppliers.application",
   "neirapp.modules.lodging.application",
+  "neirapp.modules.venues.application",
   "neirapp.shared.application",
 ]
 forbidden_modules = ["fastapi", "sqlalchemy", "starlette"]
@@ -528,3 +539,48 @@ source_modules = [
   "neirapp.modules.suppliers",
 ]
 forbidden_modules = ["neirapp.modules.lodging"]
+
+# Reservas: domain/application no importan otros módulos (quién está autorizado lo pregunta por
+# `AccessPort`, sobre identity; los avisos salen por `NotifierPort`) y nadie depende de él.
+[[tool.importlinter.contracts]]
+name = "el dominio/aplicación de venues no depende de otros módulos"
+type = "forbidden"
+source_modules = [
+  "neirapp.modules.venues.domain",
+  "neirapp.modules.venues.application",
+]
+forbidden_modules = [
+  "neirapp.modules.identity",
+  "neirapp.modules.stores",
+  "neirapp.modules.ordering",
+  "neirapp.modules.dispatch",
+  "neirapp.modules.wallet",
+  "neirapp.modules.reviews",
+  "neirapp.modules.incidents",
+  "neirapp.modules.leads",
+  "neirapp.modules.pricing",
+  "neirapp.modules.professionals",
+  "neirapp.modules.marketplace",
+  "neirapp.modules.suppliers",
+  "neirapp.modules.lodging",
+]
+
+[[tool.importlinter.contracts]]
+name = "otros módulos no dependen de venues"
+type = "forbidden"
+source_modules = [
+  "neirapp.modules.identity",
+  "neirapp.modules.stores",
+  "neirapp.modules.ordering",
+  "neirapp.modules.dispatch",
+  "neirapp.modules.wallet",
+  "neirapp.modules.reviews",
+  "neirapp.modules.incidents",
+  "neirapp.modules.leads",
+  "neirapp.modules.pricing",
+  "neirapp.modules.professionals",
+  "neirapp.modules.marketplace",
+  "neirapp.modules.suppliers",
+  "neirapp.modules.lodging",
+]
+forbidden_modules = ["neirapp.modules.venues"]

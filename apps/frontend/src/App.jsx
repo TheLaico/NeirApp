@@ -17,6 +17,7 @@ import AdminMarketplacePage from './pages/admin/AdminMarketplacePage.jsx';
 import AdminProfessionalsPage from './pages/admin/AdminProfessionalsPage.jsx';
 import AdminSuppliersPage from './pages/admin/AdminSuppliersPage.jsx';
 import AdminLodgingPage from './pages/admin/AdminLodgingPage.jsx';
+import AdminVenuesPage from './pages/admin/AdminVenuesPage.jsx';
 import AdminRolesPage from './pages/admin/AdminRolesPage.jsx';
 import AdminStoresPage from './pages/admin/AdminStoresPage.jsx';
 import CheckoutPage from './pages/checkout/CheckoutPage.jsx';
@@ -44,6 +45,10 @@ import LodgingPage from './pages/lodging/LodgingPage.jsx';
 import MyReservationsPage from './pages/lodging/MyReservationsPage.jsx';
 import SupplierPage from './pages/suppliers/SupplierPage.jsx';
 import SuppliersPage from './pages/suppliers/SuppliersPage.jsx';
+import VenuePanelPage from './pages/venue/VenuePanelPage.jsx';
+import MyBookingsPage from './pages/venues/MyBookingsPage.jsx';
+import VenuePage from './pages/venues/VenuePage.jsx';
+import VenuesPage from './pages/venues/VenuesPage.jsx';
 import SubcategoryProfessionalsPage from './pages/professionals/SubcategoryProfessionalsPage.jsx';
 import RegisterPage from './pages/register/RegisterPage.jsx';
 import MerchantPage from './pages/merchant/MerchantPage.jsx';
@@ -69,6 +74,10 @@ const ROUTES = {
   '/hospedaje/hotel': HotelPage,
   '/hospedaje/mis-reservas': MyReservationsPage,
   '/hotel': HotelPanelPage,
+  '/reservas': VenuesPage,
+  '/reservas/lugar': VenuePage,
+  '/reservas/mis-reservas': MyBookingsPage,
+  '/establecimiento': VenuePanelPage,
   '/favoritos': FavoritesPage,
   '/pedidos': OrdersPage,
   '/checkout': CheckoutPage,
@@ -80,6 +89,7 @@ const ROUTES = {
   '/admin/marquetneira': AdminMarketplacePage,
   '/admin/proveedores': AdminSuppliersPage,
   '/admin/hospedaje': AdminLodgingPage,
+  '/admin/reservas': AdminVenuesPage,
   '/admin/envios': AdminShippingPage,
   '/admin/mapa': AdminLiveMapPage,
   '/admin/solicitudes': AdminLeadsPage,

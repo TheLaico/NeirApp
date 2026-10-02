@@ -63,6 +63,13 @@ class NotificationKind(StrEnum):
     HOTEL_PLAN_ACTIVATED = "hotel_plan_activated"  # Al hotel: ya aparece
     HOTEL_FEATURED = "hotel_featured"  # Al hotel: está destacado
     HOTEL_PAYMENT_REJECTED = "hotel_payment_rejected"  # Al hotel
+    # De Reservas (lugares que se reservan).
+    BOOKING_NEW = "booking_new"  # Al establecimiento
+    BOOKING_CANCELLED = "booking_cancelled"  # Al establecimiento
+    BOOKING_CONFIRMED = "booking_confirmed"  # Al cliente
+    BOOKING_DECLINED = "booking_declined"  # Al cliente
+    VENUE_REVIEW_NEW = "venue_review_new"  # Al establecimiento
+    VENUE_REVIEW_REPLY = "venue_review_reply"  # A quien escribió la reseña
 
 
 @dataclass

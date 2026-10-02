@@ -7,6 +7,7 @@ export const ASSIGNABLE_ROLES = [
   { value: 'store_staff', label: 'Comerciante (dueño de local)' },
   { value: 'supplier', label: 'Proveedor (empresa al por mayor)' },
   { value: 'hotel', label: 'Hotel (hospedaje)' },
+  { value: 'venue', label: 'Establecimiento (lugar que recibe reservas)' },
 ];
 
 export const roleLabel = (role) => ASSIGNABLE_ROLES.find((r) => r.value === role)?.label ?? role;

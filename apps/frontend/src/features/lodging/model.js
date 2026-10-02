@@ -76,9 +76,12 @@ export const STATUS = {
   cancelled: { label: 'Cancelada', tone: 'off' },
 };
 
-/** "6068512345" → "606 851 2345". */
-export const phoneLabel = (digits = '') =>
-  digits.length === 10 ? digits.replace(/^(\d{3})(\d{3})(\d{4})$/, '$1 $2 $3') : digits.replace(/^(\d{3})(\d{4})$/, '$1 $2');
+/** "6068512345" (o "+573101234567") → "606 851 2345". */
+export const phoneLabel = (raw = '') => {
+  let digits = raw.replace(/\D/g, '');
+  if (digits.length === 12 && digits.startsWith('57')) digits = digits.slice(2);
+  return digits.length === 10 ? digits.replace(/^(\d{3})(\d{3})(\d{4})$/, '$1 $2 $3') : digits.replace(/^(\d{3})(\d{4})$/, '$1 $2');
+};
 export const telLink = (digits) => `tel:${digits.length === 10 && digits.startsWith('3') ? `+57${digits}` : digits}`;
 export const whatsappLink = (digits, hotel) =>
   `https://wa.me/57${digits}?text=${encodeURIComponent(`Hola ${hotel}, los encontré en Hospedaje de NeirAPP y quiero información para hospedarme.`)}`;

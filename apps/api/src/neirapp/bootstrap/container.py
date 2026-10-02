@@ -302,6 +302,18 @@ from neirapp.modules.suppliers.infrastructure.repositories import (
     SqlAlchemyPaymentRepository as SqlAlchemySupplierPaymentRepository,
 )
 from neirapp.modules.suppliers.infrastructure.repositories import SqlAlchemySupplierRepository
+from neirapp.modules.venues.application import use_cases as venues
+from neirapp.modules.venues.application.app import VenuesApp
+from neirapp.modules.venues.infrastructure.identity_adapter import (
+    IdentityAccessAdapter as VenueAccessAdapter,
+)
+from neirapp.modules.venues.infrastructure.repositories import (
+    SqlAlchemyBookingRepository,
+    SqlAlchemyVenueRepository,
+)
+from neirapp.modules.venues.infrastructure.repositories import (
+    SqlAlchemyReviewRepository as SqlAlchemyVenueReviewRepository,
+)
 from neirapp.modules.wallet.application.app import WalletApp
 from neirapp.modules.wallet.application.wallet import (
     CreditCourier,
@@ -591,6 +603,37 @@ def build_lodging(
         grant_plan_month=lodging_plans.GrantPlanMonth(hotels, payments, notifier, clock),
         end_plan=lodging_plans.EndPlan(hotels, reviews, clock),
         set_banner=lodging_plans.SetBanner(hotels, reviews, clock),
+    )
+
+
+def build_venues(
+    session_factory: async_sessionmaker[Any],
+    identity: IdentityApp,
+    professionals: ProfessionalsApp,
+    clock: Clock | None = None,
+) -> VenuesApp:
+    clock = clock or SystemClock()
+    places = SqlAlchemyVenueRepository(session_factory)
+    reviews = SqlAlchemyVenueReviewRepository(session_factory)
+    bookings = SqlAlchemyBookingRepository(session_factory)
+    access = VenueAccessAdapter(identity)
+    notifier = NotificationsAdapter(professionals)
+    return VenuesApp(
+        get_my_venue=venues.GetMyVenue(places, reviews),
+        save_my_venue=venues.SaveMyVenue(places, reviews, clock),
+        list_venues=venues.ListVenues(places, reviews, access),
+        get_venue=venues.GetVenue(places, reviews, access),
+        list_venue_reviews=venues.ListVenueReviews(places, reviews, access),
+        rate_venue=venues.RateVenue(places, reviews, access, notifier, clock),
+        list_my_venue_reviews=venues.ListMyVenueReviews(places, reviews),
+        reply_to_review=venues.ReplyToReview(places, reviews, notifier, clock),
+        request_booking=venues.RequestBooking(places, bookings, access, notifier, clock),
+        list_my_bookings=venues.ListMyBookings(places, bookings),
+        cancel_booking=venues.CancelBooking(places, bookings, notifier, clock),
+        list_venue_bookings=venues.ListVenueBookings(places, bookings),
+        answer_booking=venues.AnswerBooking(places, bookings, notifier, clock),
+        list_venues_for_admin=venues.ListVenuesForAdmin(places, reviews, access),
+        set_featured=venues.SetFeatured(places, reviews),
     )
 
 

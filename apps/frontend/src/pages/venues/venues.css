@@ -1,0 +1,22 @@
+/* Reservas: reusa los estilos de Hospedaje (lodging.css) y agrega lo propio: el tipo de lugar con su color, el
+   horario y el selector de hora. */
+
+.vn-cat { display: inline-flex; align-items: center; align-self: flex-start; gap: 5px; padding: 3px 10px; border-radius: 999px; background: color-mix(in srgb, var(--c, #0f5238) 12%, #fff); color: var(--c, #0f5238); font-size: 12.5px; font-weight: 800; }
+.vn-cat.on-dark { background: rgba(255, 255, 255, .18); color: #fff; }
+.vn-hours svg { color: #0f5238 !important; }
+.vn-ask { font-size: 17px !important; }
+.vn-schedule { padding: 8px 12px; border-radius: 10px; background: #f4f7ee; color: #14392a; font-size: 13.5px; font-weight: 700; }
+.lg-field select { min-height: 46px; padding: 0 12px; border: 1.5px solid #c3cdb8; border-radius: 12px; background: #fff; color: #23342b; font: inherit; font-size: 15px; }
+.lg-field select:disabled { opacity: .6; }
+.vnd-hours { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; list-style: none; padding: 0; }
+.vnd-hours li { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 4px; border-radius: 10px; background: #f4f7ee; font-size: 12.5px; font-weight: 800; color: #14392a; text-align: center; }
+.vnd-hours li.off { background: #f3f3ef; color: #a0a69a; font-weight: 600; }
+.vnd-hours small { font-weight: 600; font-size: 11px; }
+@media (max-width: 760px) {
+  .vnd-hours { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+.vnd-chips { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.lgd-card h2 svg { margin-right: 4px; vertical-align: -3px; }
+.vnf-days { margin: 10px 0 12px; }
+.vnf-days button { min-width: 58px; justify-content: center; }
+.vnf-hours { max-width: 420px; }
