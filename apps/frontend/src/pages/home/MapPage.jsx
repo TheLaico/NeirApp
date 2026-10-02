@@ -254,7 +254,7 @@ export default function MapPage({ user, onLogout }) {
       user={user}
       onLogout={onLogout}
       centerLogo
-      className={`map-view ${selected ? 'has-store' : ''}`.trim()}
+      className={`map-view ${selected ? 'has-store' : ''} ${view === 'list' ? 'view-list' : ''}`.trim()}
       heroImage={fondoBuscador}
     >
       {/* El mismo buscador del inicio (píldora con micrófono, sobre el fondo de montañas) y debajo las categorías;
