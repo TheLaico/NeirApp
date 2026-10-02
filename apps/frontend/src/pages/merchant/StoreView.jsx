@@ -5,13 +5,14 @@ import { CATEGORY_LABEL } from '../../features/stores/categories.jsx';
 import { storesApi } from '../../features/stores/api.js';
 import { mapLink } from '../../lib/geo.js';
 
-/** "Mi tienda": foto del local, nombre, categoría y descripción — lo que ven los clientes en el mapa. */
+/** "Mi tienda": logo, foto del local, nombre, categoría y descripción — lo que ven los clientes en el mapa. */
 export default function StoreView({ store, onChanged }) {
   const [values, setValues] = useState({
     name: store.name,
     category: store.category,
     description: store.description ?? '',
     image: store.image_url ?? '',
+    logo: store.logo_url ?? '',
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -26,7 +27,8 @@ export default function StoreView({ store, onChanged }) {
     values.name !== store.name ||
     values.category !== store.category ||
     values.description !== (store.description ?? '') ||
-    values.image !== (store.image_url ?? '');
+    values.image !== (store.image_url ?? '') ||
+    values.logo !== (store.logo_url ?? '');
 
   const submit = async (e) => {
     e.preventDefault();
@@ -39,6 +41,7 @@ export default function StoreView({ store, onChanged }) {
         category: values.category,
         description: values.description.trim(),
         image_url: values.image, // '' quita la foto
+        logo_url: values.logo, // '' quita el logo
       });
       await onChanged();
       setSaved(true);
@@ -53,6 +56,16 @@ export default function StoreView({ store, onChanged }) {
     <>
       <form className="cr-card cr-form" onSubmit={submit} noValidate>
         <h2>Así te ven tus clientes</h2>
+        <ImagePicker
+          label="Logo de la tienda"
+          hint="El ícono de tu marca, cuadrado y con fondo claro. Se ve en el inicio, en “Pide a domicilio de estas marcas”."
+          shape="square"
+          value={values.logo}
+          onChange={(logo) => {
+            setSaved(false);
+            setValues((v) => ({ ...v, logo }));
+          }}
+        />
         <ImagePicker
           label="Foto del local"
           hint="Una foto de la fachada o del mostrador. Se ve en la página de tu tienda."

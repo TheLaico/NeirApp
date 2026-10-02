@@ -177,6 +177,25 @@ class TestImagenDeLaTienda:
         removed = await client.patch(endpoint, json={"image_url": ""}, headers=_bearer(owner))
         assert removed.json()["image_url"] is None
 
+    async def test_el_dueno_pone_y_quita_el_logo_de_su_tienda(
+        self, client: httpx.AsyncClient, app: FastAPI
+    ) -> None:
+        admin, owner, store = await self._seller_store(client, app)
+        url = (await _upload(client, admin, PNG)).json()["url"]
+        endpoint = f"{API}/stores/{store['id']}"
+
+        put = await client.patch(endpoint, json={"logo_url": url}, headers=_bearer(owner))
+        assert put.json()["logo_url"] == url
+        assert put.json()["image_url"] is None  # el logo no es la foto del local
+        listed = (await client.get(f"{API}/stores")).json()
+        assert next(s for s in listed if s["id"] == store["id"])["logo_url"] == url
+
+        bad = await client.patch(endpoint, json={"logo_url": "ftp://x"}, headers=_bearer(owner))
+        assert bad.json()["code"] == "invalid_image_url"
+
+        removed = await client.patch(endpoint, json={"logo_url": ""}, headers=_bearer(owner))
+        assert removed.json()["logo_url"] is None
+
     async def test_solo_acepta_fotos_de_la_app_o_enlaces_https(
         self, client: httpx.AsyncClient, app: FastAPI
     ) -> None:

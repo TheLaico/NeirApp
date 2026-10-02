@@ -173,9 +173,14 @@ function BrandCard({ store, onOpen }) {
   const { Icon } = store;
   return (
     <button type="button" className="feed-brand" onClick={() => onOpen(store)}>
-      <span className="feed-brand-ico" style={{ background: store.color }}>
-        <Icon size={26} color="#fff" aria-hidden="true" />
-      </span>
+      {/* El logo lo sube el comerciante en "Mi tienda"; sin logo, el ícono y el color de su categoría. */}
+      {store.logo_url ? (
+        <img className="feed-brand-ico feed-brand-logo" src={store.logo_url} alt="" loading="lazy" />
+      ) : (
+        <span className="feed-brand-ico" style={{ background: store.color }}>
+          <Icon size={26} color="#fff" aria-hidden="true" />
+        </span>
+      )}
       <span className="feed-brand-info">
         <strong>{store.name}</strong>
         {store.rating ? (

@@ -28,6 +28,7 @@ class StoreModel(Base):
     # Distingue "rechazada" de "todavía sin revisar" (las dos empiezan con is_approved=False).
     is_rejected: Mapped[bool] = mapped_column(default=False)
     image_url: Mapped[str | None] = mapped_column(String(2048))
+    logo_url: Mapped[str | None] = mapped_column(String(2048))
     recommended_position: Mapped[int | None] = mapped_column(Integer, index=True)
     is_listed: Mapped[bool] = mapped_column(default=True, server_default="1")
     created_at: Mapped[datetime] = mapped_column(UTCDateTime)

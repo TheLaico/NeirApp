@@ -78,6 +78,7 @@ def _to_store(model: StoreModel) -> Store:
         is_rejected=model.is_rejected,
         created_at=model.created_at,
         image_url=model.image_url,
+        logo_url=model.logo_url,
         recommended_position=model.recommended_position,
         is_listed=model.is_listed,
         schedule=_to_schedule(model),
@@ -115,6 +116,7 @@ class SqlAlchemyStoreRepository:
                 is_approved=store.is_approved,
                 is_rejected=store.is_rejected,
                 image_url=store.image_url,
+                logo_url=store.logo_url,
                 created_at=store.created_at,
             )
         )
@@ -165,6 +167,7 @@ class SqlAlchemyStoreRepository:
         model.is_approved = store.is_approved
         model.is_rejected = store.is_rejected
         model.image_url = store.image_url
+        model.logo_url = store.logo_url
         model.recommended_position = store.recommended_position
         model.is_listed = store.is_listed
         model.owner_user_id = store.owner_user_id

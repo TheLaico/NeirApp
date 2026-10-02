@@ -63,6 +63,7 @@ export function normalizeStore(store) {
     next_open_at: store.next_open_at,
     description: store.description,
     image_url: store.image_url,
+    logo_url: store.logo_url ?? null,
     recommended_position: store.recommended_position ?? null,
     // Solo el panel de administrador los usa (la lista pública no trae el correo).
     is_listed: store.is_listed !== false,

@@ -174,6 +174,7 @@ async def update_store(
         category=body.category,
         description=body.description,
         image_url=body.image_url,
+        logo_url=body.logo_url,
     )
     return StoreResponse.from_domain(stores.clock.now(), store)
 

@@ -228,6 +228,7 @@ class UpdateStore:
         category: StoreCategory | None = None,
         description: str | None = None,
         image_url: str | None = None,
+        logo_url: str | None = None,
     ) -> Store:
         async with self._uow_factory() as uow:
             store = await uow.stores.get(store_id)
@@ -236,10 +237,18 @@ class UpdateStore:
             if not store.is_owned_by(user_id):
                 raise NotStoreOwner()
             await ensure_can_add_photo(
-                uow, store_id, new_url=image_url, current_url=store.image_url
+                uow,
+                store_id,
+                new_url=image_url,
+                current_url=store.image_url,
+                also=(logo_url, store.logo_url),
             )
             store.update_profile(
-                name=name, category=category, description=description, image_url=image_url
+                name=name,
+                category=category,
+                description=description,
+                image_url=image_url,
+                logo_url=logo_url,
             )
             await uow.stores.update(store)
             await uow.commit()

@@ -72,6 +72,8 @@ class Store:
     is_rejected: bool
     created_at: datetime
     image_url: str | None = None
+    # Logo o ícono de la marca (cuadrado): se ve en "Pide a domicilio de estas marcas" del inicio.
+    logo_url: str | None = None
     # Lugar (1 = primera) entre las recomendadas que elige el administrador; `None` = no lo es.
     recommended_position: int | None = None
     # El administrador puede sacar una tienda del mapa y la búsqueda sin rechazarla ni borrarla.
@@ -128,6 +130,7 @@ class Store:
         category: StoreCategory | None = None,
         description: str | None = None,
         image_url: str | None = None,
+        logo_url: str | None = None,
     ) -> None:
         if name is not None:
             self.name = _normalize_name(name, InvalidStoreName)
@@ -137,6 +140,8 @@ class Store:
             self.description = description.strip()[:500]
         if image_url is not None:
             self.image_url = normalize_image_url(image_url)
+        if logo_url is not None:
+            self.logo_url = normalize_image_url(logo_url)
 
     def transfer_to(self, owner_user_id: UUID) -> None:
         self.owner_user_id = owner_user_id
@@ -207,6 +212,7 @@ class Product:
         description: str | None = None,
         price_cop: int | None = None,
         image_url: str | None = None,
+        logo_url: str | None = None,
     ) -> None:
         if name is not None:
             self.name = _normalize_name(name, InvalidProductName)
@@ -217,6 +223,8 @@ class Product:
             self.price_cop = price_cop
         if image_url is not None:
             self.image_url = normalize_image_url(image_url)
+        if logo_url is not None:
+            self.logo_url = normalize_image_url(logo_url)
 
     def set_available(self, is_available: bool) -> None:
         self.is_available = is_available

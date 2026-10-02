@@ -104,14 +104,14 @@
 .feed-map-card img { display: block; width: 100%; height: 100%; object-fit: contain; }
 .feed-map-btn {
   position: absolute; left: 26px; bottom: 22px; display: inline-flex; align-items: center; gap: 8px;
-  height: 44px; padding: 0 22px; border-radius: 999px; background: var(--g); color: #fff;
-  font-size: 14.5px; font-weight: 700; box-shadow: 0 4px 10px rgba(15, 82, 56, 0.35);
+  height: 44px; padding: 0 22px; border-radius: 999px; background: var(--orange); color: #fff;
+  font-size: 14.5px; font-weight: 700; box-shadow: 0 4px 10px rgba(217, 84, 30, 0.35);
   animation: feed-map-btn-pulse 1.8s ease-in-out infinite;
 }
 /* Late como un pulso para llamar la atención hacia el botón sin necesitar texto extra. */
 @keyframes feed-map-btn-pulse {
-  0%, 100% { transform: scale(1); box-shadow: 0 4px 10px rgba(15, 82, 56, 0.35); }
-  50% { transform: scale(1.07); box-shadow: 0 6px 20px rgba(15, 82, 56, 0.55); }
+  0%, 100% { transform: scale(1); box-shadow: 0 4px 10px rgba(217, 84, 30, 0.35); }
+  50% { transform: scale(1.07); box-shadow: 0 6px 20px rgba(217, 84, 30, 0.55); }
 }
 
 /* ---------- "Apoya lo nuestro" (ilustración pendiente: banner-apoya-lo-nuestro.png) ---------- */
@@ -147,6 +147,7 @@
 }
 .feed-brand:hover { box-shadow: 0 6px 16px rgba(35, 52, 43, 0.12); transform: translateY(-1px); }
 .feed-brand-ico { flex: none; width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; }
+.feed-brand-logo { object-fit: cover; background: #fff; border: 1px solid var(--line); }
 .feed-brand-info { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .feed-brand-info strong { font-size: 14.5px; font-weight: 700; color: #14392a; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .feed-brand-rating { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 700; color: var(--ink); }

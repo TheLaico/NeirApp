@@ -27,6 +27,9 @@ class UpdateStoreRequest(BaseModel):
     image_url: str | None = Field(
         default=None, max_length=2048, description='Foto del local; "" la quita.'
     )
+    logo_url: str | None = Field(
+        default=None, max_length=2048, description='Logo o ícono de la marca; "" lo quita.'
+    )
 
 
 class SetStoreOpenRequest(BaseModel):
@@ -107,6 +110,7 @@ class StoreResponse(BaseModel):
     is_approved: bool
     is_rejected: bool
     image_url: str | None
+    logo_url: str | None
     recommended_position: int | None
     is_listed: bool
 
@@ -127,6 +131,7 @@ class StoreResponse(BaseModel):
             is_approved=store.is_approved,
             is_rejected=store.is_rejected,
             image_url=store.image_url,
+            logo_url=store.logo_url,
             recommended_position=store.recommended_position,
             is_listed=store.is_listed,
         )
