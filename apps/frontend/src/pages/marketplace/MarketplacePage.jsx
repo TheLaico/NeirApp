@@ -86,9 +86,7 @@ export default function MarketplacePage({ user, onLogout }) {
             <div className="mq-banner-text">
               <p>Compra o alquila inmuebles de vendedores locales</p>
               <p className="mq-banner-desc">
-                Encuentra casas, apartamentos, locales, fincas, lotes y más en Neira, publicados por sus propios dueños. Escríbeles directo por WhatsApp
-                para preguntar, visitar y acordar el precio. NeirAPP solo los conecta: no cobramos comisión ni manejamos pagos entre ustedes. ¿Tienes
-                un inmueble? Publícalo por $ 10.000 al mes.
+                Descubre casas, apartamentos, locales, fincas, lotes y mucho más, publicados directamente por sus propietarios.
               </p>
             </div>
             <div className="mq-hero-actions">
