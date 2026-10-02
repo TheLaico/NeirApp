@@ -5,7 +5,6 @@ from uuid import UUID, uuid4
 
 from neirapp.modules.professionals.domain.errors import InvalidGalleryImage, TextTooLong
 
-MAX_IMAGES = 30
 MAX_CAPTION = 140
 # Solo fotos subidas a la app (POST /uploads/images): nombre aleatorio de 32 caracteres hex.
 _UPLOADED = re.compile(r"^/api/v1/uploads/images/[0-9a-f]{32}\.(png|jpg|webp)$")

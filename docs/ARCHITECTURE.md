@@ -454,6 +454,18 @@ en `/profesional` → "Mi perfil" y queda publicado en `/profesionales`.
   rechazan con `requests_paused`). Guardar el perfil no toca estos ajustes. El cambio de contraseña
   es de `identity`: `POST /identity/me/password` pide la actual, revoca todos los refresh tokens de
   la cuenta y devuelve una sesión nueva para seguir conectado en el dispositivo donde se cambió.
+- **Planes** (`professionals_subscription`, migración 0029; `domain/plans.py`): Básico, Profesional y
+  Premium. Sin plan vigente el perfil **no se publica** (directorio, "Ver perfil", servicios, galería y
+  certificados públicos responden como si no existiera). No hay pasarela de pagos: el profesional elige
+  un plan y reporta el comprobante (`POST /professionals/me/plan/requests`, queda `pending`); el
+  administrador confirma el pago (`PUT /professionals/plans/requests/{id}/approve`) o lo rechaza con
+  motivo, o activa/quita un plan a mano (`PUT/DELETE /professionals/{user_id}/plan`). Cada activación
+  vale 30 días; renovar el mismo plan suma el mes al final del periodo ya pagado y cambiar de plan
+  empieza ya y cierra el anterior. `PlanBook` resuelve el plan vigente y lo aplican los casos de uso:
+  máximo de fotos (3 / 20 / 100; la galería pública muestra solo las que permite el plan), certificados
+  visibles y solicitudes de cita desde el plan Profesional, y Premium sale destacado y en
+  "Profesionales recomendados" del inicio. `GET /professionals/me/plan` y `GET /professionals/admin/plans`
+  dan el estado. Los datos de pago que ve el profesional están en `PAYMENT` de `pages/professional/plans.js`.
 - Pendiente: calificaciones de profesionales; avisos en tiempo real (hoy se revisa cada minuto) y
   por correo o push.
 

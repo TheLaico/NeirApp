@@ -4,15 +4,15 @@ import Lightbox from '../../components/common/Lightbox.jsx';
 import { uploadImage } from '../../features/media/api.js';
 import { professionalsApi } from '../../features/professionals/api.js';
 
-const MAX_IMAGES = 30;
 const MAX_CAPTION = 140;
 const TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
 /**
  * "Galería de imágenes": fotos del trabajo del profesional (su consultorio, obras, antes y después…). Se suben a la API
  * de imágenes y luego se agregan a su galería; la primera es la portada. Los clientes las ven en "Ver perfil".
+ * `max` es el máximo de fotos de su plan (Básico 3, Profesional 20, Premium sin límite práctico).
  */
-export default function GalleryView({ onCountChange }) {
+export default function GalleryView({ max = 3, planName = '', onCountChange, onPlans }) {
   const [state, setState] = useState({ list: [], loading: true, error: '' });
   const [uploading, setUploading] = useState(0); // fotos que se están subiendo ahora
   const [notice, setNotice] = useState({ text: '', bad: false });
@@ -41,12 +41,12 @@ export default function GalleryView({ onCountChange }) {
 
   // Sube una por una (así no se pasa del máximo y cada error se informa por separado).
   const addFiles = async (fileList) => {
-    const room = MAX_IMAGES - list.length;
+    const room = max - list.length;
     const files = [...fileList].filter((f) => TYPES.includes(f.type));
     const skipped = fileList.length - files.length;
     const batch = files.slice(0, Math.max(room, 0));
     if (!batch.length) {
-      setNotice({ text: room <= 0 ? 'Ya tienes 30 fotos. Borra alguna para agregar otra.' : 'Elige fotos JPG, PNG o WebP.', bad: true });
+      setNotice({ text: room <= 0 ? `Ya tienes ${max} fotos, el máximo de tu plan. Borra alguna o mejora tu plan.` : 'Elige fotos JPG, PNG o WebP.', bad: true });
       return;
     }
     setNotice({ text: '', bad: false });
@@ -68,7 +68,7 @@ export default function GalleryView({ onCountChange }) {
     const parts = [];
     if (added) parts.push(added === 1 ? 'Se agregó 1 foto.' : `Se agregaron ${added} fotos.`);
     if (failed) parts.push(`No se pudo subir alguna: ${failed}`);
-    if (extra > 0) parts.push(`${extra} no cupieron (máximo 30).`);
+    if (extra > 0) parts.push(`${extra} no cupieron (tu plan permite ${max}).`);
     if (skipped > 0) parts.push(`${skipped} no eran fotos JPG, PNG o WebP.`);
     setNotice({ text: parts.join(' '), bad: Boolean(failed || extra || skipped) });
   };
@@ -106,7 +106,8 @@ export default function GalleryView({ onCountChange }) {
     }
   };
 
-  const full = list.length >= MAX_IMAGES;
+  const full = list.length >= max;
+  const unlimited = max >= 100;
 
   return (
     <div className="gl">
@@ -116,9 +117,7 @@ export default function GalleryView({ onCountChange }) {
           <p>Muestra tu trabajo: tu consultorio, proyectos terminados, el antes y el después. Las personas confían más cuando pueden ver lo que haces.</p>
         </div>
         {!state.loading && !state.error && (
-          <span className={`gl-count${full ? ' full' : ''}`}>
-            {list.length} de {MAX_IMAGES}
-          </span>
+          <span className={`gl-count${full ? ' full' : ''}`}>{unlimited ? `${list.length} ${list.length === 1 ? 'foto' : 'fotos'}` : `${list.length} de ${max}`}</span>
         )}
       </div>
 
@@ -159,7 +158,7 @@ export default function GalleryView({ onCountChange }) {
           >
             <span className="gl-drop-ico">{uploading ? <Loader2 size={30} className="cr-spin" aria-hidden="true" /> : <ImagePlus size={30} aria-hidden="true" />}</span>
             <span className="gl-drop-text">
-              <strong>{uploading ? `Subiendo ${uploading} ${uploading === 1 ? 'foto' : 'fotos'}…` : full ? 'Llegaste al máximo de 30 fotos' : 'Subir fotos'}</strong>
+              <strong>{uploading ? `Subiendo ${uploading} ${uploading === 1 ? 'foto' : 'fotos'}…` : full ? `Llegaste al máximo de ${max} fotos de tu plan${planName ? ` ${planName}` : ''}` : 'Subir fotos'}</strong>
               {!uploading && !full && <small>Toca para elegir o arrástralas aquí · JPG, PNG o WebP, hasta 10 MB cada una</small>}
             </span>
           </button>
@@ -176,6 +175,11 @@ export default function GalleryView({ onCountChange }) {
             }}
           />
 
+          {full && onPlans && (
+            <button type="button" className="gl-upgrade" onClick={onPlans}>
+              ¿Necesitas más fotos? El plan Profesional permite 20 y el Premium no tiene límite. Ver planes
+            </button>
+          )}
           {list.length === 0 && !uploading ? (
             <p className="gl-empty">Todavía no tienes fotos. La primera que subas será la portada de tu galería.</p>
           ) : (

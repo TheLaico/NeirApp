@@ -48,11 +48,31 @@ async def _grant(client: httpx.AsyncClient, admin: dict[str, Any], email: str) -
 
 
 async def _professional(
-    client: httpx.AsyncClient, admin: dict[str, Any], email: str
+    client: httpx.AsyncClient, admin: dict[str, Any], email: str, plan: str | None = "pro"
 ) -> dict[str, Any]:
+    """Profesional autorizado; por defecto con el plan Profesional (sin plan no se publica)."""
     await _grant(client, admin, email)
     tokens = await _register(client, email)  # el rol llega al registrarse con el correo autorizado
+    if plan:
+        await _set_plan(client, admin, tokens, plan)
     return tokens
+
+
+async def _user_id(client: httpx.AsyncClient, tokens: dict[str, Any]) -> str:
+    me = await client.get(f"{API}/identity/me", headers=_bearer(tokens))
+    return me.json()["id"]  # type: ignore[no-any-return]
+
+
+async def _set_plan(
+    client: httpx.AsyncClient, admin: dict[str, Any], tokens: dict[str, Any], plan: str
+) -> None:
+    user_id = await _user_id(client, tokens)
+    response = await client.put(
+        f"{API}/professionals/{user_id}/plan", json={"plan": plan}, headers=_bearer(admin)
+    )
+    assert response.status_code == 200, response.text
+    # Activar el plan le deja un aviso; se borra para que las pruebas de avisos partan de cero.
+    await client.delete(f"{API}/notifications", headers=_bearer(tokens))
 
 
 class TestMiPerfil:
@@ -1025,3 +1045,241 @@ class TestConfiguracion:
             f"{API}/professionals/me/settings", json=body, headers=_bearer(customer)
         )
         assert forbidden.status_code == 403
+
+
+async def _plan(client: httpx.AsyncClient, tokens: dict[str, Any]) -> dict[str, Any]:
+    response = await client.get(f"{API}/professionals/me/plan", headers=_bearer(tokens))
+    assert response.status_code == 200, response.text
+    return response.json()  # type: ignore[no-any-return]
+
+
+async def _ask_plan(
+    client: httpx.AsyncClient, tokens: dict[str, Any], plan: str, reference: str = "Nequi M12345"
+) -> httpx.Response:
+    return await client.post(
+        f"{API}/professionals/me/plan/requests",
+        json={"plan": plan, "payment_reference": reference},
+        headers=_bearer(tokens),
+    )
+
+
+class TestPlanes:
+    async def test_sin_plan_el_perfil_no_se_publica(
+        self, client: httpx.AsyncClient, app: FastAPI
+    ) -> None:
+        admin = await _admin(client, app)
+        pro = await _professional(client, admin, "laura@correo.com", plan=None)
+        saved = await client.put(f"{API}/professionals/me", json=PROFILE, headers=_bearer(pro))
+        user_id = saved.json()["user_id"]
+
+        assert saved.json()["plan"] is None
+        assert (await client.get(f"{API}/professionals")).json() == []
+        assert (await client.get(f"{API}/professionals/{user_id}")).status_code == 404
+        status = await _plan(client, pro)
+        assert status["current"] is None
+        assert status["max_images"] == 3
+
+    async def test_pide_un_plan_y_el_admin_confirma_el_pago(
+        self, client: httpx.AsyncClient, app: FastAPI
+    ) -> None:
+        admin = await _admin(client, app)
+        pro = await _professional(client, admin, "laura@correo.com", plan=None)
+        user_id = (
+            await client.put(f"{API}/professionals/me", json=PROFILE, headers=_bearer(pro))
+        ).json()["user_id"]
+
+        asked = await _ask_plan(client, pro, "premium")
+        assert asked.status_code == 201, asked.text
+        pending = asked.json()["pending"]
+        assert (pending["plan"], pending["status"], pending["price_cop"]) == (
+            "premium",
+            "pending",
+            59900,
+        )
+        assert (await _ask_plan(client, pro, "pro")).json()["code"] == "plan_request_pending"
+
+        overview = (
+            await client.get(f"{API}/professionals/admin/plans", headers=_bearer(admin))
+        ).json()
+        assert overview[0]["display_name"] == "Dra. Laura Torres"
+        assert overview[0]["status"]["pending"]["payment_reference"] == "Nequi M12345"
+
+        approved = await client.put(
+            f"{API}/professionals/plans/requests/{pending['id']}/approve", headers=_bearer(admin)
+        )
+        assert approved.status_code == 200, approved.text
+        status = await _plan(client, pro)
+        assert status["pending"] is None
+        assert status["current"]["plan"] == "premium"
+        assert status["current"]["expires_at"].startswith("2026-10-21")  # 30 días
+        assert status["max_images"] == 100
+
+        public = (await client.get(f"{API}/professionals/{user_id}")).json()
+        assert public["plan"] == "premium"
+        assert public["is_featured"] is True  # Premium aparece primero
+        inbox = (await client.get(f"{API}/notifications", headers=_bearer(pro))).json()
+        assert inbox["items"][0]["kind"] == "plan_activated"
+        assert "21 de octubre" in inbox["items"][0]["body"]
+
+    async def test_el_admin_rechaza_el_pago_con_un_motivo(
+        self, client: httpx.AsyncClient, app: FastAPI
+    ) -> None:
+        admin = await _admin(client, app)
+        pro = await _professional(client, admin, "laura@correo.com", plan=None)
+        pending = (await _ask_plan(client, pro, "pro")).json()["pending"]
+        url = f"{API}/professionals/plans/requests/{pending['id']}/reject"
+
+        no_note = await client.put(url, json={"note": " "}, headers=_bearer(admin))
+        assert no_note.status_code == 422
+        rejected = await client.put(
+            url, json={"note": "No encontramos el pago"}, headers=_bearer(admin)
+        )
+        assert rejected.json()["status"] == "rejected"
+
+        status = await _plan(client, pro)
+        assert status["current"] is None and status["pending"] is None
+        assert status["last_rejected"]["note"] == "No encontramos el pago"
+        # Ya revisada: no se puede aprobar después.
+        again = await client.put(
+            f"{API}/professionals/plans/requests/{pending['id']}/approve", headers=_bearer(admin)
+        )
+        assert again.status_code == 409
+        # Puede volver a pedirlo; el rechazo anterior deja de mostrarse.
+        assert (await _ask_plan(client, pro, "pro")).json()["last_rejected"] is None
+
+    async def test_cancela_su_solicitud_pero_no_la_de_otro(
+        self, client: httpx.AsyncClient, app: FastAPI
+    ) -> None:
+        admin = await _admin(client, app)
+        pro = await _professional(client, admin, "laura@correo.com", plan=None)
+        other = await _professional(client, admin, "carlos@correo.com", plan=None)
+        pending = (await _ask_plan(client, pro, "basic")).json()["pending"]
+        url = f"{API}/professionals/me/plan/requests/{pending['id']}/cancel"
+
+        assert (await client.put(url, headers=_bearer(other))).status_code == 404
+        cancelled = await client.put(url, headers=_bearer(pro))
+        assert cancelled.json()["pending"] is None
+
+    async def test_renovar_suma_otro_mes_y_cambiar_de_plan_empieza_ya(
+        self, client: httpx.AsyncClient, app: FastAPI
+    ) -> None:
+        admin = await _admin(client, app)
+        pro = await _professional(client, admin, "laura@correo.com", plan="basic")
+
+        await _set_plan(client, admin, pro, "basic")  # renovación del mismo plan
+        status = await _plan(client, pro)
+        assert status["current"]["plan"] == "basic"
+        assert [s["starts_at"][:10] for s in status["upcoming"]] == ["2026-10-21"]
+
+        await _set_plan(client, admin, pro, "pro")  # mejora: empieza hoy y cierra lo anterior
+        status = await _plan(client, pro)
+        assert status["current"]["plan"] == "pro"
+        assert status["upcoming"] == []
+
+    async def test_vence_a_los_30_dias_o_cuando_el_admin_lo_quita(
+        self, client: httpx.AsyncClient, app: FastAPI, clock: FakeClock
+    ) -> None:
+        admin = await _admin(client, app)
+        _, laura_id = await _published(client, admin, "laura@correo.com")
+        _, carlos_id = await _published(client, admin, "carlos@correo.com")
+
+        removed = await client.delete(
+            f"{API}/professionals/{carlos_id}/plan", headers=_bearer(admin)
+        )
+        assert removed.json()["current"] is None
+        names = [p["user_id"] for p in (await client.get(f"{API}/professionals")).json()]
+        assert names == [laura_id]
+
+        clock.advance(days=31)
+        assert (await client.get(f"{API}/professionals")).json() == []
+
+    async def test_el_plan_basico_tiene_limites(
+        self, client: httpx.AsyncClient, app: FastAPI
+    ) -> None:
+        admin = await _admin(client, app)
+        pro = await _professional(client, admin, "laura@correo.com", plan="basic")
+        user_id = (
+            await client.put(f"{API}/professionals/me", json=PROFILE, headers=_bearer(pro))
+        ).json()["user_id"]
+        customer = await _register(client, "cliente@correo.com")
+
+        for n in range(3):
+            added = await client.post(
+                f"{API}/professionals/me/gallery",
+                json={"url": _photo(n), "caption": ""},
+                headers=_bearer(pro),
+            )
+            assert added.status_code == 201
+        fourth = await client.post(
+            f"{API}/professionals/me/gallery",
+            json={"url": _photo(9), "caption": ""},
+            headers=_bearer(pro),
+        )
+        assert fourth.json()["code"] == "too_many_images"
+
+        sent = await client.post(
+            f"{API}/professionals/{user_id}/requests", json=REQUEST, headers=_bearer(customer)
+        )
+        assert sent.json()["code"] == "requests_not_in_plan"
+
+        # Con el plan Profesional ya puede recibir solicitudes y subir más fotos.
+        await _set_plan(client, admin, pro, "pro")
+        sent = await client.post(
+            f"{API}/professionals/{user_id}/requests", json=REQUEST, headers=_bearer(customer)
+        )
+        assert sent.status_code == 201, sent.text
+        fourth = await client.post(
+            f"{API}/professionals/me/gallery",
+            json={"url": _photo(9), "caption": ""},
+            headers=_bearer(pro),
+        )
+        assert fourth.status_code == 201
+
+        # Si vuelve al Básico, el perfil muestra solo las primeras 3 (las demás siguen guardadas).
+        await _set_plan(client, admin, pro, "basic")
+        public = (await client.get(f"{API}/professionals/{user_id}/gallery")).json()
+        assert len(public) == 3
+        mine = (await client.get(f"{API}/professionals/me/gallery", headers=_bearer(pro))).json()
+        assert len(mine) == 4
+
+    async def test_el_basico_no_muestra_certificados(
+        self, client: httpx.AsyncClient, app: FastAPI
+    ) -> None:
+        admin = await _admin(client, app)
+        pro = await _professional(client, admin, "laura@correo.com", plan="basic")
+        user_id = await _user_id(client, pro)
+        body = {
+            "kind": "license",
+            "title": "Tarjeta profesional",
+            "issuer": "Ministerio de Salud",
+            "year": 2016,
+            "file_url": await _upload_pdf(client, pro),
+        }
+        created = await client.post(
+            f"{API}/professionals/me/certificates", json=body, headers=_bearer(pro)
+        )
+        await client.put(
+            f"{API}/professionals/certificates/{created.json()['id']}/review",
+            json={"approve": True, "note": ""},
+            headers=_bearer(admin),
+        )
+        public = f"{API}/professionals/{user_id}/certificates"
+        assert (await client.get(public)).json() == []
+        await _set_plan(client, admin, pro, "pro")
+        assert len((await client.get(public)).json()) == 1
+
+    async def test_permisos(self, client: httpx.AsyncClient, app: FastAPI) -> None:
+        admin = await _admin(client, app)
+        pro = await _professional(client, admin, "laura@correo.com", plan=None)
+        customer = await _register(client, "cliente@correo.com")
+        pending = (await _ask_plan(client, pro, "pro")).json()["pending"]
+        user_id = await _user_id(client, pro)
+
+        assert (await _ask_plan(client, customer, "pro")).status_code == 403
+        for method, url, body in (
+            ("PUT", f"/professionals/plans/requests/{pending['id']}/approve", None),
+            ("PUT", f"/professionals/{user_id}/plan", {"plan": "premium"}),
+            ("GET", "/professionals/admin/plans", None),
+        ):
+            response = await client.request(method, f"{API}{url}", json=body, headers=_bearer(pro))
+            assert response.status_code == 403, url

@@ -1,6 +1,7 @@
 from uuid import UUID
 
-from neirapp.modules.professionals.application.ports import AccessPort, ServiceRepository
+from neirapp.modules.professionals.application.plans import PlanBook
+from neirapp.modules.professionals.application.ports import ServiceRepository
 from neirapp.modules.professionals.domain.errors import (
     ProfileNotFound,
     ServiceNotFound,
@@ -71,11 +72,11 @@ class DeleteService:
 class ListPublicServices:
     """Servicios visibles de un profesional que sigue autorizado (para su página "Ver perfil")."""
 
-    def __init__(self, repo: ServiceRepository, access: AccessPort) -> None:
+    def __init__(self, repo: ServiceRepository, plans: PlanBook) -> None:
         self._repo = repo
-        self._access = access
+        self._plans = plans
 
     async def __call__(self, user_id: UUID) -> list[ProfessionalService]:
-        if user_id not in await self._access.professional_ids():
+        if await self._plans.public(user_id) is None:
             raise ProfileNotFound("Perfil no encontrado.")
         return [s for s in await self._repo.list_for(user_id) if s.is_active]

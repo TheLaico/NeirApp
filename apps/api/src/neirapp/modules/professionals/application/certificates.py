@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 from uuid import UUID
 
+from neirapp.modules.professionals.application.plans import PlanBook
 from neirapp.modules.professionals.application.ports import (
-    AccessPort,
     CertificateRepository,
     NotificationRepository,
     ProfileRepository,
@@ -120,11 +120,15 @@ class ReviewCertificate:
 class ListPublicCertificates:
     """Verificados y que el profesional decidió mostrar (para su página "Ver perfil")."""
 
-    def __init__(self, repo: CertificateRepository, access: AccessPort) -> None:
+    def __init__(self, repo: CertificateRepository, plans: PlanBook) -> None:
         self._repo = repo
-        self._access = access
+        self._plans = plans
 
     async def __call__(self, user_id: UUID) -> list[Certificate]:
-        if user_id not in await self._access.professional_ids():
+        plan = await self._plans.public(user_id)
+        if plan is None:
             raise ProfileNotFound("Perfil no encontrado.")
+        # El plan Básico no muestra certificados (ni la insignia de verificado).
+        if not plan.shows_certificates:
+            return []
         return [c for c in await self._repo.list_for(user_id) if c.is_public]

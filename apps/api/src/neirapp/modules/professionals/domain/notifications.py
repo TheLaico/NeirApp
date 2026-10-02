@@ -5,6 +5,7 @@ from uuid import UUID, uuid4
 
 from neirapp.modules.professionals.domain.appointments import AppointmentRequest
 from neirapp.modules.professionals.domain.certificates import Certificate, CertificateStatus
+from neirapp.modules.professionals.domain.plans import Subscription
 
 # Colombia no tiene horario de verano: siempre UTC-5. Así no se depende de la base de zonas
 # horarias del sistema, que en Windows no viene instalada.
@@ -31,6 +32,7 @@ def when_label(moment: datetime) -> str:
 PROFESSIONAL_REQUESTS = "/profesional?seccion=requests"
 PROFESSIONAL_CERTIFICATES = "/profesional?seccion=certificates"
 CUSTOMER_REQUESTS = "/profesionales/mis-solicitudes"
+PROFESSIONAL_PLANS = "/profesional/planes"
 
 
 class NotificationKind(StrEnum):
@@ -41,6 +43,8 @@ class NotificationKind(StrEnum):
     REQUEST_REJECTED = "request_rejected"  # Al cliente
     CERTIFICATE_VERIFIED = "certificate_verified"  # Al profesional
     CERTIFICATE_REJECTED = "certificate_rejected"  # Al profesional
+    PLAN_ACTIVATED = "plan_activated"  # Al profesional
+    PLAN_REJECTED = "plan_rejected"  # Al profesional
 
 
 @dataclass
@@ -161,5 +165,39 @@ def certificate_reviewed(certificate: Certificate, now: datetime) -> Notificatio
         "Un certificado necesita corrección",
         f"{_quoted(certificate.title)} no fue aprobado. Motivo: {certificate.review_note}",
         PROFESSIONAL_CERTIFICATES,
+        now,
+    )
+
+
+def _day_label(moment: datetime) -> str:
+    local = moment.astimezone(COLOMBIA)
+    return f"{local.day} de {_MONTHS[local.month - 1]}"
+
+
+def plan_activated(subscription: Subscription, plan_name: str, now: datetime) -> Notification:
+    expires = subscription.expires_at or now
+    starts = subscription.starts_at or now
+    when = (
+        f"Está activo hasta el {_day_label(expires)}."
+        if starts <= now
+        else f"Empieza el {_day_label(starts)}, cuando termine tu periodo actual."
+    )
+    return Notification.new(
+        subscription.user_id,
+        NotificationKind.PLAN_ACTIVATED,
+        f"Tu plan {plan_name} está listo",
+        f"Confirmamos tu pago. {when}",
+        PROFESSIONAL_PLANS,
+        now,
+    )
+
+
+def plan_rejected(subscription: Subscription, plan_name: str, now: datetime) -> Notification:
+    return Notification.new(
+        subscription.user_id,
+        NotificationKind.PLAN_REJECTED,
+        f"No pudimos activar tu plan {plan_name}",
+        f"Motivo: {subscription.note.rstrip('.')}. Revisa el pago y vuelve a intentarlo.",
+        PROFESSIONAL_PLANS,
         now,
     )

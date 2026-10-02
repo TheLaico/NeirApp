@@ -12,6 +12,16 @@ export const professionalsApi = {
   mine: () => authRequest(`${API}/me`),
   saveMine: (body) => authRequest(`${API}/me`, { method: 'PUT', body }),
   saveSettings: (body) => authRequest(`${API}/me/settings`, { method: 'PUT', body }),
+  // Planes: el profesional elige uno y el administrador confirma el pago.
+  myPlan: () => authRequest(`${API}/me/plan`),
+  requestPlan: (plan, paymentReference) => authRequest(`${API}/me/plan/requests`, { method: 'POST', body: { plan, payment_reference: paymentReference } }),
+  cancelPlanRequest: (id) => authRequest(`${API}/me/plan/requests/${id}/cancel`, { method: 'PUT', body: {} }),
+  // Solo administrador.
+  adminPlans: () => authRequest(`${API}/admin/plans`),
+  approvePlan: (id) => authRequest(`${API}/plans/requests/${id}/approve`, { method: 'PUT', body: {} }),
+  rejectPlan: (id, note) => authRequest(`${API}/plans/requests/${id}/reject`, { method: 'PUT', body: { note } }),
+  grantPlan: (userId, plan) => authRequest(`${API}/${userId}/plan`, { method: 'PUT', body: { plan } }),
+  endPlan: (userId) => authRequest(`${API}/${userId}/plan`, { method: 'DELETE' }),
   myServices: () => authRequest(`${API}/me/services`),
   addService: (body) => authRequest(`${API}/me/services`, { method: 'POST', body }),
   updateService: (id, body) => authRequest(`${API}/me/services/${id}`, { method: 'PUT', body }),

@@ -185,7 +185,7 @@ class TooManyImages(ValidationError):
 
     @classmethod
     def default_message(cls) -> str:
-        return "Puedes tener hasta 30 imágenes en tu galería. Borra alguna para agregar otra."
+        return "Llegaste al máximo de imágenes de tu plan. Borra alguna o mejora tu plan."
 
 
 class InvalidGalleryOrder(ValidationError):
@@ -306,3 +306,46 @@ class NotificationNotFound(NotFoundError):
     @classmethod
     def default_message(cls) -> str:
         return "Notificación no encontrada."
+
+
+class InvalidPaymentReference(ValidationError):
+    code = "invalid_payment_reference"
+
+    @classmethod
+    def default_message(cls) -> str:
+        return "El comprobante de pago puede tener hasta 120 caracteres."
+
+
+class PlanRequestPending(ConflictError):
+    code = "plan_request_pending"
+
+    @classmethod
+    def default_message(cls) -> str:
+        return "Ya tienes una solicitud de plan esperando que confirmemos el pago."
+
+
+class InvalidSubscriptionTransition(ConflictError):
+    code = "invalid_subscription_transition"
+
+    @classmethod
+    def default_message(cls) -> str:
+        return "Esta solicitud de plan ya fue revisada."
+
+
+class SubscriptionNotFound(NotFoundError):
+    code = "subscription_not_found"
+
+    @classmethod
+    def default_message(cls) -> str:
+        return "Solicitud de plan no encontrada."
+
+
+class RequestsNotInPlan(ValidationError):
+    code = "requests_not_in_plan"
+
+    @classmethod
+    def default_message(cls) -> str:
+        return (
+            "Este profesional todavía no recibe solicitudes de cita por NeirAPP. "
+            "Puedes llamarle o escribirle."
+        )

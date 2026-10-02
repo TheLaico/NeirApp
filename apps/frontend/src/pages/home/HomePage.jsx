@@ -4,6 +4,7 @@ import {
   Briefcase,
   CalendarCheck,
   Car,
+  Crown,
   ChevronRight,
   Heart,
   Home as HomeIcon,
@@ -19,6 +20,7 @@ import PageShell from '../../components/layout/PageShell.jsx';
 import { Leaf } from '../../components/common/Leaf.jsx';
 import cardVerMapa from '../../assets/card-ver-mapa.png';
 import fondoBuscador from '../../assets/fondo-buscador.png';
+import { useProfessionalDirectory } from '../../features/professionals/directory.js';
 import { useStores } from '../../features/stores/api.js';
 import { useNavigate } from '../../lib/router.jsx';
 import './home-feed.css';
@@ -173,6 +175,39 @@ function MoreCategoriesModal({ cats, onSelect, onClose }) {
         </div>
       </div>
     </div>
+  );
+}
+
+/** Recomendados en el inicio: los profesionales con plan Premium (es uno de los beneficios del plan). */
+function RecommendedProfessionals({ onOpen, onSeeAll }) {
+  const { list } = useProfessionalDirectory();
+  const premium = list.filter((p) => p.plan === 'premium').slice(0, 6);
+  if (premium.length === 0) return null;
+  return (
+    <section className="feed-section" aria-labelledby="feed-pros">
+      <header className="feed-section-head">
+        <h2 id="feed-pros">Profesionales recomendados</h2>
+        <button type="button" className="feed-see-all" onClick={onSeeAll}>
+          Ver todos <ChevronRight size={16} aria-hidden="true" />
+        </button>
+      </header>
+      <ul className="feed-pros">
+        {premium.map((p) => (
+          <li key={p.id}>
+            <button type="button" className="feed-pro" onClick={() => onOpen(p)}>
+              <span className="feed-pro-photo">{p.photo ? <img src={p.photo} alt="" loading="lazy" /> : <span aria-hidden="true">{p.name.replace(/^(Dr|Dra|Ing|Abg|Arq|Lic|Psic|Cont)\. /, '').charAt(0)}</span>}</span>
+              <span className="feed-pro-info">
+                <strong>{p.name}</strong>
+                <span>{p.headline || 'Profesional en Neira'}</span>
+              </span>
+              <span className="feed-pro-badge">
+                <Crown size={12} aria-hidden="true" /> Premium
+              </span>
+            </button>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 
@@ -346,6 +381,8 @@ export default function HomePage({ user, onLogout }) {
             ))}
           </div>
         </section>
+
+        <RecommendedProfessionals onOpen={(p) => navigate(`/profesionales/perfil?id=${p.id}`)} onSeeAll={() => navigate('/profesionales')} />
 
         <section className="feed-section">
           <h2>Otros servicios</h2>

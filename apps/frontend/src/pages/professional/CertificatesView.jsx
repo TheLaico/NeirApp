@@ -22,7 +22,7 @@ const ERROR_FIELDS = { invalid_certificate_title: 'title', invalid_certificate_y
  * "Certificados": títulos, tarjeta profesional, especializaciones y cursos. Cada uno lo revisa el equipo de NeirAPP;
  * los verificados (y que el profesional decida mostrar) aparecen en su perfil con el sello de verificado.
  */
-export default function CertificatesView() {
+export default function CertificatesView({ showsOnProfile = true, onPlans }) {
   const [state, setState] = useState({ list: [], loading: true, error: '' });
   const [editing, setEditing] = useState(null); // null, 'new' o el id que se edita
   const [notice, setNotice] = useState({ text: '', bad: false });
@@ -95,6 +95,12 @@ export default function CertificatesView() {
           </button>
         )}
       </div>
+
+      {!showsOnProfile && (
+        <button type="button" className="gl-upgrade" onClick={onPlans}>
+          Con tu plan actual los certificados no se muestran en tu perfil. Puedes subirlos y verificarlos ya: aparecen con el plan Profesional o Premium. Ver planes
+        </button>
+      )}
 
       {list.length > 0 && (
         <div className="ct-summary">

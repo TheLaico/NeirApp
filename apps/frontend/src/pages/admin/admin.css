@@ -162,3 +162,12 @@
 .a-reject input { flex: 1; min-width: 200px; height: 42px; padding: 0 12px; border: 1.5px solid #e2b7a9; border-radius: 10px; font: inherit; font-size: 14.5px; }
 .a-reject input:focus { outline: none; border-color: #b6533c; box-shadow: 0 0 0 3px rgba(182, 83, 60, .15); }
 @media (max-width: 640px) { .a-reject { padding-left: 12px; } }
+
+/* Planes de profesionales */
+.a-subtitle { margin: 18px 0 8px; font-family: 'Montserrat', sans-serif; font-size: 15px; color: var(--g); }
+.a-badge.plan-basic { background: #eef6e8; color: #2d7a3d; }
+.a-badge.plan-pro { background: var(--g); color: #fff; }
+.a-badge.plan-premium { background: linear-gradient(120deg, #e8a92c, #f6d36b); color: #3d2a00; }
+.a-badge.plan-none { background: #f3e3dc; color: #9b3d28; }
+.a-plan-row { flex-wrap: wrap; }
+.a-plan-row select { height: 38px; padding: 0 10px; border: 1.5px solid var(--line); border-radius: 10px; background: #fff; font: inherit; font-size: 14px; }

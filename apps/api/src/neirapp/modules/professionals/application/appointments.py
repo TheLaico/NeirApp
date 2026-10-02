@@ -2,8 +2,8 @@ from dataclasses import dataclass
 from datetime import datetime
 from uuid import UUID
 
+from neirapp.modules.professionals.application.plans import PlanBook
 from neirapp.modules.professionals.application.ports import (
-    AccessPort,
     AppointmentRepository,
     NotificationRepository,
     ProfileRepository,
@@ -21,6 +21,7 @@ from neirapp.modules.professionals.domain.errors import (
     CannotRequestYourself,
     InvalidAppointmentRequest,
     ProfileNotFound,
+    RequestsNotInPlan,
     RequestsPaused,
     TooManyPendingRequests,
 )
@@ -46,14 +47,14 @@ class SendRequest:
         repo: AppointmentRepository,
         profiles: ProfileRepository,
         services: ServiceRepository,
-        access: AccessPort,
+        plans: PlanBook,
         notifications: NotificationRepository,
         clock: Clock,
     ) -> None:
         self._repo = repo
         self._profiles = profiles
         self._services = services
-        self._access = access
+        self._plans = plans
         self._notifications = notifications
         self._clock = clock
 
@@ -63,12 +64,11 @@ class SendRequest:
         if professional_id == customer_id:
             raise CannotRequestYourself()
         profile = await self._profiles.get(professional_id)
-        if (
-            profile is None
-            or not profile.is_listed
-            or professional_id not in await self._access.professional_ids()
-        ):
+        plan = await self._plans.public(professional_id) if profile else None
+        if profile is None or plan is None or not profile.is_listed:
             raise ProfileNotFound("Perfil no encontrado.")
+        if not plan.receives_requests:
+            raise RequestsNotInPlan()
         if not profile.accepts_requests:
             raise RequestsPaused()
         service_name = ""

@@ -7,6 +7,7 @@ from neirapp.modules.professionals.domain.certificates import Certificate
 from neirapp.modules.professionals.domain.entities import ProfessionalProfile
 from neirapp.modules.professionals.domain.gallery import GalleryImage
 from neirapp.modules.professionals.domain.notifications import Notification
+from neirapp.modules.professionals.domain.plans import Subscription
 from neirapp.modules.professionals.domain.services import ProfessionalService
 
 
@@ -121,4 +122,24 @@ class NotificationRepository(Protocol):
 
     async def delete(self, user_id: UUID, notification_id: UUID | None) -> None:
         """Borra una, o todas las de esa persona si `notification_id` es None."""
+        ...
+
+
+class SubscriptionRepository(Protocol):
+    async def list_for(self, user_id: UUID) -> list[Subscription]:
+        """Las de un profesional, las más recientes primero."""
+        ...
+
+    async def list_active(self) -> list[Subscription]:
+        """Todas las activadas (vigentes, vencidas o por empezar) de todos los profesionales."""
+        ...
+
+    async def list_pending(self) -> list[Subscription]:
+        """Las que esperan que el administrador confirme el pago, las más antiguas primero."""
+        ...
+
+    async def get(self, subscription_id: UUID) -> Subscription | None: ...
+
+    async def save_all(self, subscriptions: list[Subscription]) -> None:
+        """Crea o reemplaza varias a la vez (todas o ninguna)."""
         ...

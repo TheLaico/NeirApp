@@ -1,13 +1,14 @@
 from dataclasses import dataclass
 from uuid import UUID
 
+from neirapp.modules.professionals.application.plans import PlanBook
 from neirapp.modules.professionals.application.ports import (
-    AccessPort,
     CategoryRepository,
     ProfileRepository,
 )
 from neirapp.modules.professionals.domain.entities import ProfessionalProfile, ProfileData
 from neirapp.modules.professionals.domain.errors import InvalidCategory, ProfileNotFound
+from neirapp.modules.professionals.domain.plans import PlanSpec
 from neirapp.shared.application.ports import Clock
 
 
@@ -54,46 +55,58 @@ class DirectoryFilter:
     subcategory_id: str | None = None
 
 
-def directory_order(profile: ProfessionalProfile) -> tuple[bool, bool, float]:
+@dataclass(frozen=True)
+class PublishedProfile:
+    """Un perfil que ven los clientes, con el plan con el que se publica."""
+
+    profile: ProfessionalProfile
+    plan: PlanSpec
+
+    @property
+    def is_featured(self) -> bool:
+        # Lo destaca el administrador o lo incluye su plan (Premium).
+        return self.profile.is_featured or self.plan.featured
+
+
+def directory_order(item: PublishedProfile) -> tuple[bool, bool, float]:
     # Destacados primero, luego los disponibles; dentro de cada grupo, el perfil actualizado más
     # recientemente (los que lo mantienen al día).
-    return (not profile.is_featured, not profile.is_available, -profile.updated_at.timestamp())
+    p = item.profile
+    return (not item.is_featured, not p.is_available, -p.updated_at.timestamp())
 
 
 class ListDirectory:
-    """Perfiles que ven los clientes: solo de cuentas que siguen autorizadas como profesional."""
+    """Perfiles que ven los clientes: cuentas que siguen autorizadas como profesional, con un
+    plan vigente y que no ocultaron su perfil."""
 
-    def __init__(self, repo: ProfileRepository, access: AccessPort) -> None:
+    def __init__(self, repo: ProfileRepository, plans: PlanBook) -> None:
         self._repo = repo
-        self._access = access
+        self._plans = plans
 
-    async def __call__(self, flt: DirectoryFilter) -> list[ProfessionalProfile]:
-        allowed = await self._access.professional_ids()
-        profiles = [
-            p
+    async def __call__(self, flt: DirectoryFilter) -> list[PublishedProfile]:
+        plans = await self._plans.all_public()
+        items = [
+            PublishedProfile(p, plans[p.user_id])
             for p in await self._repo.list_all()
-            if p.user_id in allowed
+            if p.user_id in plans
             and p.is_listed
             and (not flt.category_id or p.category_id == flt.category_id)
             and (not flt.subcategory_id or p.subcategory_id == flt.subcategory_id)
         ]
-        return sorted(profiles, key=directory_order)
+        return sorted(items, key=directory_order)
 
 
 class GetPublicProfile:
-    def __init__(self, repo: ProfileRepository, access: AccessPort) -> None:
+    def __init__(self, repo: ProfileRepository, plans: PlanBook) -> None:
         self._repo = repo
-        self._access = access
+        self._plans = plans
 
-    async def __call__(self, user_id: UUID) -> ProfessionalProfile:
+    async def __call__(self, user_id: UUID) -> PublishedProfile:
         profile = await self._repo.get(user_id)
-        if (
-            profile is None
-            or not profile.is_listed
-            or user_id not in await self._access.professional_ids()
-        ):
+        plan = await self._plans.public(user_id) if profile and profile.is_listed else None
+        if profile is None or plan is None:
             raise ProfileNotFound("Perfil no encontrado.")
-        return profile
+        return PublishedProfile(profile, plan)
 
 
 class UpdateMySettings:

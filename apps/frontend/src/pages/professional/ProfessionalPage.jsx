@@ -7,6 +7,7 @@ import { canAccessAdmin } from '../../config/roles.js';
 import { useNotifications } from '../../features/notifications/NotificationsContext.jsx';
 import { professionalsApi } from '../../features/professionals/api.js';
 import { displayName, useProfessionalProfile } from '../../features/professionals/profile.js';
+import { useMyPlan } from '../../features/professionals/subscription.js';
 import { useNavigate } from '../../lib/router.jsx';
 import { useMediaQuery } from '../../lib/useMediaQuery.js';
 import '../admin/admin.css';
@@ -40,6 +41,14 @@ export default function ProfessionalPage({ user, onLogout, onUserChange }) {
   const mine = useProfessionalProfile(user);
   const profile = mine.profile;
   const name = (profile && displayName(profile)) || user.name;
+  // Plan vigente: lo muestran el inicio, el encabezado, la galería (máximo de fotos) y Configuración.
+  const plan = useMyPlan(allowed);
+  const reloadPlan = plan.reload;
+  // Un aviso nuevo puede ser "tu plan está listo": se vuelve a consultar el plan.
+  useEffect(() => {
+    if (allowed && unreadNotices > 0) reloadPlan();
+  }, [allowed, unreadNotices, reloadPlan]);
+  const planName = plan.status?.current?.plan_name;
   // Cuántas fotos tiene en la galería: el inicio le sugiere agregar si no tiene ninguna.
   const [images, setImages] = useState(null);
   useEffect(() => {
@@ -94,7 +103,17 @@ export default function ProfessionalPage({ user, onLogout, onUserChange }) {
       </div>
     );
   } else if (view === 'home') {
-    content = <HomeView name={name} activity={activity} onGo={setView} onPlans={() => navigate('/profesional/planes')} />;
+    content = (
+      <HomeView
+        name={name}
+        activity={activity}
+        plan={plan.status}
+        published={mine.exists}
+        listed={profile?.listed ?? true}
+        onGo={setView}
+        onPlans={() => navigate('/profesional/planes')}
+      />
+    );
   } else if (view === 'settings') {
     content = (
       <SettingsView
@@ -102,6 +121,7 @@ export default function ProfessionalPage({ user, onLogout, onUserChange }) {
         profile={profile}
         published={mine.exists}
         onSaveSettings={mine.saveSettings}
+        plan={plan.status}
         onUserChange={onUserChange}
         onGo={setView}
         onPlans={() => navigate('/profesional/planes')}
@@ -111,11 +131,18 @@ export default function ProfessionalPage({ user, onLogout, onUserChange }) {
   } else if (view === 'notifications') {
     content = <NotificationsView onGo={setView} onNavigate={navigate} />;
   } else if (view === 'requests') {
-    content = <RequestsView requests={requests} onChange={(list) => setRequests((r) => ({ ...r, list }))} />;
+    content = (
+      <RequestsView
+        requests={requests}
+        onChange={(list) => setRequests((r) => ({ ...r, list }))}
+        receivesRequests={plan.status?.receives_requests ?? true}
+        onPlans={() => navigate('/profesional/planes')}
+      />
+    );
   } else if (view === 'certificates') {
-    content = <CertificatesView />;
+    content = <CertificatesView showsOnProfile={plan.status?.shows_certificates ?? true} onPlans={() => navigate('/profesional/planes')} />;
   } else if (view === 'gallery') {
-    content = <GalleryView onCountChange={setImages} />;
+    content = <GalleryView max={plan.status?.max_images ?? 3} planName={planName} onCountChange={setImages} onPlans={() => navigate('/profesional/planes')} />;
   } else if (view === 'services') {
     content = <ServicesView onGoProfile={() => setView('profile')} />;
   } else if (view === 'profile') {
@@ -136,7 +163,7 @@ export default function ProfessionalPage({ user, onLogout, onUserChange }) {
 
   const shell = {
     user,
-    profile: { name, image: profile?.photo, Icon: UserRound, roleLabel: 'Profesional', onSettings: allowed ? () => setView('settings') : undefined },
+    profile: { name, image: profile?.photo, Icon: UserRound, roleLabel: planName ? `Profesional · Plan ${planName}` : 'Profesional', onSettings: allowed ? () => setView('settings') : undefined },
     nav: NAV,
     badges: { requests: newRequests, notifications: unreadNotices },
     view,

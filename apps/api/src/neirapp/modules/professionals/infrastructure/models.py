@@ -145,3 +145,18 @@ class NotificationModel(Base):
     link: Mapped[str] = mapped_column(String(120))
     is_read: Mapped[bool] = mapped_column(default=False, index=True)
     created_at: Mapped[datetime] = mapped_column(UTCDateTime, index=True)
+
+
+class SubscriptionModel(Base):
+    __tablename__ = "professionals_subscription"
+
+    id: Mapped[UUID] = mapped_column(Uuid, primary_key=True)
+    user_id: Mapped[UUID] = mapped_column(Uuid, index=True)
+    plan: Mapped[str] = mapped_column(String(10))
+    status: Mapped[str] = mapped_column(String(10), index=True)
+    payment_reference: Mapped[str] = mapped_column(String(120), default="")
+    note: Mapped[str] = mapped_column(String(300), default="")
+    requested_at: Mapped[datetime] = mapped_column(UTCDateTime)
+    reviewed_at: Mapped[datetime | None] = mapped_column(UTCDateTime, default=None)
+    starts_at: Mapped[datetime | None] = mapped_column(UTCDateTime, default=None)
+    expires_at: Mapped[datetime | None] = mapped_column(UTCDateTime, default=None)

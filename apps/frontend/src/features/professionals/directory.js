@@ -8,6 +8,7 @@ export const toCard = (p) => ({
   photo: p.photo_url,
   available: p.is_available,
   featured: p.is_featured,
+  plan: p.plan,
   headline: p.headline,
   categoryId: p.category_id,
   subcategoryId: p.subcategory_id,

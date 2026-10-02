@@ -1,6 +1,7 @@
 // Planes de suscripción para profesionales. Precios y beneficios provisionales: se ajustan aquí y la
 // página /profesional/planes los toma tal cual. `id` también define el color de la tarjeta (verde claro,
-// verde NeirAPP y dorado) e `icon` es el nombre del ícono de lucide-react. Todavía no hay cobro; elegir un plan solo lo marca.
+// verde NeirAPP y dorado) e `icon` es el nombre del ícono de lucide-react. Los límites reales de cada plan (fotos,
+// certificados, solicitudes, destacado) los aplica la API (`professionals/domain/plans.py`): si cambian, cambia ambos.
 
 export const PLANS = [
   {
@@ -56,3 +57,14 @@ export const PLANS = [
     audience: 'Para consultorios, firmas y expertos que quieren ser la primera opción.',
   },
 ];
+
+// Cómo se paga un plan mientras no haya pasarela de pagos: el profesional paga por fuera, escribe el comprobante y el
+// administrador lo confirma en "Gestión de profesionales". Llena aquí las cuentas reales de NeirAPP; mientras la
+// lista esté vacía, la ventana de pago le dice que el equipo le enviará los datos por WhatsApp.
+export const PAYMENT = {
+  // Ej: { label: 'Nequi', value: '300 123 4567' }, { label: 'Bancolombia ahorros', value: '123-456789-01' }
+  methods: [],
+  holder: 'NeirAPP',
+};
+
+export const PLAN_DAYS = 30;

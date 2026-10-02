@@ -133,7 +133,7 @@ export default function ProfessionalProfilePage({ user, onLogout }) {
 
             <aside className="pp-contact" aria-label="Contactar">
               <h2>Contactar</h2>
-              {p.user_id !== user.id &&
+              {p.user_id !== user.id && p.plan !== 'basic' &&
                 (p.accepts_requests ? (
                   <button type="button" className="subcat-btn pp-request" onClick={() => setAsking(true)}>
                     <CalendarCheck size={16} aria-hidden="true" /> Pedir una cita
@@ -141,7 +141,8 @@ export default function ProfessionalProfilePage({ user, onLogout }) {
                 ) : (
                   <p className="pp-paused">Por ahora no está recibiendo solicitudes de cita. Puedes llamarle o escribirle.</p>
                 ))}
-              {p.user_id === user.id && !p.is_listed && <p className="pp-paused">Tu perfil está oculto: solo tú lo ves. Puedes volver a mostrarlo en Configuración.</p>}
+              {p.user_id === user.id && !p.plan && <p className="pp-paused">Tu perfil no se publica: no tienes un plan activo. Elige uno en Planes para profesionales.</p>}
+              {p.user_id === user.id && p.plan && !p.is_listed && <p className="pp-paused">Tu perfil está oculto: solo tú lo ves. Puedes volver a mostrarlo en Configuración.</p>}
               <a className="subcat-btn" href={telLink(card.phone)}>
                 <Phone size={16} aria-hidden="true" /> Llamar
               </a>

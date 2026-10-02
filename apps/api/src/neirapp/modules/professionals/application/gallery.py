@@ -1,13 +1,15 @@
 from uuid import UUID
 
-from neirapp.modules.professionals.application.ports import AccessPort, GalleryRepository
+from neirapp.modules.professionals.application.plans import PlanBook
+from neirapp.modules.professionals.application.ports import GalleryRepository
 from neirapp.modules.professionals.domain.errors import (
     GalleryImageNotFound,
     InvalidGalleryOrder,
     ProfileNotFound,
     TooManyImages,
 )
-from neirapp.modules.professionals.domain.gallery import MAX_IMAGES, GalleryImage, clean_caption
+from neirapp.modules.professionals.domain.gallery import GalleryImage, clean_caption
+from neirapp.modules.professionals.domain.plans import NO_PLAN_MAX_IMAGES
 from neirapp.shared.application.ports import Clock
 
 
@@ -28,15 +30,17 @@ class ListMyGallery:
 
 
 class AddGalleryImage:
-    """Agrega al final una foto ya subida (`POST /uploads/images`)."""
+    """Agrega al final una foto ya subida (`POST /uploads/images`), hasta el máximo de su plan."""
 
-    def __init__(self, repo: GalleryRepository, clock: Clock) -> None:
+    def __init__(self, repo: GalleryRepository, plans: PlanBook, clock: Clock) -> None:
         self._repo = repo
+        self._plans = plans
         self._clock = clock
 
     async def __call__(self, user_id: UUID, url: str, caption: str) -> GalleryImage:
         existing = await self._repo.list_for(user_id)
-        if len(existing) >= MAX_IMAGES:
+        plan = await self._plans.of(user_id)
+        if len(existing) >= (plan.max_images if plan else NO_PLAN_MAX_IMAGES):
             raise TooManyImages()
         position = max((i.position for i in existing), default=-1) + 1
         image = GalleryImage.create(user_id, url, caption, position, self._clock.now())
@@ -79,13 +83,15 @@ class DeleteGalleryImage:
 
 
 class ListPublicGallery:
-    """Fotos de un profesional que sigue autorizado (para su página "Ver perfil")."""
+    """Fotos de un profesional publicado (para su página "Ver perfil"). Si bajó de plan, se
+    muestran las primeras que le permite el plan actual; las demás siguen guardadas."""
 
-    def __init__(self, repo: GalleryRepository, access: AccessPort) -> None:
+    def __init__(self, repo: GalleryRepository, plans: PlanBook) -> None:
         self._repo = repo
-        self._access = access
+        self._plans = plans
 
     async def __call__(self, user_id: UUID) -> list[GalleryImage]:
-        if user_id not in await self._access.professional_ids():
+        plan = await self._plans.public(user_id)
+        if plan is None:
             raise ProfileNotFound("Perfil no encontrado.")
-        return await self._repo.list_for(user_id)
+        return (await self._repo.list_for(user_id))[: plan.max_images]

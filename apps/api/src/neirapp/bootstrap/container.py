@@ -151,6 +151,17 @@ from neirapp.modules.professionals.application.notifications import (
     ListMyNotifications,
     MarkNotificationRead,
 )
+from neirapp.modules.professionals.application.plans import (
+    ApprovePlanRequest,
+    CancelPlanRequest,
+    EndPlan,
+    GetMyPlan,
+    GrantPlan,
+    ListProfessionalPlans,
+    PlanBook,
+    RejectPlanRequest,
+    RequestPlan,
+)
 from neirapp.modules.professionals.application.profiles import (
     GetMyProfile,
     GetPublicProfile,
@@ -178,6 +189,7 @@ from neirapp.modules.professionals.infrastructure.identity_adapter import Identi
 from neirapp.modules.professionals.infrastructure.notifications import (
     SqlAlchemyNotificationRepository,
 )
+from neirapp.modules.professionals.infrastructure.plans import SqlAlchemySubscriptionRepository
 from neirapp.modules.professionals.infrastructure.repositories import SqlAlchemyProfileRepository
 from neirapp.modules.professionals.infrastructure.services import SqlAlchemyServiceRepository
 from neirapp.modules.reviews.application.app import ReviewsApp
@@ -356,11 +368,13 @@ def build_professionals(
     notifications = SqlAlchemyNotificationRepository(session_factory)
     access = IdentityAccessAdapter(identity)
     clock = clock or SystemClock()
+    subscriptions = SqlAlchemySubscriptionRepository(session_factory)
+    plans = PlanBook(subscriptions, access, clock)
     return ProfessionalsApp(
         get_my_profile=GetMyProfile(repo),
         save_my_profile=SaveMyProfile(repo, categories, clock),
-        list_directory=ListDirectory(repo, access),
-        get_public_profile=GetPublicProfile(repo, access),
+        list_directory=ListDirectory(repo, plans),
+        get_public_profile=GetPublicProfile(repo, plans),
         set_featured=SetFeatured(repo),
         update_my_settings=UpdateMySettings(repo),
         list_categories=ListCategories(categories),
@@ -373,21 +387,21 @@ def build_professionals(
         add_service=AddService(services, clock),
         update_service=UpdateService(services, clock),
         delete_service=DeleteService(services),
-        list_public_services=ListPublicServices(services, access),
+        list_public_services=ListPublicServices(services, plans),
         list_my_gallery=ListMyGallery(gallery),
-        add_gallery_image=AddGalleryImage(gallery, clock),
+        add_gallery_image=AddGalleryImage(gallery, plans, clock),
         set_gallery_caption=SetGalleryCaption(gallery),
         reorder_gallery=ReorderGallery(gallery),
         delete_gallery_image=DeleteGalleryImage(gallery),
-        list_public_gallery=ListPublicGallery(gallery, access),
+        list_public_gallery=ListPublicGallery(gallery, plans),
         list_my_certificates=ListMyCertificates(certificates),
         add_certificate=AddCertificate(certificates, clock),
         update_certificate=UpdateCertificate(certificates, clock),
         delete_certificate=DeleteCertificate(certificates),
         list_pending_certificates=ListPendingCertificates(certificates, repo),
         review_certificate=ReviewCertificate(certificates, notifications, clock),
-        list_public_certificates=ListPublicCertificates(certificates, access),
-        send_request=SendRequest(appointments, repo, services, access, notifications, clock),
+        list_public_certificates=ListPublicCertificates(certificates, plans),
+        send_request=SendRequest(appointments, repo, services, plans, notifications, clock),
         list_received_requests=ListReceivedRequests(appointments),
         schedule_request=ScheduleRequest(appointments, repo, notifications, clock),
         reject_request=RejectRequest(appointments, repo, notifications, clock),
@@ -398,6 +412,15 @@ def build_professionals(
         list_my_notifications=ListMyNotifications(notifications),
         mark_notification_read=MarkNotificationRead(notifications),
         delete_notification=DeleteNotification(notifications),
+        plans=plans,
+        get_my_plan=GetMyPlan(subscriptions, clock),
+        request_plan=RequestPlan(subscriptions, clock),
+        cancel_plan_request=CancelPlanRequest(subscriptions, clock),
+        list_professional_plans=ListProfessionalPlans(subscriptions, repo, clock),
+        approve_plan_request=ApprovePlanRequest(subscriptions, notifications, clock),
+        reject_plan_request=RejectPlanRequest(subscriptions, notifications, clock),
+        grant_plan=GrantPlan(subscriptions, notifications, clock),
+        end_plan=EndPlan(subscriptions, clock),
     )
 
 

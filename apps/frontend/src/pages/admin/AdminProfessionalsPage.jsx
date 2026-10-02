@@ -6,6 +6,7 @@ import { useProfessionalDirectory } from '../../features/professionals/directory
 import { useRoleGrants } from '../../features/roles/api.js';
 import AdminLayout from './AdminLayout.jsx';
 import CertificateReview from './CertificateReview.jsx';
+import PlanAdmin from './PlanAdmin.jsx';
 
 // "Medicina · Pediatría" con los nombres de las categorías (en el perfil solo se guardan sus ids).
 function categoryLabel(categories, pro) {
@@ -215,12 +216,14 @@ export default function AdminProfessionalsPage({ user, onLogout }) {
         )}
       </section>
 
+      <PlanAdmin onChanged={directory.reload} />
+
       <CertificateReview onReviewed={directory.reload} />
 
       <section className="a-card">
         <h2>Destacados</h2>
         <p className="a-card-hint">
-          El profesional destacado aparece primero en su especialidad en /profesionales. Aquí salen quienes ya publicaron su perfil.
+          El profesional destacado aparece primero en su especialidad en /profesionales (los de plan Premium ya salen destacados). Aquí salen quienes tienen su perfil publicado.
         </p>
         {featuredError && (
           <p className="a-err" role="alert">

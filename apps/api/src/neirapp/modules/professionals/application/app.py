@@ -40,6 +40,17 @@ from neirapp.modules.professionals.application.notifications import (
     ListMyNotifications,
     MarkNotificationRead,
 )
+from neirapp.modules.professionals.application.plans import (
+    ApprovePlanRequest,
+    CancelPlanRequest,
+    EndPlan,
+    GetMyPlan,
+    GrantPlan,
+    ListProfessionalPlans,
+    PlanBook,
+    RejectPlanRequest,
+    RequestPlan,
+)
 from neirapp.modules.professionals.application.profiles import (
     GetMyProfile,
     GetPublicProfile,
@@ -100,3 +111,12 @@ class ProfessionalsApp:
     list_my_notifications: ListMyNotifications
     mark_notification_read: MarkNotificationRead
     delete_notification: DeleteNotification
+    plans: PlanBook
+    get_my_plan: GetMyPlan
+    request_plan: RequestPlan
+    cancel_plan_request: CancelPlanRequest
+    list_professional_plans: ListProfessionalPlans
+    approve_plan_request: ApprovePlanRequest
+    reject_plan_request: RejectPlanRequest
+    grant_plan: GrantPlan
+    end_plan: EndPlan

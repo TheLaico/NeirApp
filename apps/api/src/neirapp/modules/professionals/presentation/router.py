@@ -7,9 +7,11 @@ from pydantic import AwareDatetime, BaseModel, Field
 
 from neirapp.modules.identity.domain.entities import Role, User
 from neirapp.modules.identity.presentation.dependencies import CurrentUser, require_roles
+from neirapp.modules.professionals.application.app import ProfessionalsApp
 from neirapp.modules.professionals.application.appointments import SentRequest
 from neirapp.modules.professionals.application.certificates import PendingCertificate
-from neirapp.modules.professionals.application.profiles import DirectoryFilter
+from neirapp.modules.professionals.application.plans import PlanStatus, ProfessionalPlanRow
+from neirapp.modules.professionals.application.profiles import DirectoryFilter, PublishedProfile
 from neirapp.modules.professionals.domain.appointments import (
     MAX_ADDRESS,
     MAX_MESSAGE,
@@ -35,7 +37,16 @@ from neirapp.modules.professionals.domain.entities import (
     ProfessionalProfile,
     ProfileData,
 )
-from neirapp.modules.professionals.domain.gallery import MAX_CAPTION, MAX_IMAGES, GalleryImage
+from neirapp.modules.professionals.domain.gallery import MAX_CAPTION, GalleryImage
+from neirapp.modules.professionals.domain.plans import (
+    MAX_PLAN_IMAGES,
+    MAX_REFERENCE,
+    NO_PLAN_MAX_IMAGES,
+    PLANS,
+    PlanId,
+    Subscription,
+    SubscriptionStatus,
+)
 from neirapp.modules.professionals.domain.services import (
     MAX_SERVICE_DESCRIPTION,
     PriceKind,
@@ -124,10 +135,18 @@ class ProfileResponse(BaseModel):
     is_featured: bool
     is_listed: bool
     accepts_requests: bool
+    # Plan vigente (None: sin plan, no se publica). En el directorio y "Ver perfil" siempre viene.
+    plan: PlanId | None
     updated_at: datetime
 
     @classmethod
-    def from_domain(cls, p: ProfessionalProfile) -> "ProfileResponse":
+    def from_published(cls, item: PublishedProfile) -> "ProfileResponse":
+        response = cls.from_domain(item.profile, item.plan.id)
+        response.is_featured = item.is_featured
+        return response
+
+    @classmethod
+    def from_domain(cls, p: ProfessionalProfile, plan: PlanId | None = None) -> "ProfileResponse":
         return cls(
             user_id=p.user_id,
             title=p.title,
@@ -151,14 +170,22 @@ class ProfileResponse(BaseModel):
             is_featured=p.is_featured,
             is_listed=p.is_listed,
             accepts_requests=p.accepts_requests,
+            plan=plan,
             updated_at=p.updated_at,
         )
+
+
+async def _mine(
+    app: ProfessionalsApp, user_id: UUID, profile: ProfessionalProfile
+) -> ProfileResponse:
+    plan = await app.plans.of(user_id)
+    return ProfileResponse.from_domain(profile, plan.id if plan else None)
 
 
 @router.get("/me", response_model=ProfileResponse)
 async def get_my_profile(user: RequireProfessional, app: ProfessionalsDep) -> ProfileResponse:
     """El perfil del profesional que inició sesión (404 si todavía no lo ha creado)."""
-    return ProfileResponse.from_domain(await app.get_my_profile(user.id))
+    return await _mine(app, user.id, await app.get_my_profile(user.id))
 
 
 @router.put("/me", response_model=ProfileResponse)
@@ -166,7 +193,7 @@ async def save_my_profile(
     body: ProfileRequest, user: RequireProfessional, app: ProfessionalsDep
 ) -> ProfileResponse:
     """Crea o actualiza el perfil. Se publica en el directorio mientras la cuenta tenga acceso."""
-    return ProfileResponse.from_domain(await app.save_my_profile(user.id, body.to_data()))
+    return await _mine(app, user.id, await app.save_my_profile(user.id, body.to_data()))
 
 
 @router.put("/me/settings", response_model=ProfileResponse)
@@ -177,7 +204,7 @@ async def update_my_settings(
     profile = await app.update_my_settings(
         user.id, is_listed=body.is_listed, accepts_requests=body.accepts_requests
     )
-    return ProfileResponse.from_domain(profile)
+    return await _mine(app, user.id, profile)
 
 
 class ServiceRequest(BaseModel):
@@ -262,7 +289,7 @@ class CaptionRequest(BaseModel):
 
 
 class GalleryOrderRequest(BaseModel):
-    ids: list[UUID] = Field(max_length=MAX_IMAGES)
+    ids: list[UUID] = Field(max_length=MAX_PLAN_IMAGES)
 
 
 class GalleryImageResponse(BaseModel):
@@ -585,6 +612,145 @@ async def cancel_request_as_customer(
     return AppointmentResponse.from_domain(request)
 
 
+class SubscriptionResponse(BaseModel):
+    id: UUID
+    plan: PlanId
+    plan_name: str
+    price_cop: int
+    status: SubscriptionStatus
+    payment_reference: str
+    note: str
+    requested_at: datetime
+    starts_at: datetime | None
+    expires_at: datetime | None
+
+    @classmethod
+    def from_domain(cls, s: Subscription) -> "SubscriptionResponse":
+        spec = PLANS[s.plan]
+        return cls(
+            id=s.id,
+            plan=s.plan,
+            plan_name=spec.name,
+            price_cop=spec.price_cop,
+            status=s.status,
+            payment_reference=s.payment_reference,
+            note=s.note,
+            requested_at=s.requested_at,
+            starts_at=s.starts_at,
+            expires_at=s.expires_at,
+        )
+
+
+def _sub(s: Subscription | None) -> SubscriptionResponse | None:
+    return SubscriptionResponse.from_domain(s) if s else None
+
+
+class PlanStatusResponse(BaseModel):
+    current: SubscriptionResponse | None
+    upcoming: list[SubscriptionResponse]
+    pending: SubscriptionResponse | None
+    last_rejected: SubscriptionResponse | None
+    # Lo que permite hoy su plan (sin plan: lo del Básico, para ir armando el perfil).
+    max_images: int
+    shows_certificates: bool
+    receives_requests: bool
+
+    @classmethod
+    def from_status(cls, st: PlanStatus) -> "PlanStatusResponse":
+        spec = PLANS[st.current.plan] if st.current else None
+        return cls(
+            current=_sub(st.current),
+            upcoming=[SubscriptionResponse.from_domain(s) for s in st.upcoming],
+            pending=_sub(st.pending),
+            last_rejected=_sub(st.last_rejected),
+            max_images=spec.max_images if spec else NO_PLAN_MAX_IMAGES,
+            shows_certificates=bool(spec and spec.shows_certificates),
+            receives_requests=bool(spec and spec.receives_requests),
+        )
+
+
+class PlanRequestBody(BaseModel):
+    plan: PlanId
+    payment_reference: str = Field(default="", max_length=MAX_REFERENCE * 2)
+
+
+class GrantPlanBody(BaseModel):
+    plan: PlanId
+
+
+class ProfessionalPlanResponse(BaseModel):
+    user_id: UUID
+    display_name: str
+    phone: str
+    category_id: str
+    subcategory_id: str
+    is_featured: bool
+    is_listed: bool
+    status: PlanStatusResponse
+
+    @classmethod
+    def from_row(cls, row: ProfessionalPlanRow) -> "ProfessionalPlanResponse":
+        p = row.profile
+        return cls(
+            user_id=p.user_id,
+            display_name=p.display_name,
+            phone=p.phone,
+            category_id=p.category_id,
+            subcategory_id=p.subcategory_id,
+            is_featured=p.is_featured,
+            is_listed=p.is_listed,
+            status=PlanStatusResponse.from_status(row.status),
+        )
+
+
+@router.get("/me/plan", response_model=PlanStatusResponse)
+async def get_my_plan(user: RequireProfessional, app: ProfessionalsDep) -> PlanStatusResponse:
+    """Plan vigente, renovaciones ya pagadas y la solicitud que espera confirmar el pago."""
+    return PlanStatusResponse.from_status(await app.get_my_plan(user.id))
+
+
+@router.post("/me/plan/requests", response_model=PlanStatusResponse, status_code=201)
+async def request_plan(
+    body: PlanRequestBody, user: RequireProfessional, app: ProfessionalsDep
+) -> PlanStatusResponse:
+    """Elige un plan; queda pendiente hasta que el administrador confirme el pago."""
+    status_ = await app.request_plan(user.id, body.plan, body.payment_reference)
+    return PlanStatusResponse.from_status(status_)
+
+
+@router.put("/me/plan/requests/{subscription_id}/cancel", response_model=PlanStatusResponse)
+async def cancel_plan_request(
+    subscription_id: UUID, user: RequireProfessional, app: ProfessionalsDep
+) -> PlanStatusResponse:
+    return PlanStatusResponse.from_status(await app.cancel_plan_request(user.id, subscription_id))
+
+
+# Antes que "/{user_id}" para que "admin" y "plans" no se tomen como un id.
+@router.get("/admin/plans", response_model=list[ProfessionalPlanResponse])
+async def list_professional_plans(
+    _admin: RequireAdmin, app: ProfessionalsDep
+) -> list[ProfessionalPlanResponse]:
+    """Profesionales con perfil y su plan; primero los que tienen un pago por confirmar."""
+    return [ProfessionalPlanResponse.from_row(r) for r in await app.list_professional_plans()]
+
+
+@router.put("/plans/requests/{subscription_id}/approve", response_model=SubscriptionResponse)
+async def approve_plan_request(
+    subscription_id: UUID, _admin: RequireAdmin, app: ProfessionalsDep
+) -> SubscriptionResponse:
+    """Pago confirmado: el plan queda activo 30 días (o desde que venza el mes ya pagado)."""
+    return SubscriptionResponse.from_domain(await app.approve_plan_request(subscription_id))
+
+
+@router.put("/plans/requests/{subscription_id}/reject", response_model=SubscriptionResponse)
+async def reject_plan_request(
+    subscription_id: UUID, body: NoteBody, _admin: RequireAdmin, app: ProfessionalsDep
+) -> SubscriptionResponse:
+    return SubscriptionResponse.from_domain(
+        await app.reject_plan_request(subscription_id, body.note)
+    )
+
+
 @router.get("", response_model=list[ProfileResponse])
 async def list_directory(
     app: ProfessionalsDep,
@@ -595,7 +761,7 @@ async def list_directory(
     profiles = await app.list_directory(
         DirectoryFilter(category_id=category_id, subcategory_id=subcategory_id)
     )
-    return [ProfileResponse.from_domain(p) for p in profiles]
+    return [ProfileResponse.from_published(p) for p in profiles]
 
 
 class SubcategoryResponse(BaseModel):
@@ -702,7 +868,7 @@ async def delete_subcategory(
 
 @router.get("/{user_id}", response_model=ProfileResponse)
 async def get_public_profile(user_id: UUID, app: ProfessionalsDep) -> ProfileResponse:
-    return ProfileResponse.from_domain(await app.get_public_profile(user_id))
+    return ProfileResponse.from_published(await app.get_public_profile(user_id))
 
 
 @router.put("/{user_id}/featured", response_model=ProfileResponse)
@@ -743,3 +909,19 @@ async def send_request(
     """Pide una cita a un profesional (cualquier persona con sesión)."""
     request = await app.send_request(user_id, user.id, user.full_name, body.to_data())
     return AppointmentResponse.from_domain(request)
+
+
+@router.put("/{user_id}/plan", response_model=PlanStatusResponse)
+async def grant_plan(
+    user_id: UUID, body: GrantPlanBody, _admin: RequireAdmin, app: ProfessionalsDep
+) -> PlanStatusResponse:
+    """El administrador activa un plan directamente por 30 días."""
+    return PlanStatusResponse.from_status(await app.grant_plan(user_id, body.plan))
+
+
+@router.delete("/{user_id}/plan", response_model=PlanStatusResponse)
+async def end_plan(
+    user_id: UUID, _admin: RequireAdmin, app: ProfessionalsDep
+) -> PlanStatusResponse:
+    """Quita el plan desde hoy: el perfil deja de publicarse."""
+    return PlanStatusResponse.from_status(await app.end_plan(user_id))

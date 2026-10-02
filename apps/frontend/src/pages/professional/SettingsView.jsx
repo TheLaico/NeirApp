@@ -1,6 +1,7 @@
 import { CalendarCheck, ChevronRight, Crown, Eye, EyeOff, KeyRound, Loader2, LogOut, Mail, Search, UserRound } from 'lucide-react';
 import { useState } from 'react';
 import { isMobile } from '../../features/professionals/profile.js';
+import { dayLabel, paidUntil } from '../../features/professionals/subscription.js';
 import { changePassword, updateProfile } from '../../services/auth.js';
 
 const PASSWORD_MIN = 8;
@@ -16,7 +17,7 @@ const localPhone = (phone) =>
  * "Configuración" del panel del profesional: quién ve su perfil y si recibe solicitudes, los datos de su cuenta,
  * la contraseña, su plan y cerrar sesión. Los datos públicos del perfil se cambian en "Mi perfil".
  */
-export default function SettingsView({ user, profile, published, onSaveSettings, onUserChange, onGo, onPlans, onLogout }) {
+export default function SettingsView({ user, profile, published, plan, onSaveSettings, onUserChange, onGo, onPlans, onLogout }) {
   return (
     <div className="st">
       <div className="sv-head">
@@ -36,8 +37,14 @@ export default function SettingsView({ user, profile, published, onSaveSettings,
         </h2>
         <button type="button" className="st-link" onClick={onPlans}>
           <span>
-            <strong>Planes para profesionales</strong>
-            <small>Compara los planes Básico, Profesional y Premium y elige el que más te sirva.</small>
+            <strong>{plan?.current ? `Plan ${plan.current.plan_name}` : plan?.pending ? `Plan ${plan.pending.plan_name}: pago en revisión` : 'Sin plan activo'}</strong>
+            <small>
+              {plan?.current
+                ? `Activo hasta el ${dayLabel(paidUntil(plan))}. Renuévalo o cámbialo en Planes para profesionales.`
+                : plan?.pending
+                  ? 'Te avisaremos cuando confirmemos el pago.'
+                  : 'Tu perfil no aparece en el directorio hasta que actives un plan. Compara Básico, Profesional y Premium.'}
+            </small>
           </span>
           <ChevronRight size={20} aria-hidden="true" />
         </button>

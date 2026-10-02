@@ -22,7 +22,7 @@ const byTab = (list, tab) => {
  * fecha y hora, o se rechazan; las agendadas se marcan como atendidas, se reprograman o se cancelan.
  * `requests` lo carga la página (también lo usan el inicio y la campana); `onChanged` lo vuelve a pedir.
  */
-export default function RequestsView({ requests, onChange }) {
+export default function RequestsView({ requests, onChange, receivesRequests = true, onPlans }) {
   const [tab, setTab] = useState('pending');
   const [notice, setNotice] = useState('');
   const { list, loading, error } = requests;
@@ -50,6 +50,12 @@ export default function RequestsView({ requests, onChange }) {
           <p>Las personas te escriben desde tu perfil en NeirAPP. Responde pronto: quien recibe respuesta el mismo día casi siempre agenda.</p>
         </div>
       </div>
+
+      {!receivesRequests && (
+        <button type="button" className="gl-upgrade" onClick={onPlans}>
+          Con tu plan actual las personas no pueden pedirte citas desde tu perfil (sí llamarte o escribirte). Las solicitudes llegan con el plan Profesional o Premium. Ver planes
+        </button>
+      )}
 
       {notice && (
         <p className="sv-notice" role="status">
