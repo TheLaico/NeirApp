@@ -200,9 +200,12 @@
 
 .feed-more-list { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 10px; }
 .feed-more-item {
-  display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: 16px;
+  display: flex; align-items: center; gap: 14px; width: 100%; padding: 14px 16px; border-radius: 16px;
   background: color-mix(in srgb, var(--tint) 16%, #fff); border: 1px solid color-mix(in srgb, var(--tint) 30%, var(--line));
+  font: inherit; color: var(--ink); text-align: left; cursor: pointer; transition: box-shadow 0.15s, transform 0.15s;
 }
+.feed-more-item:hover { box-shadow: 0 6px 16px rgba(35, 52, 43, 0.12); transform: translateY(-1px); }
+.feed-more-chev { flex: none; color: var(--tint); }
 .feed-more-ico { flex: none; width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; background: var(--tint); color: #fff; }
 .feed-more-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .feed-more-text strong { font-size: 14.5px; color: #14392a; }

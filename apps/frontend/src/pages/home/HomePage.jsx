@@ -1,14 +1,17 @@
 import {
   ArrowRight,
   Briefcase,
+  CalendarCheck,
   Car,
   Crown,
   ChevronRight,
   Heart,
   Home as HomeIcon,
   Mic,
+  Package,
   Search,
   Star,
+  Store,
 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import PageShell from '../../components/layout/PageShell.jsx';
@@ -130,12 +133,14 @@ function CatCarousel({ cats, onSelect }) {
   );
 }
 
-// Filas de "Otros servicios": todavía no existen como módulo propio (no son categorías reales de tienda),
-// así que se muestran marcadas como "Próximamente" en vez de fingir que funcionan.
+// Filas de "Otros servicios": los demás módulos de NeirAPP (los domicilios ya están arriba). `to`: su ruta.
 const MORE_SERVICES = [
-  { label: 'Servicios profesionales', text: 'Encuentra expertos locales.', Icon: Briefcase, color: '#E8A92C' },
-  { label: 'Transporte', text: 'Muévete por Neira de forma fácil.', Icon: Car, color: '#1D8A9C' },
-  { label: 'Hospedaje', text: 'Alojamientos cómodos en Neira.', Icon: HomeIcon, color: '#B6533C' },
+  { label: 'Servicios profesionales', text: 'Encuentra expertos locales.', Icon: Briefcase, color: '#E8A92C', to: '/profesionales' },
+  { label: 'Transporte', text: 'Muévete por Neira de forma fácil.', Icon: Car, color: '#1D8A9C', to: '/transporte' },
+  { label: 'Hospedaje', text: 'Alojamientos cómodos en Neira.', Icon: HomeIcon, color: '#B6533C', to: '/hospedaje' },
+  { label: 'MarketNeira', text: 'Compra o alquila inmuebles en Neira.', Icon: Store, color: '#6A4C93', to: '/marquetneira' },
+  { label: 'Proveedores', text: 'Productos locales al por mayor.', Icon: Package, color: '#3B6E8F', to: '/proveedores' },
+  { label: 'Reservas', text: 'Reserva tu mesa, cancha o salón.', Icon: CalendarCheck, color: '#C0587A', to: '/reservas' },
 ];
 
 /** Recomendados en el inicio: los profesionales con plan Premium (es uno de los beneficios del plan). */
@@ -390,16 +395,18 @@ export default function HomePage({ user, onLogout }) {
         <section className="feed-section">
           <h2>Otros servicios</h2>
           <ul className="feed-more-list">
-            {MORE_SERVICES.map(({ label, text, Icon, color }) => (
-              <li key={label} className="feed-more-item" style={{ '--tint': color }}>
-                <span className="feed-more-ico">
-                  <Icon size={22} aria-hidden="true" />
-                </span>
-                <span className="feed-more-text">
-                  <strong>{label}</strong>
-                  <span>{text}</span>
-                </span>
-                <span className="feed-soon">Próximamente</span>
+            {MORE_SERVICES.map(({ label, text, Icon, color, to }) => (
+              <li key={label}>
+                <button type="button" className="feed-more-item" style={{ '--tint': color }} onClick={() => navigate(to)}>
+                  <span className="feed-more-ico">
+                    <Icon size={22} aria-hidden="true" />
+                  </span>
+                  <span className="feed-more-text">
+                    <strong>{label}</strong>
+                    <span>{text}</span>
+                  </span>
+                  <ChevronRight size={20} className="feed-more-chev" aria-hidden="true" />
+                </button>
               </li>
             ))}
           </ul>
