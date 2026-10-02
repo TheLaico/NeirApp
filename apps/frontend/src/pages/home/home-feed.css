@@ -56,15 +56,12 @@
   50% { transform: scale(1.15); }
 }
 
-/* Fila de categorías: la pasarela que se desliza sola (`.feed-cat-track`, ver HomePage `CatCarousel`) más
-   el botón "Más" fijo al final, que no se mueve con las demás. */
+/* Fila de categorías: la pasarela que se desliza sola (`.feed-cat-track`, ver HomePage `CatCarousel`). */
 .feed-cats-wrap { display: flex; align-items: flex-start; gap: 14px; margin-top: 18px; }
 .feed-cat-track {
   flex: 1; min-width: 0; display: flex; gap: clamp(10px, 3vw, 26px); overflow-x: auto; overflow-y: hidden;
   cursor: grab; -webkit-user-select: none; user-select: none; touch-action: pan-y;
   scrollbar-width: none; -ms-overflow-style: none;
-  -webkit-mask-image: linear-gradient(to right, transparent, #000 20px, #000 calc(100% - 20px), transparent);
-  mask-image: linear-gradient(to right, transparent, #000 20px, #000 calc(100% - 20px), transparent);
 }
 .feed-cat-track::-webkit-scrollbar { display: none; }
 .feed-cat-track:active { cursor: grabbing; }
