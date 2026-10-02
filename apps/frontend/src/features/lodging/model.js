@@ -54,6 +54,16 @@ export const amenitiesOf = (ids = []) => AMENITIES.filter((a) => ids.includes(a.
 // Marcador de los hoteles en el mapa (ver `store.marker` en NeiraMap).
 export const HOTEL_MARKER = { Icon: BedDouble, color: '#B6533C' };
 
+// Planes (iguales a `PLAN_FEES_COP` de la API): cada mes vale 30 días.
+export const PLAN_DAYS = 30;
+export const PLANS = {
+  listing: { fee: 25000, label: 'Aparecer en Hospedaje', short: 'Plan Hospedaje' },
+  featured: { fee: 4900, label: 'Hotel destacado', short: 'Destacado' },
+};
+export const isActive = (until) => Boolean(until) && new Date(until) > new Date();
+/** "21 de octubre". */
+export const dayLabel = (iso) => new Date(iso).toLocaleDateString('es-CO', { day: 'numeric', month: 'long' });
+
 // Igual que `MAX_PHOTOS` de la API.
 export const MAX_PHOTOS = 12;
 // Lo que abarca el mapa (igual que `LAT_RANGE`/`LNG_RANGE` de la API).

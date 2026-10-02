@@ -2,6 +2,7 @@ from typing import Protocol
 from uuid import UUID
 
 from neirapp.modules.lodging.domain.hotels import Hotel
+from neirapp.modules.lodging.domain.payments import HotelPayment
 from neirapp.modules.lodging.domain.reservations import Reservation
 from neirapp.modules.lodging.domain.reviews import Rating, Review
 
@@ -43,6 +44,20 @@ class ReservationRepository(Protocol):
 
     async def list_for_hotel(self, hotel_id: UUID) -> list[Reservation]:
         """Las de un hospedaje, las más recientes primero."""
+        ...
+
+
+class PaymentRepository(Protocol):
+    async def get(self, payment_id: UUID) -> HotelPayment | None: ...
+
+    async def save(self, payment: HotelPayment) -> None: ...
+
+    async def list_for(self, hotel_id: UUID) -> list[HotelPayment]:
+        """Los de un hotel, los más recientes primero."""
+        ...
+
+    async def list_all(self) -> list[HotelPayment]:
+        """Todos, los más recientes primero (para el panel del administrador)."""
         ...
 
 

@@ -1,21 +1,26 @@
-import { AlertTriangle, ArrowRight, BedDouble, CalendarCheck, CheckCircle2, ChevronRight, Circle, Eye, Star } from 'lucide-react';
+import { AlertTriangle, ArrowRight, BedDouble, CalendarCheck, CheckCircle2, ChevronRight, Circle, Eye, Hourglass, Receipt } from 'lucide-react';
+import { PLANS, dayLabel, isActive } from '../../features/lodging/model.js';
+import { formatCop } from '../../lib/money.js';
 import { Stars } from '../lodging/Stars.jsx';
 
 const QUICK = [
   { key: 'hotel', title: 'Mi hotel', text: 'Fotos, servicios, precio y ubicación.', Icon: BedDouble, tone: 'green' },
   { key: 'reservations', title: 'Reservas', text: 'Confirma o rechaza solicitudes.', Icon: CalendarCheck, tone: 'blue' },
-  { key: 'reviews', title: 'Reseñas', text: 'Responde a tus huéspedes.', Icon: Star, tone: 'gold' },
+  { key: 'plan', title: 'Plan', text: 'Aparece y destaca tu hotel.', Icon: Receipt, tone: 'gold' },
   { key: 'public', title: 'Ver cómo me ven', text: 'Tu ficha en Hospedaje.', Icon: Eye, tone: 'terra' },
 ];
 
 /** Inicio del panel del hotel: si aparece en Hospedaje, lo pendiente (reservas y reseñas) y qué le falta. */
-export default function HomeView({ user, hotel, pending, unanswered, onGo, onPublic }) {
+export default function HomeView({ user, hotel, billing, pending, unanswered, onGo, onPublic }) {
   const name = hotel?.name || user.name;
+  const listed = isActive(billing?.listing.until);
   let status;
   if (!hotel) status = { tone: 'warn', Icon: AlertTriangle, text: 'Crea la ficha de tu hotel para aparecer en Hospedaje.', go: 'hotel' };
+  else if (!listed && billing?.listing.pending) status = { tone: 'wait', Icon: Hourglass, text: 'Estamos confirmando tu pago. Te avisaremos cuando tu hotel aparezca.', go: 'plan' };
+  else if (!listed) status = { tone: 'warn', Icon: Receipt, text: `Tu hotel no aparece todavía: activa tu plan (${formatCop(PLANS.listing.fee)} al mes).`, go: 'plan' };
   else if (!hotel.is_listed) status = { tone: 'warn', Icon: AlertTriangle, text: 'Tu hotel está oculto. Vuelve a mostrarlo en Mi hotel.', go: 'hotel' };
   else if (pending) status = { tone: 'wait', Icon: CalendarCheck, text: pending === 1 ? 'Tienes 1 reserva esperando respuesta.' : `Tienes ${pending} reservas esperando respuesta.`, go: 'reservations' };
-  else status = { tone: 'ok', Icon: CheckCircle2, text: 'Tu hotel aparece en Hospedaje.', go: 'hotel' };
+  else status = { tone: 'ok', Icon: CheckCircle2, text: `Tu hotel aparece en Hospedaje hasta el ${dayLabel(billing.listing.until)}.`, go: 'plan' };
 
   const checklist = [
     { done: Boolean(hotel), label: 'Crea la ficha de tu hotel', go: 'hotel' },
@@ -23,6 +28,7 @@ export default function HomeView({ user, hotel, pending, unanswered, onGo, onPub
     { done: (hotel?.amenities.length ?? 0) >= 3, label: 'Marca los servicios que ofreces', go: 'hotel' },
     { done: Boolean(hotel?.whatsapp), label: 'Agrega tu WhatsApp para reservas', go: 'hotel' },
     { done: Boolean(hotel?.tagline), label: 'Escribe una frase corta', go: 'hotel' },
+    { done: listed, label: `Activa tu plan (${formatCop(PLANS.listing.fee)} al mes)`, go: 'plan' },
     { done: Boolean(hotel) && unanswered === 0, label: 'Responde todas tus reseñas', go: 'reviews' },
   ];
   const done = checklist.filter((c) => c.done).length;

@@ -1,6 +1,7 @@
 import { ArrowLeft, BedDouble, Bike, Briefcase, LayoutDashboard, LogOut, MapPinned, MessageSquarePlus, ShieldCheck, Sofa, Store, Truck, UserCog, Warehouse } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { canAccessAdmin, ROLES } from '../../config/roles.js';
+import { lodgingApi } from '../../features/lodging/api.js';
 import { marketplaceApi } from '../../features/marketplace/api.js';
 import { professionalsApi } from '../../features/professionals/api.js';
 import { suppliersApi } from '../../features/suppliers/api.js';
@@ -41,6 +42,8 @@ export default function AdminLayout({ user, onLogout, title, subtitle, actions, 
   const [marketTodo, setMarketTodo] = useState(0);
   // Y en Proveedores: pagos de suscripción por confirmar.
   const [supplierTodo, setSupplierTodo] = useState(0);
+  // Y en Hospedaje: pagos de planes de hoteles por confirmar.
+  const [lodgingTodo, setLodgingTodo] = useState(0);
   const allowed = canAccessAdmin(user);
   useEffect(() => {
     if (!allowed) return undefined;
@@ -59,13 +62,20 @@ export default function AdminLayout({ user, onLogout, title, subtitle, actions, 
         .adminSubscriptions()
         .then((rows) => alive && setSupplierTodo(rows.filter((r) => r.subscription.pending).length))
         .catch(() => {});
+    const checkLodging = () =>
+      lodgingApi
+        .adminHotels()
+        .then((rows) => alive && setLodgingTodo(rows.reduce((n, r) => n + (r.billing.listing.pending ? 1 : 0) + (r.billing.featured.pending ? 1 : 0), 0)))
+        .catch(() => {});
     check();
     checkMarket();
     checkSuppliers();
+    checkLodging();
     const timer = setInterval(() => {
       check();
       checkMarket();
       checkSuppliers();
+      checkLodging();
     }, 60000);
     return () => {
       alive = false;
@@ -110,6 +120,11 @@ export default function AdminLayout({ user, onLogout, title, subtitle, actions, 
             >
               <Icon size={19} aria-hidden="true" />
               {label}
+              {to === '/admin/hospedaje' && lodgingTodo > 0 && (
+                <span className="a-count" aria-label={`${lodgingTodo} pagos de hoteles por confirmar`}>
+                  {lodgingTodo}
+                </span>
+              )}
               {to === '/admin/proveedores' && supplierTodo > 0 && (
                 <span className="a-count" aria-label={`${supplierTodo} pagos de proveedores por confirmar`}>
                   {supplierTodo}

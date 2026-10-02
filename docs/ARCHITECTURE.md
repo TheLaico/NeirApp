@@ -536,10 +536,17 @@ estadía: muestra los hoteles (lista y mapa), reúne las reseñas y lleva las so
   (`lodging_hotel`, migración 0034): nombre, tipo, frase, descripción, dirección, punto en el mapa
   (dentro del recuadro del mapa de Neira de la app), teléfono, WhatsApp, correo, precio por noche
   "desde", servicios (WiFi, piscina, restaurante, parqueadero, desayuno, vista, bar, camping…),
-  hasta 12 fotos, horas de llegada/salida y si se muestra. Sale en Hospedaje mientras la cuenta tenga
-  el rol (o sea admin) y no se oculte.
-- **Recomendados**: el administrador marca cuáles son recomendados y sube el fondo de su banner
-  (`PUT /lodging/admin/hotels/{id}/recommended`); salen primero y en el carrusel de arriba.
+  hasta 12 fotos, horas de llegada/salida y si se muestra. Sale en Hospedaje mientras tenga el plan
+  al día, la cuenta tenga el rol (o sea admin) y no se oculte.
+- **Planes** (migración 0035: `paid_until`, `featured_until` y `lodging_payment`): **$ 25.000 al mes
+  para aparecer** y **$ 4.900 al mes para salir destacado** (en "Hoteles recomendados" y primero en la
+  lista; solo cuenta si también tiene el plan para aparecer). Igual que en Proveedores: el hotel
+  reporta el pago (`POST /lodging/me/plan/payments` con `kind` = `listing` o `featured`), el
+  administrador lo confirma o lo rechaza (`PUT /lodging/admin/payments/{id}/approve|reject`) y cada
+  mes vale 30 días (renovar suma al final). El admin también activa o quita meses
+  (`POST /lodging/admin/hotels/{id}/grant-month`, `PUT /lodging/admin/hotels/{id}/end`) y sube el
+  fondo del banner de los destacados (`PUT /lodging/admin/hotels/{id}/banner`). Avisos
+  `hotel_plan_activated`, `hotel_featured` y `hotel_payment_rejected`.
 - **Reseñas** (`lodging_review`): cualquier persona califica de 1 a 5 estrellas con comentario, una
   por hotel (volver a calificar la actualiza); el hotel no se califica a sí mismo. El hotel responde
   (`PUT /lodging/me/reviews/{id}/reply`, texto vacío borra la respuesta). El promedio y la cantidad
@@ -555,7 +562,7 @@ estadía: muestra los hoteles (lista y mapa), reúne las reseñas y lleva las so
   en la ficha y en el detalle) abre Google Maps con la ruta ya trazada hasta el hotel
   (`google.com/maps/dir/?api=1&destination=lat,lng`: gratis y sin clave de API), `/hospedaje/hotel?id=`
   (fotos, servicios, ubicación, contacto, reserva y todas las opiniones, donde se califica),
-  `/hospedaje/mis-reservas`, el panel del hotel `/hotel` (Inicio, Mi hotel, Reservas, Reseñas y
+  `/hospedaje/mis-reservas`, el panel del hotel `/hotel` (Inicio, Mi hotel, Reservas, Reseñas, Plan y
   Notificaciones) y `/admin/hospedaje`. El hotel también está en la vista de desarrollo.
 
 ## Frontend

@@ -188,3 +188,5 @@
 .a-lg-preview .lg-reco-text p { font-size: 14px; }
 .a-lg-banner-actions { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
 @media (max-width: 800px) { .a-lg-banner { grid-template-columns: 1fr; } }
+.a-lg-actions { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 10px; }
+.a-lg-plan { display: inline-flex; flex-wrap: wrap; gap: 8px; }
