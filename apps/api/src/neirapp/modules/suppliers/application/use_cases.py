@@ -170,18 +170,27 @@ class SupplierRow:
 
     supplier: Supplier
     subscription: Subscription
+    has_access: bool  # Sin el rol de proveedor no aparece aunque esté al día
 
 
 class ListSupplierSubscriptions:
     """Todas las empresas con perfil; primero las que tienen un pago por confirmar."""
 
-    def __init__(self, repo: SupplierRepository, payments: PaymentRepository) -> None:
+    def __init__(
+        self, repo: SupplierRepository, payments: PaymentRepository, access: AccessPort
+    ) -> None:
         self._repo = repo
         self._payments = payments
+        self._access = access
 
     async def __call__(self) -> list[SupplierRow]:
+        allowed = await self._access.supplier_ids()
         rows = [
-            SupplierRow(s, _subscription(s, await self._payments.list_for(s.user_id)))
+            SupplierRow(
+                s,
+                _subscription(s, await self._payments.list_for(s.user_id)),
+                s.user_id in allowed,
+            )
             for s in await self._repo.list_all()
         ]
         return sorted(

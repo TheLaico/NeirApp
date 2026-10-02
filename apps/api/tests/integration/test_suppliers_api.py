@@ -91,6 +91,8 @@ class TestProveedores:
             headers=_bearer(admin),
         )
         assert (await client.get(S)).json() == []
+        rows = (await client.get(f"{S}/admin/subscriptions", headers=_bearer(admin))).json()
+        assert rows[0]["has_access"] is False  # le quitaron el rol: el admin ve por qué no aparece
 
     async def test_valida_los_datos(self, client: httpx.AsyncClient, app: FastAPI) -> None:
         admin = await _admin(client, app)
@@ -200,3 +202,14 @@ class TestSuscripcion:
         ):
             response = await client.request(method, f"{S}{url}", headers=_bearer(company))
             assert response.status_code == 403, url
+
+
+async def test_la_empresa_de_un_admin_tambien_aparece(
+    client: httpx.AsyncClient, app: FastAPI
+) -> None:
+    """El admin puede armar una empresa desde la vista de desarrollo sin el rol de proveedor."""
+    admin = await _admin(client, app)
+    await _published(client, admin, admin)
+    assert [s["company_name"] for s in (await client.get(S)).json()] == ["Productos del Campo"]
+    rows = (await client.get(f"{S}/admin/subscriptions", headers=_bearer(admin))).json()
+    assert rows[0]["has_access"] is True

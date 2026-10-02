@@ -18,7 +18,7 @@ class SupplierRepository(Protocol):
 
 
 class AccessPort(Protocol):
-    """Quién tiene hoy acceso de proveedor (el administrador lo autoriza por correo)."""
+    """Quién tiene hoy acceso de proveedor (autorizados por correo, más los administradores)."""
 
     async def supplier_ids(self) -> set[UUID]: ...
 

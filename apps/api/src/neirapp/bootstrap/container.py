@@ -527,7 +527,7 @@ def build_suppliers(
         get_my_subscription=GetMySubscription(repo, payments),
         request_subscription_payment=RequestSubscriptionPayment(repo, payments, clock),
         cancel_subscription_payment=CancelSubscriptionPayment(repo, payments),
-        list_supplier_subscriptions=ListSupplierSubscriptions(repo, payments),
+        list_supplier_subscriptions=ListSupplierSubscriptions(repo, payments, access),
         approve_subscription_payment=ApproveSubscriptionPayment(repo, payments, notifier, clock),
         reject_subscription_payment=RejectSubscriptionPayment(repo, payments, notifier, clock),
         grant_subscription_month=GrantSubscriptionMonth(repo, payments, notifier, clock),

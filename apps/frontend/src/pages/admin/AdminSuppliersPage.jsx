@@ -141,12 +141,13 @@ export default function AdminSuppliersPage({ user, onLogout }) {
 
       <section className="a-card">
         <h2>Empresas</h2>
-        <p className="a-card-hint">Solo aparecen en Proveedores las que tienen la suscripción al día y no se ocultaron.</p>
+        <p className="a-card-hint">Solo aparecen en Proveedores las que tienen la suscripción al día, no se ocultaron y su cuenta sigue autorizada como proveedor.</p>
         {!state.loading && !state.error && state.list.length === 0 && <p className="a-empty">Todavía ninguna empresa ha creado su perfil.</p>}
         {state.list.length > 0 && (
           <ul className="a-store-list">
-            {state.list.map(({ supplier: s, subscription: sub }) => {
+            {state.list.map(({ supplier: s, subscription: sub, has_access: hasAccess }) => {
               const paid = isPaid(sub.paid_until);
+              const visible = paid && s.is_listed && hasAccess;
               const key = `s-${s.user_id}`;
               return (
                 <li key={s.user_id} className="a-store-row a-plan-row">
@@ -155,10 +156,11 @@ export default function AdminSuppliersPage({ user, onLogout }) {
                     <span>
                       {categoryOf(s.category).label} · {paid ? `Activa hasta el ${dayLabel(sub.paid_until)}` : sub.paid_until ? `Venció el ${dayLabel(sub.paid_until)}` : 'Sin suscripción'}
                       {!s.is_listed && ' · oculta por la empresa'}
+                      {!hasAccess && ' · la cuenta no tiene el rol Proveedor (autorízala en Roles)'}
                       {!s.catalog_url && ' · sin catálogo'}
                     </span>
                   </div>
-                  <span className={`a-badge ${paid && s.is_listed ? 'plan-pro' : 'plan-none'}`}>{paid && s.is_listed ? 'Visible' : 'No aparece'}</span>
+                  <span className={`a-badge ${visible ? 'plan-pro' : 'plan-none'}`}>{visible ? 'Visible' : 'No aparece'}</span>
                   <button type="button" className="a-btn ghost" disabled={busy === key} onClick={() => run(key, () => suppliersApi.grantMonth(s.user_id), `✓ ${s.company_name}: se activó un mes.`)}>
                     {busy === key ? <Loader2 size={16} className="a-spin" aria-hidden="true" /> : <Gift size={16} aria-hidden="true" />} Activar un mes
                   </button>

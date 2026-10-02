@@ -147,12 +147,14 @@ class SubscriptionResponse(BaseModel):
 class SupplierRowResponse(BaseModel):
     supplier: SupplierResponse
     subscription: SubscriptionResponse
+    has_access: bool
 
     @classmethod
     def from_row(cls, row: SupplierRow) -> "SupplierRowResponse":
         return cls(
             supplier=SupplierResponse.from_domain(row.supplier),
             subscription=SubscriptionResponse.from_domain(row.subscription),
+            has_access=row.has_access,
         )
 
 

@@ -11,4 +11,7 @@ class IdentityAccessAdapter:
         self._identity = identity
 
     async def supplier_ids(self) -> set[UUID]:
-        return await self._identity.list_user_ids_with_role(Role.SUPPLIER)
+        # Los administradores también: pueden armar y publicar una empresa (p. ej. desde la vista de
+        # desarrollo) sin tener que autorizarse a sí mismos como proveedor.
+        suppliers = await self._identity.list_user_ids_with_role(Role.SUPPLIER)
+        return suppliers | await self._identity.list_user_ids_with_role(Role.ADMIN)
