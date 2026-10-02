@@ -50,3 +50,6 @@ cd C:\Users\rbx56\OneDrive\Desktop\NeirApp\apps\api
 
 cd C:\Users\rbx56\OneDrive\Desktop\NeirApp\apps\frontend
 npm run dev
+
+cloudflared tunnel -- url http://localhost: 5173
+
