@@ -31,17 +31,13 @@
 .mq-heart.on { background: var(--g); color: #fff; }
 .mq-back { display: inline-flex; align-items: center; gap: 6px; margin: 6px 0 14px; padding: 6px 0; border: 0; background: none; color: var(--g); font: inherit; font-size: 15px; font-weight: 800; cursor: pointer; }
 
-/* ---------- Portada ---------- */
-.mq-hero { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 20px; min-height: 170px; margin-bottom: 18px; padding: 8px 8px 8px 84px; }
-.mq-hero-leaves { position: absolute; left: 0; top: 0; width: 60px; height: 120px; pointer-events: none; }
-.mq-hero .leaf, .mq-filters .leaf { position: absolute; transform: rotate(var(--r, 0deg)); filter: drop-shadow(0 2px 4px rgba(35, 52, 43, .15)); }
-.mq-hero-text h1 { font-family: 'Montserrat', sans-serif; font-size: clamp(34px, 4vw, 56px); font-weight: 800; line-height: 1.02; letter-spacing: -.02em; color: var(--g2); }
-.mq-hero-text > p { margin-top: 6px; font-size: clamp(17px, 1.7vw, 24px); color: var(--g); }
-.mq-hero-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
-.mq-hero-visual { position: relative; flex: none; display: flex; align-items: center; width: min(46%, 560px); }
-.mq-hero-art { width: 100%; height: auto; }
-.mq-hero-script { position: absolute; right: -6px; top: 6px; font-family: 'Kaushan Script', cursive; font-size: clamp(18px, 1.8vw, 26px); line-height: 1.05; color: var(--g2); text-align: center; transform: rotate(-8deg); text-shadow: 0 2px 0 #fff; }
-.mq-hero-script::after { content: ''; display: block; width: 70%; height: 4px; margin: 4px auto 0; border-radius: 4px; background: #e8762c; transform: rotate(-4deg); }
+/* ---------- Portada: card con el banner de MarquetNeira ---------- */
+.mq-banner-card { display: flex; flex-direction: column; align-items: center; gap: 10px; margin: 6px 0 20px; padding: 18px 24px 18px; overflow: hidden; border: 1px solid var(--line); border-radius: 26px; background: linear-gradient(115deg, #fbf8ee 0%, #f1f5e6 55%, #e8f0dc 100%); box-shadow: 0 6px 20px rgba(35, 52, 43, .09); }
+.mq-banner-img { display: block; width: 100%; max-width: 980px; height: auto; max-height: 300px; object-fit: contain; }
+.mq-banner-foot { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px 20px; width: 100%; padding-top: 12px; border-top: 1px solid var(--line); }
+.mq-banner-foot p { font-size: clamp(16px, 1.5vw, 20px); font-weight: 700; color: var(--g); }
+.mq-hero-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.mq-filters .leaf { position: absolute; transform: rotate(var(--r, 0deg)); filter: drop-shadow(0 2px 4px rgba(35, 52, 43, .15)); }
 
 /* ---------- Barra de filtros ---------- */
 .mq-filters { position: relative; display: flex; align-items: center; flex-wrap: wrap; gap: 10px 12px; margin-bottom: 22px; padding: 12px 64px; border: 1px solid var(--line); border-radius: 22px; background: rgba(255, 255, 255, .88); box-shadow: 0 4px 14px rgba(35, 52, 43, .07); }
@@ -213,16 +209,15 @@
 
 /* ---------- Celular y tableta ---------- */
 @media (max-width: 1100px) {
-  .mq-hero { flex-direction: column; align-items: stretch; padding-left: 26px; }
-  .mq-hero-visual { width: 100%; max-width: 520px; align-self: center; }
   .mq-filters { padding: 12px 16px; }
   .mq-filters-leaf { display: none; }
   .mq-detail { grid-template-columns: 1fr; }
 }
 @media (max-width: 700px) {
   .mq-page { padding: 4px 14px 32px; }
-  .mq-hero { padding: 0 0 0 18px; }
-  .mq-hero-script { font-size: 17px; right: 0; top: -4px; }
+  .mq-banner-card { padding: 12px 12px 14px; border-radius: 20px; }
+  .mq-banner-foot { flex-direction: column; align-items: stretch; text-align: center; }
+  .mq-banner-foot .mq-btn { flex: 1; }
   .mq-filters { flex-wrap: nowrap; overflow-x: auto; padding: 10px; border-radius: 18px; scrollbar-width: none; }
   .mq-filters::-webkit-scrollbar { display: none; }
   .mq-kinds button, .mq-drop-btn, .mq-fav-filter { flex: none; min-height: 40px; padding: 0 14px; font-size: 14px; }
@@ -242,4 +237,8 @@
   .mq-card, .mq-card-img img, .mq-btn, .mq-switch, .mq-switch span { transition: none; }
   .mq-card:hover { transform: none; }
   .mq-card:hover .mq-card-img img { transform: none; }
+}
+@media (max-width: 700px) {
+  .mq-banner-foot .mq-hero-actions { flex-direction: column; }
+  .mq-banner-foot .mq-btn { width: 100%; }
 }

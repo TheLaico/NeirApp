@@ -1,12 +1,12 @@
 import { CalendarDays, ChevronDown, Heart, LayoutGrid, Package, Plus, Sofa, Store, Tag } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import banner from '../../assets/marketplace/fondo-marquetplace.webp';
 import fondoBuscador from '../../assets/fondo-buscador.png';
 import { Leaf } from '../../components/common/Leaf.jsx';
 import PageShell from '../../components/layout/PageShell.jsx';
 import { marketplaceApi } from '../../features/marketplace/api.js';
 import { AVAILABILITY, CATEGORIES, PRICE_RANGES, useMarketFavorites } from '../../features/marketplace/model.js';
 import { useNavigate } from '../../lib/router.jsx';
-import HeroArt from './HeroArt.jsx';
 import ListingCard from './ListingCard.jsx';
 import ReportDialog from './ReportDialog.jsx';
 import './marketplace.css';
@@ -76,13 +76,13 @@ export default function MarketplacePage({ user, onLogout }) {
   return (
     <PageShell user={user} onLogout={onLogout} query={query} onQuery={setQuery} flush heroImage={fondoBuscador} centerLogo className="mq-view">
       <div className="mq-page">
-        <section className="mq-hero">
-          <span className="mq-hero-leaves" aria-hidden="true">
-            <Leaf fill="#2d7a3d" style={{ left: -14, top: 30, width: 44, '--r': '28deg' }} />
-            <Leaf fill="#e8a92c" style={{ left: 16, top: 70, width: 30, '--r': '70deg' }} />
-          </span>
-          <div className="mq-hero-text">
-            <h1>Muebles en Neira</h1>
+        {/* Portada: el banner de MarquetNeira a todo el ancho, con la frase y los botones para publicar. */}
+        <section className="mq-banner-card" aria-labelledby="mq-title">
+          <h1 id="mq-title" className="mq-sr">
+            Muebles en Neira
+          </h1>
+          <img className="mq-banner-img" src={banner} alt="MarquetNeira Inmobiliario" />
+          <div className="mq-banner-foot">
             <p>Compra o alquila muebles de vendedores locales</p>
             <div className="mq-hero-actions">
               <button type="button" className="mq-btn primary" onClick={() => navigate('/marquetneira/mis-publicaciones?nueva=1')}>
@@ -92,16 +92,6 @@ export default function MarketplacePage({ user, onLogout }) {
                 <Store size={17} aria-hidden="true" /> Mis publicaciones
               </button>
             </div>
-          </div>
-          <div className="mq-hero-visual">
-            <HeroArt />
-            <span className="mq-hero-script">
-              Hogares
-              <br />
-              con alma
-              <br />
-              neirense
-            </span>
           </div>
         </section>
 
