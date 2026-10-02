@@ -85,6 +85,18 @@ from neirapp.modules.incidents.infrastructure.unit_of_work import (
 from neirapp.modules.leads.application.app import LeadsApp
 from neirapp.modules.leads.application.leads import ListLeads, SetLeadContacted, SubmitLead
 from neirapp.modules.leads.infrastructure.store import SqlAlchemyLeadStore
+from neirapp.modules.lodging.application import use_cases as lodging
+from neirapp.modules.lodging.application.app import LodgingApp
+from neirapp.modules.lodging.infrastructure.identity_adapter import (
+    IdentityAccessAdapter as HotelAccessAdapter,
+)
+from neirapp.modules.lodging.infrastructure.repositories import (
+    SqlAlchemyHotelRepository,
+    SqlAlchemyReservationRepository,
+)
+from neirapp.modules.lodging.infrastructure.repositories import (
+    SqlAlchemyReviewRepository as SqlAlchemyHotelReviewRepository,
+)
 from neirapp.modules.marketplace.application.app import MarketplaceApp
 from neirapp.modules.marketplace.application.use_cases import (
     ApprovePayment,
@@ -532,6 +544,39 @@ def build_suppliers(
         reject_subscription_payment=RejectSubscriptionPayment(repo, payments, notifier, clock),
         grant_subscription_month=GrantSubscriptionMonth(repo, payments, notifier, clock),
         end_subscription=EndSubscription(repo, clock),
+    )
+
+
+def build_lodging(
+    session_factory: async_sessionmaker[Any],
+    identity: IdentityApp,
+    professionals: ProfessionalsApp,
+    clock: Clock | None = None,
+) -> LodgingApp:
+    clock = clock or SystemClock()
+    hotels = SqlAlchemyHotelRepository(session_factory)
+    reviews = SqlAlchemyHotelReviewRepository(session_factory)
+    reservations = SqlAlchemyReservationRepository(session_factory)
+    access = HotelAccessAdapter(identity)
+    notifier = NotificationsAdapter(professionals)
+    return LodgingApp(
+        get_my_hotel=lodging.GetMyHotel(hotels, reviews),
+        save_my_hotel=lodging.SaveMyHotel(hotels, reviews, clock),
+        list_hotels=lodging.ListHotels(hotels, reviews, access),
+        get_hotel=lodging.GetHotel(hotels, reviews, access),
+        list_hotel_reviews=lodging.ListHotelReviews(hotels, reviews, access),
+        rate_hotel=lodging.RateHotel(hotels, reviews, access, notifier, clock),
+        list_my_hotel_reviews=lodging.ListMyHotelReviews(hotels, reviews),
+        reply_to_review=lodging.ReplyToReview(hotels, reviews, notifier, clock),
+        request_reservation=lodging.RequestReservation(
+            hotels, reservations, access, notifier, clock
+        ),
+        list_my_reservations=lodging.ListMyReservations(hotels, reservations),
+        cancel_reservation=lodging.CancelReservation(hotels, reservations, notifier, clock),
+        list_hotel_reservations=lodging.ListHotelReservations(hotels, reservations),
+        answer_reservation=lodging.AnswerReservation(hotels, reservations, notifier, clock),
+        list_hotels_for_admin=lodging.ListHotelsForAdmin(hotels, reviews, access),
+        set_recommended=lodging.SetRecommended(hotels, reviews),
     )
 
 

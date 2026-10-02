@@ -180,3 +180,11 @@
 .a-mq-reasons li { display: flex; align-items: flex-start; gap: 8px; font-size: 13.5px; }
 .a-mq-reasons svg { flex: none; margin-top: 2px; color: #9b3d28; }
 .a-mq-reasons small { color: var(--muted); }
+
+/* Hospedaje: vista previa del banner de un hotel recomendado. */
+.a-lg-banner { display: grid; grid-template-columns: minmax(0, 520px) auto; gap: 14px; align-items: center; margin-top: 12px; }
+.a-lg-preview { min-height: 150px; padding: 20px 24px; border-radius: 16px; }
+.a-lg-preview .lg-reco-text h3 { font-size: 22px; }
+.a-lg-preview .lg-reco-text p { font-size: 14px; }
+.a-lg-banner-actions { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+@media (max-width: 800px) { .a-lg-banner { grid-template-columns: 1fr; } }

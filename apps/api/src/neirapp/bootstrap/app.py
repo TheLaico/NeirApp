@@ -9,6 +9,7 @@ from neirapp.bootstrap.container import (
     build_identity,
     build_incidents,
     build_leads,
+    build_lodging,
     build_marketplace,
     build_ordering,
     build_pricing,
@@ -23,6 +24,7 @@ from neirapp.modules.dispatch.presentation.router import router as dispatch_rout
 from neirapp.modules.identity.presentation.router import router as identity_router
 from neirapp.modules.incidents.presentation.router import router as incidents_router
 from neirapp.modules.leads.presentation.router import router as leads_router
+from neirapp.modules.lodging.presentation.router import router as lodging_router
 from neirapp.modules.marketplace.presentation.router import router as marketplace_router
 from neirapp.modules.media.presentation.router import router as media_router
 from neirapp.modules.ordering.presentation.router import router as ordering_router
@@ -69,6 +71,9 @@ def create_app(settings: Settings | None = None, clock: Clock | None = None) -> 
     app.state.suppliers = build_suppliers(
         session_factory, app.state.identity, app.state.professionals, clock
     )
+    app.state.lodging = build_lodging(
+        session_factory, app.state.identity, app.state.professionals, clock
+    )
     app.state.marketplace = build_marketplace(
         session_factory, app.state.identity, app.state.professionals, clock
     )
@@ -110,6 +115,7 @@ def create_app(settings: Settings | None = None, clock: Clock | None = None) -> 
     app.include_router(notifications_router, prefix="/api/v1")
     app.include_router(marketplace_router, prefix="/api/v1")
     app.include_router(suppliers_router, prefix="/api/v1")
+    app.include_router(lodging_router, prefix="/api/v1")
     app.include_router(dispatch_router, prefix="/api/v1")
     app.include_router(reviews_router, prefix="/api/v1")
     app.include_router(incidents_router, prefix="/api/v1")

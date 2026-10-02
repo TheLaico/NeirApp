@@ -16,6 +16,7 @@ import AdminOverviewPage from './pages/admin/AdminOverviewPage.jsx';
 import AdminMarketplacePage from './pages/admin/AdminMarketplacePage.jsx';
 import AdminProfessionalsPage from './pages/admin/AdminProfessionalsPage.jsx';
 import AdminSuppliersPage from './pages/admin/AdminSuppliersPage.jsx';
+import AdminLodgingPage from './pages/admin/AdminLodgingPage.jsx';
 import AdminRolesPage from './pages/admin/AdminRolesPage.jsx';
 import AdminStoresPage from './pages/admin/AdminStoresPage.jsx';
 import CheckoutPage from './pages/checkout/CheckoutPage.jsx';
@@ -37,6 +38,10 @@ import ListingPage from './pages/marketplace/ListingPage.jsx';
 import MarketplacePage from './pages/marketplace/MarketplacePage.jsx';
 import MyListingsPage from './pages/marketplace/MyListingsPage.jsx';
 import SupplierPanelPage from './pages/supplier/SupplierPanelPage.jsx';
+import HotelPanelPage from './pages/hotel/HotelPanelPage.jsx';
+import HotelPage from './pages/lodging/HotelPage.jsx';
+import LodgingPage from './pages/lodging/LodgingPage.jsx';
+import MyReservationsPage from './pages/lodging/MyReservationsPage.jsx';
 import SupplierPage from './pages/suppliers/SupplierPage.jsx';
 import SuppliersPage from './pages/suppliers/SuppliersPage.jsx';
 import SubcategoryProfessionalsPage from './pages/professionals/SubcategoryProfessionalsPage.jsx';
@@ -60,6 +65,10 @@ const ROUTES = {
   '/proveedores/empresa': SupplierPage,
   '/proveedores/mi-empresa': SupplierPanelPage,
   '/proveedor': SupplierPanelPage,
+  '/hospedaje': LodgingPage,
+  '/hospedaje/hotel': HotelPage,
+  '/hospedaje/mis-reservas': MyReservationsPage,
+  '/hotel': HotelPanelPage,
   '/favoritos': FavoritesPage,
   '/pedidos': OrdersPage,
   '/checkout': CheckoutPage,
@@ -70,6 +79,7 @@ const ROUTES = {
   '/admin/profesionales': AdminProfessionalsPage,
   '/admin/marquetneira': AdminMarketplacePage,
   '/admin/proveedores': AdminSuppliersPage,
+  '/admin/hospedaje': AdminLodgingPage,
   '/admin/envios': AdminShippingPage,
   '/admin/mapa': AdminLiveMapPage,
   '/admin/solicitudes': AdminLeadsPage,

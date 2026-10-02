@@ -1,4 +1,4 @@
-import { ArrowLeft, Bike, Briefcase, LayoutDashboard, LogOut, MapPinned, MessageSquarePlus, ShieldCheck, Sofa, Store, Truck, UserCog, Warehouse } from 'lucide-react';
+import { ArrowLeft, BedDouble, Bike, Briefcase, LayoutDashboard, LogOut, MapPinned, MessageSquarePlus, ShieldCheck, Sofa, Store, Truck, UserCog, Warehouse } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { canAccessAdmin, ROLES } from '../../config/roles.js';
 import { marketplaceApi } from '../../features/marketplace/api.js';
@@ -15,6 +15,7 @@ const ITEMS = [
   { to: '/admin/profesionales', label: 'Gestión de profesionales', Icon: Briefcase },
   { to: '/admin/marquetneira', label: 'MarquetNeira', Icon: Sofa },
   { to: '/admin/proveedores', label: 'Proveedores', Icon: Warehouse },
+  { to: '/admin/hospedaje', label: 'Hospedaje', Icon: BedDouble },
   { to: '/admin/mapa', label: 'Mapa en vivo', Icon: MapPinned },
   { to: '/admin/envios', label: 'Envíos', Icon: Truck },
   { to: '/admin/solicitudes', label: 'Solicitudes', Icon: MessageSquarePlus },

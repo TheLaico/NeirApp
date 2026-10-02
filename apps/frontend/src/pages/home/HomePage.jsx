@@ -169,7 +169,7 @@ function MoreCategoriesModal({ cats, onSelect, onClose }) {
                 <Icon size={22} color="#fff" aria-hidden="true" />
               </span>
               <span>{label}</span>
-              {id !== 'domicilios' && id !== 'profesionales' && id !== 'marquetneira' && id !== 'proveedores' && <span className="feed-soon">Próximamente</span>}
+              {id !== 'domicilios' && id !== 'profesionales' && id !== 'marquetneira' && id !== 'proveedores' && id !== 'hospedaje' && <span className="feed-soon">Próximamente</span>}
             </button>
           ))}
         </div>
@@ -298,6 +298,9 @@ export default function HomePage({ user, onLogout }) {
     } else if (id === 'proveedores') {
       navigate('/proveedores');
       setShowMoreCats(false);
+    } else if (id === 'hospedaje') {
+      navigate('/hospedaje');
+      setShowMoreCats(false);
     }
   };
 
@@ -330,7 +333,7 @@ export default function HomePage({ user, onLogout }) {
           <div className="feed-cats-wrap">
             <CatCarousel
               cats={TOP_CATS}
-              onSelect={(id) => (id === 'domicilios' || id === 'profesionales' || id === 'marquetneira' || id === 'proveedores' ? openCategory(id) : setShowMoreCats(true))}
+              onSelect={(id) => (id === 'domicilios' || id === 'profesionales' || id === 'marquetneira' || id === 'proveedores' || id === 'hospedaje' ? openCategory(id) : setShowMoreCats(true))}
             />
             <button type="button" className="feed-cat feed-cat-static" onClick={() => setShowMoreCats(true)}>
               <span className="feed-cat-dot feed-cat-more">

@@ -70,9 +70,9 @@ export function set3D(map, on) {
   }
 }
 
-// Marcador en forma de gota, con el color e icono del grupo de la tienda.
+// Marcador en forma de gota, con el color e icono del grupo de la tienda (o los de `store.marker`, p. ej. hoteles).
 function markerElement(store) {
-  const { Icon, color } = GROUPS[store.group] ?? GROUPS.mercados;
+  const { Icon, color } = store.marker ?? GROUPS[store.group] ?? GROUPS.mercados;
   const el = document.createElement('div');
   el.style.cursor = 'pointer';
   el.setAttribute('role', 'button');
@@ -82,8 +82,8 @@ function markerElement(store) {
       style={{
         display: 'grid',
         placeItems: 'center',
-        width: 34,
-        height: 34,
+        width: store.active ? 42 : 34,
+        height: store.active ? 42 : 34,
         borderRadius: '50% 50% 50% 0',
         transform: 'rotate(-45deg)',
         border: '2px solid white',
@@ -100,7 +100,7 @@ function markerElement(store) {
 
   // Nombre de la tienda junto al puntero. Se crea con textContent para que un nombre con símbolos no inyecte HTML.
   const label = document.createElement('span');
-  label.className = 'store-label';
+  label.className = store.active ? 'store-label active' : 'store-label';
   label.textContent = store.name;
   el.appendChild(label);
   return el;

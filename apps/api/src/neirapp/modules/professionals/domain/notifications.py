@@ -53,6 +53,13 @@ class NotificationKind(StrEnum):
     # De Proveedores.
     SUPPLIER_ACTIVATED = "supplier_activated"  # A la empresa
     SUPPLIER_PAYMENT_REJECTED = "supplier_payment_rejected"  # A la empresa
+    # De Hospedaje.
+    RESERVATION_NEW = "reservation_new"  # Al hospedaje
+    RESERVATION_CANCELLED = "reservation_cancelled"  # Al hospedaje
+    RESERVATION_CONFIRMED = "reservation_confirmed"  # Al huésped
+    RESERVATION_DECLINED = "reservation_declined"  # Al huésped
+    HOTEL_REVIEW_NEW = "hotel_review_new"  # Al hospedaje
+    HOTEL_REVIEW_REPLY = "hotel_review_reply"  # A quien escribió la reseña
 
 
 @dataclass

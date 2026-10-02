@@ -527,6 +527,35 @@ visibilidad y los clientes las contactan directamente.
   completo para ampliar o descargar), el panel del proveedor `/proveedor` (Inicio, Mi empresa, Catálogo, Suscripción y
   Notificaciones) y `/admin/proveedores`. El proveedor también está en la vista de desarrollo.
 
+## Módulo `lodging` — Hospedaje (implementado)
+
+Hoteles, fincas hotel, hostales, cabañas y glampings de Neira para turistas. NeirAPP no cobra la
+estadía: muestra los hoteles (lista y mapa), reúne las reseñas y lleva las solicitudes de reserva.
+
+- **Acceso**: rol `hotel` (nuevo en `identity`, asignable por correo). Cada cuenta tiene un hospedaje
+  (`lodging_hotel`, migración 0034): nombre, tipo, frase, descripción, dirección, punto en el mapa
+  (dentro del recuadro del mapa de Neira de la app), teléfono, WhatsApp, correo, precio por noche
+  "desde", servicios (WiFi, piscina, restaurante, parqueadero, desayuno, vista, bar, camping…),
+  hasta 12 fotos, horas de llegada/salida y si se muestra. Sale en Hospedaje mientras la cuenta tenga
+  el rol (o sea admin) y no se oculte.
+- **Recomendados**: el administrador marca cuáles son recomendados y sube el fondo de su banner
+  (`PUT /lodging/admin/hotels/{id}/recommended`); salen primero y en el carrusel de arriba.
+- **Reseñas** (`lodging_review`): cualquier persona califica de 1 a 5 estrellas con comentario, una
+  por hotel (volver a calificar la actualiza); el hotel no se califica a sí mismo. El hotel responde
+  (`PUT /lodging/me/reviews/{id}/reply`, texto vacío borra la respuesta). El promedio y la cantidad
+  vienen en cada hotel (`rating`, `reviews_count`).
+- **Reservas** (`lodging_reservation`): el turista pide fechas, huéspedes, habitaciones y celular
+  (`POST /lodging/hotels/{id}/reservations`, máximo 3 pendientes por hotel); el hotel confirma o
+  rechaza con una nota (`PUT /lodging/me/reservations/{id}/confirm|decline`) y el huésped puede
+  cancelar (`PUT /lodging/reservations/{id}/cancel`). Avisos `reservation_new`,
+  `reservation_confirmed`, `reservation_declined`, `reservation_cancelled`, `hotel_review_new` y
+  `hotel_review_reply` (por la campana de `professionals`, vía `NotifierPort`).
+- En el frontend: `/hospedaje` (recomendados, lista o mapa —el mismo `NeiraMap` del inicio, solo con
+  hoteles— y, en computador, la ficha del hotel elegido con sus opiniones), `/hospedaje/hotel?id=`
+  (fotos, servicios, ubicación, contacto, reserva y todas las opiniones, donde se califica),
+  `/hospedaje/mis-reservas`, el panel del hotel `/hotel` (Inicio, Mi hotel, Reservas, Reseñas y
+  Notificaciones) y `/admin/hospedaje`. El hotel también está en la vista de desarrollo.
+
 ## Frontend
 
 `apps/web` (Vite + React 19 + TypeScript). Estructura *feature-based*:

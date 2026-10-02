@@ -14,6 +14,7 @@ export const ROLES = {
   store_staff: 'Comerciante',
   professional: 'Profesional',
   supplier: 'Proveedor',
+  hotel: 'Hotel',
 };
 
 export const roleOf = (email = '') => (DEVELOPER_EMAILS.includes(email.trim().toLowerCase()) ? 'developer' : 'customer');

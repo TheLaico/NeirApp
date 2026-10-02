@@ -1,0 +1,70 @@
+/* Panel del hotel. Usa el marco del panel de proveedores (spp-*, sp-form…) y agrega lo propio. */
+
+.htp-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; flex-wrap: wrap; }
+.htp-hero { background: linear-gradient(100deg, #f8f5ed 0%, #f3ebe0 55%, #ead7c5 100%); }
+.htp-hero-photo { top: 0; bottom: 0; right: 0; width: 46%; height: 100%; transform: none; object-fit: cover; }
+.htp-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; list-style: none; padding: 0; }
+.htp-stats button { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; width: 100%; padding: 16px 18px; border: 1px solid var(--line); border-radius: 18px; background: #fff; color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
+.htp-stats strong { font-family: 'Montserrat', sans-serif; font-size: 30px; color: var(--g2); }
+.htp-stats button > span { font-size: 14px; color: var(--muted); }
+
+/* Fotos */
+.htp-photos { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; margin-bottom: 8px; list-style: none; padding: 0; }
+.htp-photos li { position: relative; aspect-ratio: 1; overflow: hidden; border-radius: 12px; background: #eef0e6; }
+.htp-photos img { width: 100%; height: 100%; object-fit: cover; }
+.htp-cover { position: absolute; left: 6px; bottom: 6px; display: inline-flex; align-items: center; gap: 3px; padding: 2px 8px; border-radius: 999px; background: #f2b632; color: #3d2a00; font-size: 11.5px; font-weight: 800; }
+.htp-cover-btn { position: absolute; left: 6px; right: 6px; bottom: 6px; padding: 4px; border: 0; border-radius: 8px; background: rgba(20, 57, 42, .82); color: #fff; font: inherit; font-size: 11.5px; font-weight: 700; cursor: pointer; }
+.htp-photo-remove { position: absolute; top: 6px; right: 6px; display: grid; place-items: center; width: 26px; height: 26px; border: 0; border-radius: 50%; background: rgba(0, 0, 0, .6); color: #fff; cursor: pointer; }
+.htp-photo-loading { display: grid; place-items: center; color: var(--g); }
+.htp-photo-add { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; width: 100%; height: 100%; border: 2px dashed #b9cdb0; border-radius: 12px; background: #f6f9f1; color: var(--g); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+.htp-photo-add[aria-invalid="true"] { border-color: #b6533c; }
+.htp-times { grid-template-columns: 1fr 1fr; }
+
+/* Servicios */
+.htp-amenities { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; padding: 0; }
+.htp-amenities button { display: inline-flex; align-items: center; gap: 7px; padding: 8px 14px; border: 1.5px solid #d6dccb; border-radius: 999px; background: #fff; color: var(--ink); font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
+.htp-amenities button.on { border-color: var(--g); background: #eef5ea; color: var(--g); }
+
+/* Ubicación */
+.htp-map-help { display: flex; align-items: center; gap: 6px; margin: 12px 0 8px; }
+.htp-map { position: relative; height: 340px; overflow: hidden; border: 1.5px solid #c3cdb8; border-radius: 14px; }
+.htp-map[aria-invalid="true"] { border-color: #b6533c; }
+.htp-map-canvas { position: absolute; inset: 0; }
+
+/* Reservas */
+.htp-tabs { display: inline-flex; flex-wrap: wrap; gap: 4px; padding: 4px; border: 1px solid var(--line); border-radius: 14px; background: #fff; align-self: flex-start; }
+.htp-tabs button { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border: 0; border-radius: 10px; background: none; color: var(--ink); font: inherit; font-size: 14.5px; font-weight: 800; cursor: pointer; }
+.htp-tabs button.on { background: var(--g); color: #fff; }
+.htp-tabs button span { min-width: 20px; padding: 0 6px; border-radius: 999px; background: #b6533c; color: #fff; font-size: 12px; }
+.htp-tabs.small button { padding: 6px 12px; font-size: 13.5px; }
+.htp-res-list, .htp-reviews { display: flex; flex-direction: column; gap: 12px; list-style: none; padding: 0; }
+.htp-res, .htp-review { display: flex; flex-direction: column; gap: 10px; padding: 16px 18px; border: 1px solid var(--line); border-radius: 18px; background: #fff; }
+.htp-res-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.htp-res-top > div { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.htp-res-top strong { font-size: 17px; color: var(--g2); }
+.htp-res-when { font-size: 13px; color: var(--muted); }
+.htp-res-facts { display: flex; flex-wrap: wrap; gap: 6px 22px; list-style: none; padding: 0; font-size: 14.5px; }
+.htp-res-facts li { display: flex; align-items: center; gap: 6px; }
+.htp-res-facts svg { color: var(--g); }
+.htp-res-msg { padding: 10px 14px; border-radius: 12px; background: #f6f9f1; font-size: 14.5px; font-style: italic; }
+.htp-res-note { font-size: 13.5px; color: var(--muted); }
+.htp-res-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+.htp-answer { display: flex; flex-direction: column; gap: 10px; padding-top: 10px; border-top: 1px dashed var(--line); }
+.htp-answer textarea { min-height: 80px; padding: 10px 14px; border: 1.5px solid #c3cdb8; border-radius: 12px; font: inherit; font-size: 15px; resize: vertical; }
+
+/* Reseñas */
+.htp-score { display: flex; align-items: center; flex-wrap: wrap; gap: 14px 18px; padding: 16px 18px; border: 1px solid var(--line); border-radius: 18px; background: #fff; }
+.htp-score > strong { font-family: 'Montserrat', sans-serif; font-size: 40px; line-height: 1; color: var(--g2); }
+.htp-score > div:nth-child(2) { display: flex; flex-direction: column; gap: 2px; font-size: 14px; color: var(--muted); }
+.htp-score .htp-tabs { margin-left: auto; }
+
+@media (max-width: 900px) {
+  .htp-photos { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (max-width: 700px) {
+  .htp-stats { grid-template-columns: 1fr; }
+  .htp-photos { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .htp-hero-photo { position: static; width: 100%; height: 180px; }
+  .htp-map { height: 280px; }
+  .htp-score .htp-tabs { margin-left: 0; }
+}

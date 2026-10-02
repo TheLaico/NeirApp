@@ -7,6 +7,7 @@ from neirapp.modules.dispatch.infrastructure import models as dispatch_models
 from neirapp.modules.identity.infrastructure import models as identity_models
 from neirapp.modules.incidents.infrastructure import models as incidents_models
 from neirapp.modules.leads.infrastructure import models as leads_models
+from neirapp.modules.lodging.infrastructure import models as lodging_models
 from neirapp.modules.marketplace.infrastructure import models as marketplace_models
 from neirapp.modules.ordering.infrastructure import models as ordering_models
 from neirapp.modules.pricing.infrastructure import models as pricing_models
@@ -23,6 +24,7 @@ __all__ = [
     "identity_models",
     "incidents_models",
     "leads_models",
+    "lodging_models",
     "marketplace_models",
     "ordering_models",
     "pricing_models",
