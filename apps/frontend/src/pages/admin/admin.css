@@ -173,3 +173,10 @@
 .a-plan-row select { height: 38px; padding: 0 10px; border: 1.5px solid var(--line); border-radius: 10px; background: #fff; font: inherit; font-size: 14px; }
 .admin-nav svg { flex: none; }
 .admin-nav .a-count { flex: none; margin-left: auto; }
+
+/* MarquetNeira (admin) */
+.a-mq-photo { flex: none; width: 64px; height: 52px; border-radius: 10px; object-fit: cover; background: #eef0e6; }
+.a-mq-reasons { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; padding: 10px 12px; list-style: none; border-radius: 12px; background: #fbf5ef; }
+.a-mq-reasons li { display: flex; align-items: flex-start; gap: 8px; font-size: 13.5px; }
+.a-mq-reasons svg { flex: none; margin-top: 2px; color: #9b3d28; }
+.a-mq-reasons small { color: var(--muted); }

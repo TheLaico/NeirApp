@@ -469,6 +469,34 @@ en `/profesional` → "Mi perfil" y queda publicado en `/profesionales`.
 - Pendiente: calificaciones de profesionales; avisos en tiempo real (hoy se revisa cada minuto) y
   por correo o push.
 
+
+## Módulo `marketplace` — MarquetNeira (implementado)
+
+Muebles en venta o alquiler entre personas de Neira. NeirAPP solo media: no hay pagos ni inventario
+en la plataforma; el trato se cierra por WhatsApp.
+
+- **Publicaciones** (`marketplace_listing`, migración 0030): cualquier cuenta publica nombre, venta o
+  alquiler (con cobro por día, semana o mes), precio fijo o negociable por chat (sin precio solo si es
+  negociable), categoría, descripción, cantidad, 1 a 8 fotos (`POST /uploads/images`, que ahora acepta
+  cualquier cuenta) y WhatsApp. El vendedor la edita, la pausa (`is_active`) o la elimina.
+- **Pago por publicación**: $ 10.000 por mes (`marketplace_payment`). Igual que los planes: el vendedor
+  reporta el comprobante, el administrador lo confirma y la publicación se ve 30 días (renovar suma el
+  mes al final). Se ve solo si está activa, pagada y no retirada.
+- **Reportes** (`marketplace_report`): un cliente reporta con un motivo (estafa, contenido inapropiado,
+  información falsa, producto prohibido, spam u otro); uno abierto por persona y publicación. Se avisa a
+  todos los administradores, que descartan los reportes o retiran la publicación (el vendedor no la puede
+  reactivar y recibe el motivo).
+- **Avisos**: `NotifierPort` lo implementa `bootstrap/notifier.py` con `SendNotification` del módulo
+  `professionals` (la campana es una sola), así ningún módulo depende del otro. Las cuentas y los
+  administradores los da `AccountsPort` sobre `identity`.
+- **Endpoints** (`/marketplace`): `GET /listings`, `GET /listings/{id}` (públicos);
+  `POST /listings/{id}/reports`, `GET/POST /me/listings`, `PUT/DELETE /me/listings/{id}`,
+  `PUT /me/listings/{id}/active`, `POST /me/listings/{id}/payments`, `PUT /me/payments/{id}/cancel`
+  (con sesión); `GET /admin/payments`, `PUT /admin/payments/{id}/approve|reject`, `GET /admin/reports`,
+  `PUT /admin/listings/{id}/dismiss-reports|remove|restore` (admin).
+- En el frontend: `/marquetneira`, `/marquetneira/producto?id=`, `/marquetneira/mis-publicaciones` y
+  `/admin/marquetneira`. Los favoritos de MarquetNeira se guardan en el dispositivo.
+
 ## Frontend
 
 `apps/web` (Vite + React 19 + TypeScript). Estructura *feature-based*:

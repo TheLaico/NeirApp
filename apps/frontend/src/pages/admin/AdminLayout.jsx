@@ -1,6 +1,7 @@
-import { ArrowLeft, Bike, Briefcase, LayoutDashboard, LogOut, MapPinned, MessageSquarePlus, ShieldCheck, Store, Truck, UserCog } from 'lucide-react';
+import { ArrowLeft, Bike, Briefcase, LayoutDashboard, LogOut, MapPinned, MessageSquarePlus, ShieldCheck, Sofa, Store, Truck, UserCog } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { canAccessAdmin, ROLES } from '../../config/roles.js';
+import { marketplaceApi } from '../../features/marketplace/api.js';
 import { professionalsApi } from '../../features/professionals/api.js';
 import { useNavigate, usePath } from '../../lib/router.jsx';
 import './admin.css';
@@ -11,6 +12,7 @@ const ITEMS = [
   { to: '/admin/roles', label: 'Roles', Icon: UserCog },
   { to: '/admin/repartidores', label: 'Repartidores', Icon: Bike },
   { to: '/admin/profesionales', label: 'Gestión de profesionales', Icon: Briefcase },
+  { to: '/admin/marquetneira', label: 'MarquetNeira', Icon: Sofa },
   { to: '/admin/mapa', label: 'Mapa en vivo', Icon: MapPinned },
   { to: '/admin/envios', label: 'Envíos', Icon: Truck },
   { to: '/admin/solicitudes', label: 'Solicitudes', Icon: MessageSquarePlus },
@@ -32,6 +34,8 @@ export default function AdminLayout({ user, onLogout, title, subtitle, actions, 
 
   // Pagos de planes por confirmar: se marcan en "Gestión de profesionales" para que no se pasen por alto.
   const [pendingPlans, setPendingPlans] = useState(0);
+  // Y en MarquetNeira: pagos de publicación por confirmar más publicaciones reportadas.
+  const [marketTodo, setMarketTodo] = useState(0);
   const allowed = canAccessAdmin(user);
   useEffect(() => {
     if (!allowed) return undefined;
@@ -41,8 +45,16 @@ export default function AdminLayout({ user, onLogout, title, subtitle, actions, 
         .adminPlans()
         .then((rows) => alive && setPendingPlans(rows.filter((r) => r.status.pending).length))
         .catch(() => {});
+    const checkMarket = () =>
+      Promise.all([marketplaceApi.pendingPayments(), marketplaceApi.reports()])
+        .then(([payments, reports]) => alive && setMarketTodo(payments.length + reports.length))
+        .catch(() => {});
     check();
-    const timer = setInterval(check, 60000);
+    checkMarket();
+    const timer = setInterval(() => {
+      check();
+      checkMarket();
+    }, 60000);
     return () => {
       alive = false;
       clearInterval(timer);
@@ -86,6 +98,11 @@ export default function AdminLayout({ user, onLogout, title, subtitle, actions, 
             >
               <Icon size={19} aria-hidden="true" />
               {label}
+              {to === '/admin/marquetneira' && marketTodo > 0 && (
+                <span className="a-count" aria-label={`${marketTodo} pendientes en MarquetNeira`}>
+                  {marketTodo}
+                </span>
+              )}
               {to === '/admin/profesionales' && pendingPlans > 0 && (
                 <span className="a-count" aria-label={`${pendingPlans} pagos de planes por confirmar`}>
                   {pendingPlans}

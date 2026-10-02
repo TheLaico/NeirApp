@@ -13,6 +13,7 @@ import AdminLeadsPage from './pages/admin/AdminLeadsPage.jsx';
 import AdminLiveMapPage from './pages/admin/AdminLiveMapPage.jsx';
 import AdminShippingPage from './pages/admin/AdminShippingPage.jsx';
 import AdminOverviewPage from './pages/admin/AdminOverviewPage.jsx';
+import AdminMarketplacePage from './pages/admin/AdminMarketplacePage.jsx';
 import AdminProfessionalsPage from './pages/admin/AdminProfessionalsPage.jsx';
 import AdminRolesPage from './pages/admin/AdminRolesPage.jsx';
 import AdminStoresPage from './pages/admin/AdminStoresPage.jsx';
@@ -31,6 +32,9 @@ import ProfessionalPage from './pages/professional/ProfessionalPage.jsx';
 import MyRequestsPage from './pages/professionals/MyRequestsPage.jsx';
 import ProfessionalProfilePage from './pages/professionals/ProfessionalProfilePage.jsx';
 import ProfessionalsPage from './pages/professionals/ProfessionalsPage.jsx';
+import ListingPage from './pages/marketplace/ListingPage.jsx';
+import MarketplacePage from './pages/marketplace/MarketplacePage.jsx';
+import MyListingsPage from './pages/marketplace/MyListingsPage.jsx';
 import SubcategoryProfessionalsPage from './pages/professionals/SubcategoryProfessionalsPage.jsx';
 import RegisterPage from './pages/register/RegisterPage.jsx';
 import MerchantPage from './pages/merchant/MerchantPage.jsx';
@@ -45,6 +49,9 @@ const ROUTES = {
   '/profesionales/categoria': SubcategoryProfessionalsPage,
   '/profesionales/perfil': ProfessionalProfilePage,
   '/profesionales/mis-solicitudes': MyRequestsPage,
+  '/marquetneira': MarketplacePage,
+  '/marquetneira/producto': ListingPage,
+  '/marquetneira/mis-publicaciones': MyListingsPage,
   '/favoritos': FavoritesPage,
   '/pedidos': OrdersPage,
   '/checkout': CheckoutPage,
@@ -53,6 +60,7 @@ const ROUTES = {
   '/admin/roles': AdminRolesPage,
   '/admin/repartidores': AdminCouriersPage,
   '/admin/profesionales': AdminProfessionalsPage,
+  '/admin/marquetneira': AdminMarketplacePage,
   '/admin/envios': AdminShippingPage,
   '/admin/mapa': AdminLiveMapPage,
   '/admin/solicitudes': AdminLeadsPage,
