@@ -1,20 +1,15 @@
-import { CalendarCheck, Mic, Search, X } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { CalendarCheck, X } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import HeroSearch from '../../components/common/HeroSearch.jsx';
 import PageShell from '../../components/layout/PageShell.jsx';
+import fondoBuscador from '../../assets/fondo-buscador.png';
 import { CATEGORY_ICONS, DEFAULT_SUBCATEGORY_COLOR, useProfessionalCategories } from '../../features/professionals/categories.js';
 import { useNavigate } from '../../lib/router.jsx';
 import fondo from '../../assets/professionals/fondo.png';
 import './professionals-page.css';
 
-// Ejemplos que se "escriben" solos en el buscador para sugerir qué se puede buscar.
-const SEARCH_EXAMPLES = [
-  'Abogado en Neira',
-  'Médico general',
-  'Contador público',
-  'Psicólogo',
-  'Arquitecto',
-  'Profesor particular',
-];
+// Ejemplos que se "escriben" solos en el buscador ("Busca un abogado…") para sugerir qué se puede buscar.
+const SEARCH_EXAMPLES = ['un abogado', 'un médico general', 'un contador público', 'una psicóloga', 'un arquitecto', 'un profesor particular'];
 
 /**
  * Página "Profesionales": directorio de expertos locales (todavía sin datos reales detrás; por ahora
@@ -23,67 +18,14 @@ const SEARCH_EXAMPLES = [
 export default function ProfessionalsPage({ user, onLogout }) {
   const { categories } = useProfessionalCategories();
   const navigate = useNavigate();
-  const [navQuery, setNavQuery] = useState('');
   const [search, setSearch] = useState('');
-  const [placeholder, setPlaceholder] = useState('Buscar por profesión, nombre o especialidad...');
-  const [listening, setListening] = useState(false);
   const [openCatId, setOpenCatId] = useState(null);
-  const recognitionRef = useRef(null);
-  const isEmpty = search.trim().length === 0;
   const openCat = categories.find((cat) => cat.id === openCatId) ?? null;
 
-  // Animación de "máquina de escribir": mientras el buscador está vacío, va mostrando ejemplos
-  // de búsqueda en el placeholder para sugerirle al usuario qué puede escribir.
-  useEffect(() => {
-    if (!isEmpty) return undefined;
-    let exampleIndex = 0;
-    let charIndex = 0;
-    let deleting = false;
-    let timeoutId;
-
-    const tick = () => {
-      const word = SEARCH_EXAMPLES[exampleIndex];
-      if (!deleting) {
-        charIndex += 1;
-        setPlaceholder(`Ej: ${word.slice(0, charIndex)}`);
-        timeoutId = setTimeout(tick, charIndex === word.length ? 1400 : 70);
-        if (charIndex === word.length) deleting = true;
-      } else {
-        charIndex -= 1;
-        setPlaceholder(`Ej: ${word.slice(0, charIndex)}`);
-        if (charIndex === 0) {
-          deleting = false;
-          exampleIndex = (exampleIndex + 1) % SEARCH_EXAMPLES.length;
-          timeoutId = setTimeout(tick, 300);
-        } else {
-          timeoutId = setTimeout(tick, 35);
-        }
-      }
-    };
-
-    timeoutId = setTimeout(tick, 500);
-    return () => clearTimeout(timeoutId);
-  }, [isEmpty]);
-
-  // Búsqueda por voz (Web Speech API); en navegadores sin soporte el botón simplemente no hace nada.
-  const toggleMic = () => {
-    const SpeechRecognitionCtor = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognitionCtor) return;
-    if (listening) {
-      recognitionRef.current?.stop();
-      return;
-    }
-    const recognition = new SpeechRecognitionCtor();
-    recognition.lang = 'es-CO';
-    recognition.interimResults = false;
-    recognition.maxAlternatives = 1;
-    recognition.onresult = (e) => setSearch(e.results[0][0].transcript);
-    recognition.onend = () => setListening(false);
-    recognition.onerror = () => setListening(false);
-    recognitionRef.current = recognition;
-    recognition.start();
-    setListening(true);
-  };
+  const heroCats = useMemo(
+    () => categories.map(({ id, label, icon, color }) => ({ id, label, color, Icon: CATEGORY_ICONS[icon] ?? CATEGORY_ICONS.Ellipsis })),
+    [categories],
+  );
 
   // Las categorías reaccionan a lo que se escribe: solo se muestran las que coinciden.
   const filteredCategories = useMemo(() => {
@@ -93,8 +35,21 @@ export default function ProfessionalsPage({ user, onLogout }) {
   }, [categories, search]);
 
   return (
-    <PageShell user={user} onLogout={onLogout} query={navQuery} onQuery={setNavQuery} hideCart flush className="pros-view">
+    <PageShell user={user} onLogout={onLogout} hideCart flush heroImage={fondoBuscador} centerLogo className="pros-view">
       <div className="pros-page">
+        {/* El mismo buscador del inicio (píldora con micrófono sobre el fondo de montañas) y, debajo, las
+            categorías de profesionales en la pasarela que se desliza sola. */}
+        <HeroSearch
+          value={search}
+          onChange={setSearch}
+          placeholder="Busca por profesión, nombre o especialidad"
+          ariaLabel="Buscar profesionales"
+          examples={SEARCH_EXAMPLES}
+          cats={heroCats}
+          onSelectCat={setOpenCatId}
+        />
+
+        <div className="pros-body">
         <section className="pros-hero">
           <img className="pros-hero-art" src={fondo} alt="" aria-hidden="true" />
           <div className="pros-hero-text">
@@ -110,29 +65,6 @@ export default function ProfessionalsPage({ user, onLogout }) {
           </div>
         </section>
 
-        {/* Fuera de la portada (no en `.pros-hero-text`): adentro competía por ancho con la ilustración,
-            así que en celular quedaba angosto y apretado. Acá tiene todo el ancho de la página para él solo. */}
-        <form className="pros-search" onSubmit={(e) => e.preventDefault()}>
-          <Search size={20} aria-hidden="true" />
-          <input
-            type="search"
-            placeholder={placeholder}
-            aria-label="Buscar profesionales"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-          <button
-            type="button"
-            className={`pros-search-mic${listening ? ' is-listening' : ''}`}
-            aria-label={listening ? 'Detener dictado por voz' : 'Buscar por voz'}
-            onClick={toggleMic}
-          >
-            <Mic size={18} aria-hidden="true" />
-          </button>
-          <button type="submit" aria-label="Buscar">
-            <Search size={18} aria-hidden="true" />
-          </button>
-        </form>
 
         <section className="pros-categories">
           <h2>Explora por categoría</h2>
@@ -153,6 +85,7 @@ export default function ProfessionalsPage({ user, onLogout }) {
             <p className="pros-cat-empty">No encontramos categorías que coincidan con “{search}”.</p>
           )}
         </section>
+        </div>
       </div>
 
       {openCat && <SubcategoriesModal category={openCat} onClose={() => setOpenCatId(null)} />}

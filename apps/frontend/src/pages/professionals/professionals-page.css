@@ -1,9 +1,8 @@
 /* Página "Profesionales": portada con búsqueda y categorías (todavía sin directorio real detrás). */
 
-.pros-page {
-  /* PageShell recibe `flush` (fondo/paisaje de borde a borde); sin relleno propio hay que darle el suyo aquí. */
-  padding: 4px 20px 32px;
-}
+.pros-page { padding-bottom: 32px; }
+/* El buscador (HeroSearch) va de borde a borde como en el inicio; el resto lleva su propio relleno. */
+.pros-body { padding: 4px 20px 0; }
 /* `flush` también le quita el scroll a `.page-cell` (pensado para páginas que manejan el suyo); esta
    página es más alta que la pantalla, así que sin esto el contenido de abajo queda cortado. */
 @media (min-width: 1024px) {
@@ -34,37 +33,6 @@
 .pros-tagline { margin-top: 8px; font-size: 17px; font-weight: 700; color: var(--ink); }
 .pros-desc { margin-top: 10px; font-size: 14.5px; line-height: 1.5; color: var(--muted); }
 
-/* Buscador aparte, debajo de la portada del todo (no se superpone ni compite por ancho con la imagen). */
-.pros-search {
-  display: flex; align-items: center; gap: 10px;
-  margin: 20px auto 24px; height: 54px; max-width: 640px;
-  padding: 0 8px 0 20px; border-radius: 999px; background: #fff; color: var(--g);
-  box-shadow: 0 8px 22px rgba(35, 52, 43, 0.12);
-}
-.pros-search:focus-within { box-shadow: 0 0 0 3px rgba(15, 82, 56, 0.18), 0 8px 22px rgba(35, 52, 43, 0.12); }
-.pros-search input {
-  flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; font: inherit; font-size: 15px; color: var(--ink);
-}
-.pros-search input::placeholder { color: var(--muted); }
-.pros-search button {
-  flex: none; width: 42px; height: 42px; display: grid; place-items: center; border: 0; border-radius: 50%;
-  background: var(--g); color: #fff; cursor: pointer; transition: filter 0.15s;
-}
-.pros-search button:hover { filter: brightness(1.1); }
-
-.pros-search-mic {
-  background: transparent !important; color: var(--muted) !important;
-  transition: background 0.15s, color 0.15s !important;
-}
-.pros-search-mic:hover { background: rgba(15, 82, 56, 0.08) !important; color: var(--g) !important; }
-.pros-search-mic.is-listening {
-  background: #d64545 !important; color: #fff !important; animation: pros-mic-pulse 1.2s ease-in-out infinite;
-}
-@keyframes pros-mic-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(214, 69, 69, 0.45); }
-  50% { box-shadow: 0 0 0 8px rgba(214, 69, 69, 0); }
-}
-
 /* ---------- Categorías ---------- */
 .pros-categories { margin-top: 30px; }
 .pros-categories h2 { font-family: 'Montserrat', sans-serif; font-size: 18px; font-weight: 700; color: var(--ink); margin-bottom: 14px; }
@@ -94,11 +62,10 @@
 
 /* ---------- Tablet y móvil ---------- */
 @media (max-width: 1023px) {
-  .pros-page { padding: 4px 14px 28px; }
+  .pros-body { padding: 4px 14px 0; }
   .pros-hero { padding: 24px; gap: 20px; }
   .pros-hero-art { max-width: 220px; }
   .pros-hero h1 { font-size: 26px; }
-  .pros-search { margin: 16px 0 24px; max-width: none; }
 }
 
 /* Sigue lado a lado hasta el celular más angosto (nunca se apila): la imagen solo se va achicando. */
@@ -108,7 +75,6 @@
   .pros-hero h1 { font-size: 19px; }
   .pros-tagline { font-size: 13.5px; }
   .pros-desc { font-size: 12px; line-height: 1.4; }
-  .pros-search { margin: 14px 0 20px; }
 }
 
 @media (max-width: 480px) {
