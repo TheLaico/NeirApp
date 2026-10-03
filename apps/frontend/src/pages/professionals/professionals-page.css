@@ -10,28 +10,34 @@
 }
 
 /* ---------- Portada ---------- */
-/* Texto e imagen lado a lado (no la imagen sangrando detrás del texto): más simple y se acomoda solo
-   al reducirse, sin recortes raros ni superposición con nada. */
+/* La ilustración (montañas, sol e iglesia de Neira, ya recortada sin el margen transparente) nace en la esquina
+   inferior derecha y ocupa casi todo el alto de la tarjeta; el texto va a la izquierda, sobre un degradado claro
+   que lo mantiene legible donde la ilustración llega por detrás. */
 .pros-hero {
   position: relative;
   display: flex;
   align-items: center;
-  gap: 28px;
   overflow: hidden;
+  min-height: 250px;
   margin-top: 12px;
   padding: 32px;
   border-radius: 24px;
-  background: linear-gradient(100deg, #eef2df 45%, #dce8d0 100%);
+  background: linear-gradient(100deg, #f4f6e8 0%, #e6eedb 55%, #d3e3c6 100%);
 }
-/* En el HTML la imagen va primero (así queda arriba del texto cuando se apilan en celular sin tocar el
-   orden de las etiquetas); acá se reordena para que en el layout de lado a lado quede a la derecha. */
-.pros-hero-text { order: 1; flex: 1 1 280px; min-width: 0; max-width: 520px; }
-.pros-hero-art { order: 2; flex: 1 1 260px; width: 100%; max-width: 320px; height: auto; object-fit: contain; pointer-events: none; }
+.pros-hero::after {
+  content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  background: linear-gradient(90deg, rgba(244, 246, 232, .96) 0%, rgba(244, 246, 232, .85) 38%, rgba(244, 246, 232, 0) 62%);
+}
+.pros-hero-text { position: relative; z-index: 2; max-width: 520px; }
+.pros-hero-art {
+  position: absolute; right: 0; bottom: 0; z-index: 0; height: 104%; width: auto; max-width: 70%;
+  object-fit: contain; object-position: right bottom; pointer-events: none;
+}
 .pros-hero h1 {
-  font-family: 'Montserrat', sans-serif; font-size: 34px; font-weight: 800; color: var(--g); line-height: 1.15;
+  font-family: 'Montserrat', sans-serif; font-size: 34px; font-weight: 800; color: #0b3f2b; line-height: 1.15;
 }
-.pros-tagline { margin-top: 8px; font-size: 17px; font-weight: 700; color: var(--ink); }
-.pros-desc { margin-top: 10px; font-size: 14.5px; line-height: 1.5; color: var(--muted); }
+.pros-tagline { margin-top: 8px; font-size: 17px; font-weight: 700; color: #14392a; }
+.pros-desc { margin-top: 10px; font-size: 14.5px; line-height: 1.5; color: #3d5246; }
 
 /* ---------- Categorías ---------- */
 .pros-categories { margin-top: 30px; }
@@ -63,18 +69,18 @@
 /* ---------- Tablet y móvil ---------- */
 @media (max-width: 1023px) {
   .pros-body { padding: 4px 14px 0; }
-  .pros-hero { padding: 24px; gap: 20px; }
-  .pros-hero-art { max-width: 220px; }
+  .pros-hero { padding: 24px; }
   .pros-hero h1 { font-size: 26px; }
 }
 
-/* Sigue lado a lado hasta el celular más angosto (nunca se apila): la imagen solo se va achicando. */
 @media (max-width: 640px) {
-  .pros-hero { padding: 18px; gap: 12px; }
-  .pros-hero-art { flex: 0 0 84px; max-width: 84px; }
-  .pros-hero h1 { font-size: 19px; }
-  .pros-tagline { font-size: 13.5px; }
-  .pros-desc { font-size: 12px; line-height: 1.4; }
+  /* Celular: el texto arriba y la ilustración abajo a la derecha, ancha, asomando bajo el texto. */
+  .pros-hero { flex-direction: column; align-items: flex-start; min-height: 0; padding: 20px 18px 150px; }
+  .pros-hero::after { background: linear-gradient(180deg, rgba(244, 246, 232, .95) 0%, rgba(244, 246, 232, .8) 55%, rgba(244, 246, 232, 0) 75%); }
+  .pros-hero-art { height: auto; width: 92%; max-width: none; }
+  .pros-hero h1 { font-size: 24px; }
+  .pros-tagline { font-size: 15px; }
+  .pros-desc { font-size: 13.5px; line-height: 1.45; }
 }
 
 @media (max-width: 480px) {

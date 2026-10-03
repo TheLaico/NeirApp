@@ -5,7 +5,7 @@ import PageShell from '../../components/layout/PageShell.jsx';
 import fondoBuscador from '../../assets/fondo-buscador.png';
 import { CATEGORY_ICONS, DEFAULT_SUBCATEGORY_COLOR, useProfessionalCategories } from '../../features/professionals/categories.js';
 import { useNavigate } from '../../lib/router.jsx';
-import fondo from '../../assets/professionals/fondo.png';
+import portada from '../../assets/professionals/portada-neira.png';
 import './professionals-page.css';
 
 // Ejemplos que se "escriben" solos en el buscador ("Busca un abogado…") para sugerir qué se puede buscar.
@@ -51,7 +51,7 @@ export default function ProfessionalsPage({ user, onLogout }) {
 
         <div className="pros-body">
         <section className="pros-hero">
-          <img className="pros-hero-art" src={fondo} alt="" aria-hidden="true" />
+          <img className="pros-hero-art" src={portada} alt="" aria-hidden="true" />
           <div className="pros-hero-text">
             <h1>Profesionales</h1>
             <p className="pros-tagline">Encuentra el experto que necesitas en Neira.</p>
