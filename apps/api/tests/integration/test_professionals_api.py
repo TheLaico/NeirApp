@@ -4,8 +4,17 @@ import httpx
 import pytest
 from fastapi import FastAPI
 
+from neirapp.modules.professionals.domain import plans as plans_domain
 from tests.conftest import FakeClock
 from tests.integration.test_leads_api import API, _admin, _bearer, _register
+
+
+@pytest.fixture(autouse=True)
+def _todos_los_planes(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Por ahora solo se ofrece el plan único, pero la lógica de Básico, Profesional y Premium se
+    conserva para el futuro: estas pruebas la siguen cubriendo con todos los planes habilitados."""
+    monkeypatch.setattr(plans_domain, "AVAILABLE_PLANS", frozenset(plans_domain.PlanId))
+
 
 PROFILE = {
     "title": "Dra.",
@@ -1301,3 +1310,59 @@ class TestPlanes:
         ):
             response = await client.request(method, f"{API}{url}", json=body, headers=_bearer(pro))
             assert response.status_code == 403, url
+
+
+@pytest.fixture
+def _solo_plan_unico(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Lo que se ofrece hoy: solo el plan único (deshace `_todos_los_planes` en estas pruebas)."""
+    monkeypatch.setattr(plans_domain, "AVAILABLE_PLANS", frozenset({plans_domain.PlanId.UNICO}))
+
+
+@pytest.mark.usefixtures("_solo_plan_unico")
+class TestPlanUnico:
+    """Por ahora solo se ofrece un plan: $ 15.000 con todo incluido y 5 fotos."""
+
+    async def test_solo_se_puede_pedir_el_plan_unico(
+        self, client: httpx.AsyncClient, app: FastAPI
+    ) -> None:
+        admin = await _admin(client, app)
+        pro = await _professional(client, admin, "laura@correo.com", plan=None)
+
+        for old in ("basic", "pro", "premium"):
+            response = await _ask_plan(client, pro, old)
+            assert response.status_code == 422, old
+            assert response.json()["code"] == "plan_not_available"
+
+        asked = (await _ask_plan(client, pro, "unico")).json()["pending"]
+        assert (asked["plan"], asked["plan_name"], asked["price_cop"]) == (
+            "unico",
+            "Profesional NeirAPP",
+            15000,
+        )
+
+    async def test_incluye_todo_con_5_fotos(self, client: httpx.AsyncClient, app: FastAPI) -> None:
+        admin = await _admin(client, app)
+        pro = await _professional(client, admin, "laura@correo.com", plan="unico")
+        user_id = (
+            await client.put(f"{API}/professionals/me", json=PROFILE, headers=_bearer(pro))
+        ).json()["user_id"]
+
+        status = await _plan(client, pro)
+        assert status["current"]["plan"] == "unico"
+        assert status["max_images"] == 5
+        assert status["shows_certificates"] is True
+        assert status["receives_requests"] is True
+        public = (await client.get(f"{API}/professionals/{user_id}")).json()
+        assert public["is_featured"] is True  # destacado, como el Premium
+
+    async def test_el_admin_tampoco_activa_los_planes_viejos(
+        self, client: httpx.AsyncClient, app: FastAPI
+    ) -> None:
+        admin = await _admin(client, app)
+        pro = await _professional(client, admin, "laura@correo.com", plan=None)
+        me = (await client.get(f"{API}/identity/me", headers=_bearer(pro))).json()
+        response = await client.put(
+            f"{API}/professionals/{me['id']}/plan", json={"plan": "premium"}, headers=_bearer(admin)
+        )
+        assert response.status_code == 422
+        assert response.json()["code"] == "plan_not_available"

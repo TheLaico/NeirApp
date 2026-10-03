@@ -22,6 +22,7 @@ from neirapp.modules.professionals.domain.plans import (
     Subscription,
     SubscriptionStatus,
     current_of,
+    ensure_available,
     paid_until,
 )
 from neirapp.shared.application.ports import Clock
@@ -120,6 +121,7 @@ class RequestPlan:
         self._clock = clock
 
     async def __call__(self, user_id: UUID, plan: PlanId, payment_reference: str) -> PlanStatus:
+        ensure_available(plan)
         mine = await self._repo.list_for(user_id)
         if any(s.status is SubscriptionStatus.PENDING for s in mine):
             raise PlanRequestPending()
@@ -252,6 +254,7 @@ class GrantPlan:
         self._clock = clock
 
     async def __call__(self, user_id: UUID, plan: PlanId) -> PlanStatus:
+        ensure_available(plan)
         now = self._clock.now()
         subscription = Subscription.request(user_id, plan, "Activado por el administrador", now)
         await self._repo.save_all(await _activate(self._repo, subscription, now))

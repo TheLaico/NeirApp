@@ -7,6 +7,7 @@ from neirapp.modules.professionals.domain.errors import (
     InvalidPaymentReference,
     InvalidSubscriptionTransition,
     MissingReviewNote,
+    PlanNotAvailable,
 )
 
 PLAN_DAYS = 30
@@ -18,6 +19,8 @@ class PlanId(StrEnum):
     BASIC = "basic"
     PRO = "pro"
     PREMIUM = "premium"
+    # Plan único con el que arranca NeirAPP: todo lo del Premium por $ 15.000, con 5 fotos.
+    UNICO = "unico"
 
 
 @dataclass(frozen=True)
@@ -38,7 +41,20 @@ PLANS: dict[PlanId, PlanSpec] = {
     PlanId.PRO: PlanSpec(PlanId.PRO, "Profesional", 29_900, 20, True, True, False),
     # "Galería ilimitada": el tope solo evita abusos.
     PlanId.PREMIUM: PlanSpec(PlanId.PREMIUM, "Premium", 59_900, 100, True, True, True),
+    PlanId.UNICO: PlanSpec(PlanId.UNICO, "Profesional NeirAPP", 15_000, 5, True, True, True),
 }
+
+# Planes que se pueden pedir o activar hoy. Por ahora solo el único de $ 15.000; Básico,
+# Profesional y Premium siguen definidos (y quien ya los tenga los conserva hasta que venzan) para
+# volver a ofrecerlos más adelante: basta con agregarlos aquí (y en `AVAILABLE_PLAN_IDS` de
+# `plans.js`).
+AVAILABLE_PLANS: frozenset[PlanId] = frozenset({PlanId.UNICO})
+
+
+def ensure_available(plan: PlanId) -> None:
+    if plan not in AVAILABLE_PLANS:
+        raise PlanNotAvailable()
+
 
 MAX_PLAN_IMAGES = max(p.max_images for p in PLANS.values())
 

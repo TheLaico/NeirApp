@@ -166,7 +166,7 @@
 /* Planes de profesionales */
 .a-subtitle { margin: 18px 0 8px; font-family: 'Montserrat', sans-serif; font-size: 15px; color: var(--g); }
 .a-badge.plan-basic { background: #eef6e8; color: #2d7a3d; }
-.a-badge.plan-pro { background: var(--g); color: #fff; }
+.a-badge.plan-pro, .a-badge.plan-unico { background: var(--g); color: #fff; }
 .a-badge.plan-premium { background: linear-gradient(120deg, #e8a92c, #f6d36b); color: #3d2a00; }
 .a-badge.plan-none { background: #f3e3dc; color: #9b3d28; }
 .a-plan-row { flex-wrap: wrap; }

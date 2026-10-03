@@ -5,7 +5,7 @@ import { Leaf } from '../../components/common/Leaf.jsx';
 import { PLAN_NAMES, dayLabel, daysLeft, paidUntil, useMyPlan } from '../../features/professionals/subscription.js';
 import { formatCop } from '../../lib/money.js';
 import { useNavigate } from '../../lib/router.jsx';
-import { PAYMENT, PLAN_DAYS, PLANS } from './plans.js';
+import { AVAILABLE_PLANS, PAYMENT, PLAN_DAYS } from './plans.js';
 import './plans-page.css';
 
 const PLAN_ICONS = { Sprout, BriefcaseBusiness, Crown };
@@ -15,10 +15,12 @@ const CARD_LEAVES = {
   basic: ['#8cc56b', '#2d7a3d'],
   pro: ['#5a9a4a', '#8cc56b'],
   premium: ['#a8700c', '#fbe08a'],
+  unico: ['#5a9a4a', '#e8a92c'],
 };
 
 /**
- * Página "Planes para profesionales": los tres planes lado a lado (en celular, uno debajo del otro). El profesional
+ * Página "Planes para profesionales": los planes que se ofrecen hoy (`AVAILABLE_PLANS`; por ahora uno solo, de
+ * $ 15.000) lado a lado (en celular, uno debajo del otro). El profesional
  * elige uno, paga por fuera y escribe el comprobante; el administrador confirma el pago y el plan queda activo 30 días.
  * Sin plan activo su perfil no aparece en el directorio.
  */
@@ -49,7 +51,7 @@ export default function PlansPage({ user }) {
       <header className="plans-head">
         <img className="plans-logo" src={logo} alt="NeirAPP" />
         <div className="plans-intro">
-          <h1>Planes para profesionales</h1>
+          <h1>{AVAILABLE_PLANS.length === 1 ? 'Plan para profesionales' : 'Planes para profesionales'}</h1>
           <p>Haz crecer tu presencia en Neira y llega a más personas que necesitan tus servicios.</p>
         </div>
         <button type="button" className="plans-back" onClick={() => navigate('/profesional')}>
@@ -59,8 +61,8 @@ export default function PlansPage({ user }) {
 
       <main>
         {allowed && <StatusBanner mine={mine} onCancel={mine.cancel} />}
-        <ul className="plans-grid">
-          {PLANS.map((plan) => (
+        <ul className={`plans-grid${AVAILABLE_PLANS.length === 1 ? ' single' : ''}`}>
+          {AVAILABLE_PLANS.map((plan) => (
             <li key={plan.id}>
               <PlanCard
                 plan={plan}

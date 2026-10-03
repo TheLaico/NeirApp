@@ -349,3 +349,11 @@ class RequestsNotInPlan(ValidationError):
             "Este profesional todavía no recibe solicitudes de cita por NeirAPP. "
             "Puedes llamarle o escribirle."
         )
+
+
+class PlanNotAvailable(ValidationError):
+    code = "plan_not_available"
+
+    @classmethod
+    def default_message(cls) -> str:
+        return "Ese plan ya no está disponible."

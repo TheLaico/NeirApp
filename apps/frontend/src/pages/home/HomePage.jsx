@@ -23,6 +23,7 @@ import { CATEGORY_LABEL } from '../../features/stores/categories.jsx';
 import { formatCop } from '../../lib/money.js';
 import { useNavigate } from '../../lib/router.jsx';
 import { TOP_CATS, categoryPath } from './categories.jsx';
+import { HOME_RECOMMENDED_PLANS } from '../professional/plans.js';
 import './home-feed.css';
 
 const normalize = (t) => t.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
@@ -37,10 +38,10 @@ const MORE_SERVICES = [
   { label: 'Reservas', text: 'Reserva tu mesa, cancha o salón.', Icon: CalendarCheck, color: '#C0587A', to: '/reservas' },
 ];
 
-/** Recomendados en el inicio: los profesionales con plan Premium (es uno de los beneficios del plan). */
+/** Recomendados en el inicio: los profesionales con plan Premium o el plan único (es uno de sus beneficios). */
 function RecommendedProfessionals({ onOpen, onSeeAll }) {
   const { list } = useProfessionalDirectory();
-  const premium = list.filter((p) => p.plan === 'premium').slice(0, 6);
+  const premium = list.filter((p) => HOME_RECOMMENDED_PLANS.includes(p.plan)).slice(0, 6);
   if (premium.length === 0) return null;
   return (
     <section className="feed-section" aria-labelledby="feed-pros">
@@ -60,7 +61,7 @@ function RecommendedProfessionals({ onOpen, onSeeAll }) {
                 <span>{p.headline || 'Profesional en Neira'}</span>
               </span>
               <span className="feed-pro-badge">
-                <Crown size={12} aria-hidden="true" /> Premium
+                <Crown size={12} aria-hidden="true" /> Recomendado
               </span>
             </button>
           </li>

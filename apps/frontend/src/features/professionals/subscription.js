@@ -4,7 +4,7 @@ import { professionalsApi } from './api.js';
 // Plan del profesional (`GET /professionals/me/plan`): el vigente, las renovaciones ya pagadas, la solicitud que
 // espera que el administrador confirme el pago y lo que permite hoy (fotos, certificados, solicitudes).
 
-export const PLAN_NAMES = { basic: 'Básico', pro: 'Profesional', premium: 'Premium' };
+export const PLAN_NAMES = { basic: 'Básico', pro: 'Profesional', premium: 'Premium', unico: 'Profesional NeirAPP' };
 
 /** "21 de octubre" (o "21 de octubre de 2027" si no es este año). */
 export function dayLabel(iso) {

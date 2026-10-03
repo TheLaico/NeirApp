@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { professionalsApi } from '../../features/professionals/api.js';
 import { whatsappLink } from '../../features/professionals/directory.js';
 import { PLAN_NAMES, dayLabel, paidUntil } from '../../features/professionals/subscription.js';
+import { AVAILABLE_PLAN_IDS } from '../professional/plans.js';
 import { formatCop } from '../../lib/money.js';
 
 const day = (iso) => new Date(iso).toLocaleDateString('es-CO', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
@@ -148,7 +149,7 @@ export default function PlanAdmin({ onChanged }) {
             <ul className="a-store-list">
               {state.list.map((row) => {
                 const current = row.status.current;
-                const pick = chosen[row.user_id] ?? current?.plan ?? 'basic';
+                const pick = chosen[row.user_id] ?? (AVAILABLE_PLAN_IDS.includes(current?.plan) ? current.plan : AVAILABLE_PLAN_IDS[0]);
                 const key = `grant-${row.user_id}`;
                 return (
                   <li key={row.user_id} className="a-store-row a-plan-row">
@@ -162,9 +163,10 @@ export default function PlanAdmin({ onChanged }) {
                     </div>
                     <span className={`a-badge plan-${current ? current.plan : 'none'}`}>{current ? PLAN_NAMES[current.plan] : 'Sin plan'}</span>
                     <select aria-label={`Plan para ${row.display_name}`} value={pick} onChange={(e) => setChosen((c) => ({ ...c, [row.user_id]: e.target.value }))}>
-                      {Object.entries(PLAN_NAMES).map(([id, name]) => (
+                      {/* Solo los planes que se ofrecen hoy (ver AVAILABLE_PLAN_IDS en plans.js). */}
+                      {AVAILABLE_PLAN_IDS.map((id) => (
                         <option key={id} value={id}>
-                          {name}
+                          {PLAN_NAMES[id]}
                         </option>
                       ))}
                     </select>

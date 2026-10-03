@@ -30,7 +30,9 @@
 .plans-grid > li { display: flex; }
 
 .plan { --c: #5a9a4a; --c2: #3f7d35; --soft: #eef4e6; --lift: 0px; position: relative; display: flex; flex-direction: column; width: 100%; overflow: hidden; border: 1px solid var(--line); border-radius: 24px; background: #fff; box-shadow: 0 2px 10px rgba(35, 52, 43, .06); transform: translateY(var(--lift)); transition: transform .35s cubic-bezier(.2, .8, .3, 1.2), box-shadow .35s, border-color .35s; }
-.plan.pro { --c: #0f5238; --c2: #2d7a3d; --soft: #e6f0e3; }
+.plan.pro, .plan.unico { --c: #0f5238; --c2: #2d7a3d; --soft: #e6f0e3; }
+/* Un solo plan: una tarjeta centrada, sin estirarse a todo el ancho. */
+.plans-grid.single { grid-template-columns: minmax(0, 480px); justify-content: center; }
 .plan.premium { --c: #c8901a; --c2: #f0c04a; --soft: #fbf1d6; border-color: #ecd49a; background: linear-gradient(180deg, #fffdf6 0%, #fff 40%); }
 .plan.recommended { --lift: -12px; border: 2px solid var(--c); box-shadow: 0 16px 36px rgba(15, 82, 56, .18); }
 .plan:hover { transform: translateY(calc(var(--lift) - 10px)); box-shadow: 0 22px 44px color-mix(in srgb, var(--c) 28%, transparent); border-color: var(--c); }
