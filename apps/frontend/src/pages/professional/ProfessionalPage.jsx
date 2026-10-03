@@ -1,5 +1,5 @@
 import { Construction, ShieldCheck, UserRound } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import slogan from '../../assets/slogan.png';
 import PanelDesktop from '../../components/panel/PanelDesktop.jsx';
 import PanelMobile from '../../components/panel/PanelMobile.jsx';
@@ -19,7 +19,6 @@ import ProfileView from './ProfileView.jsx';
 import ServicesView from './ServicesView.jsx';
 import SettingsView from './SettingsView.jsx';
 import { NAV, TABS } from './model.js';
-import RequestsView from './RequestsView.jsx';
 import './professional-panel.css';
 
 const DESKTOP = '(min-width: 1100px)';
@@ -31,7 +30,7 @@ const DESKTOP = '(min-width: 1100px)';
 export default function ProfessionalPage({ user, onLogout, onUserChange }) {
   const navigate = useNavigate();
   const desktop = useMediaQuery(DESKTOP);
-  // Se puede entrar directo a una sección: /profesional?seccion=requests (así llevan los avisos).
+  // Se puede entrar directo a una sección: /profesional?seccion=certificates (así llevan los avisos).
   const [view, setView] = useState(() => {
     const section = new URLSearchParams(window.location.search).get('seccion');
     return NAV.some((n) => n.key === section) ? section : 'home';
@@ -58,24 +57,7 @@ export default function ProfessionalPage({ user, onLogout, onUserChange }) {
       .then((list) => setImages(list.length))
       .catch(() => {});
   }, [allowed]);
-  // Solicitudes de cita: las usan el inicio, la campana, el menú y "Citas y solicitudes". Se revisan cada minuto.
-  const [requests, setRequests] = useState({ list: [], loading: true, error: '' });
-  const loadRequests = useCallback(async () => {
-    try {
-      setRequests({ list: await professionalsApi.receivedRequests(), loading: false, error: '' });
-    } catch (err) {
-      setRequests((r) => ({ ...r, loading: false, error: err.message }));
-    }
-  }, []);
-  useEffect(() => {
-    if (!allowed) return undefined;
-    loadRequests();
-    const timer = setInterval(loadRequests, 60000);
-    return () => clearInterval(timer);
-  }, [allowed, loadRequests]);
-  const newRequests = requests.list.filter((r) => r.status === 'pending').length;
-
-  const activity = { newRequests, hasDescription: (profile?.description.trim().length ?? 0) >= 80, images: images ?? 0 };
+  const activity = { hasDescription: (profile?.description.trim().length ?? 0) >= 80, images: images ?? 0 };
 
   let content;
   if (!allowed) {
@@ -130,15 +112,6 @@ export default function ProfessionalPage({ user, onLogout, onUserChange }) {
     );
   } else if (view === 'notifications') {
     content = <NotificationsView onGo={setView} onNavigate={navigate} />;
-  } else if (view === 'requests') {
-    content = (
-      <RequestsView
-        requests={requests}
-        onChange={(list) => setRequests((r) => ({ ...r, list }))}
-        receivesRequests={plan.status?.receives_requests ?? true}
-        onPlans={() => navigate('/profesional/planes')}
-      />
-    );
   } else if (view === 'certificates') {
     content = <CertificatesView showsOnProfile={plan.status?.shows_certificates ?? true} onPlans={() => navigate('/profesional/planes')} />;
   } else if (view === 'gallery') {
@@ -165,7 +138,7 @@ export default function ProfessionalPage({ user, onLogout, onUserChange }) {
     user,
     profile: { name, image: profile?.photo, Icon: UserRound, roleLabel: planName ? `Profesional · Plan ${planName}` : 'Profesional', onSettings: allowed ? () => setView('settings') : undefined },
     nav: NAV,
-    badges: { requests: newRequests, notifications: unreadNotices },
+    badges: { notifications: unreadNotices },
     view,
     onSelect: (key) => {
       setView(key);

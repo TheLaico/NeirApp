@@ -33,7 +33,6 @@ import OrdersPage from './pages/orders/OrdersPage.jsx';
 import PaymentsPage from './pages/payments/PaymentsPage.jsx';
 import PlansPage from './pages/professional/PlansPage.jsx';
 import ProfessionalPage from './pages/professional/ProfessionalPage.jsx';
-import MyRequestsPage from './pages/professionals/MyRequestsPage.jsx';
 import ProfessionalProfilePage from './pages/professionals/ProfessionalProfilePage.jsx';
 import ProfessionalsPage from './pages/professionals/ProfessionalsPage.jsx';
 import ListingPage from './pages/marketplace/ListingPage.jsx';
@@ -66,7 +65,6 @@ const ROUTES = {
   '/profesionales': ProfessionalsPage,
   '/profesionales/categoria': SubcategoryProfessionalsPage,
   '/profesionales/perfil': ProfessionalProfilePage,
-  '/profesionales/mis-solicitudes': MyRequestsPage,
   '/marquetneira': MarketplacePage,
   '/marquetneira/producto': ListingPage,
   '/marquetneira/mis-publicaciones': MyListingsPage,

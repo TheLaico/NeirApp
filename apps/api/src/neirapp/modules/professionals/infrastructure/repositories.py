@@ -24,7 +24,6 @@ _FIELDS = (
     "photo_url",
     "is_featured",
     "is_listed",
-    "accepts_requests",
     "created_at",
     "updated_at",
 )

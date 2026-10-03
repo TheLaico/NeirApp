@@ -681,15 +681,6 @@ class TestCertificados:
         assert response.status_code == 404
 
 
-REQUEST = {
-    "modality": "home",
-    "message": "Necesito una visita para mi hijo con fiebre desde ayer.",
-    "phone": "315 765 4321",
-    "preferred_time": "morning",
-    "address": "Carrera 9 # 10-30, Neira",
-}
-
-
 async def _published(
     client: httpx.AsyncClient, admin: dict[str, Any], email: str
 ) -> tuple[dict[str, Any], str]:
@@ -699,217 +690,21 @@ async def _published(
     return tokens, saved.json()["user_id"]
 
 
-class TestSolicitudes:
-    async def test_flujo_completo(self, client: httpx.AsyncClient, app: FastAPI) -> None:
-        admin = await _admin(client, app)
-        pro, pro_id = await _published(client, admin, "laura@correo.com")
-        service_id = (
-            await client.post(
-                f"{API}/professionals/me/services", json=SERVICE, headers=_bearer(pro)
-            )
-        ).json()["id"]
-        customer = await _register(client, "cliente@correo.com")
-
-        sent = await client.post(
-            f"{API}/professionals/{pro_id}/requests",
-            json={**REQUEST, "service_id": service_id},
-            headers=_bearer(customer),
-        )
-        assert sent.status_code == 201, sent.text
-        assert sent.json()["status"] == "pending"
-        assert sent.json()["service_name"] == "Consulta pediátrica"
-        assert sent.json()["customer_phone"] == "3157654321"
-        request_id = sent.json()["id"]
-
-        received = (
-            await client.get(f"{API}/professionals/me/requests", headers=_bearer(pro))
-        ).json()
-        assert [r["customer_name"] for r in received] == ["Ana Gómez"]
-
-        scheduled = await client.put(
-            f"{API}/professionals/me/requests/{request_id}/schedule",
-            json={"scheduled_at": "2030-01-10T15:00:00-05:00", "note": "Llevar el carné"},
-            headers=_bearer(pro),
-        )
-        assert scheduled.status_code == 200, scheduled.text
-        assert scheduled.json()["status"] == "scheduled"
-
-        mine = (
-            await client.get(f"{API}/professionals/requests/mine", headers=_bearer(customer))
-        ).json()
-        assert mine[0]["professional_name"] == "Dra. Laura Torres"
-        assert mine[0]["status"] == "scheduled" and mine[0]["note"] == "Llevar el carné"
-
-        done = await client.put(
-            f"{API}/professionals/me/requests/{request_id}/complete", headers=_bearer(pro)
-        )
-        assert done.json()["status"] == "completed"
-        # Ya hecha: no se puede cancelar.
-        late = await client.put(
-            f"{API}/professionals/requests/{request_id}/cancel", json={}, headers=_bearer(customer)
-        )
-        assert late.status_code == 409
-
-    async def test_el_cliente_cancela_y_el_profesional_rechaza(
-        self, client: httpx.AsyncClient, app: FastAPI
-    ) -> None:
-        admin = await _admin(client, app)
-        pro, pro_id = await _published(client, admin, "laura@correo.com")
-        customer = await _register(client, "cliente@correo.com")
-        url = f"{API}/professionals/{pro_id}/requests"
-        first = (await client.post(url, json=REQUEST, headers=_bearer(customer))).json()["id"]
-        second = (await client.post(url, json=REQUEST, headers=_bearer(customer))).json()["id"]
-
-        cancelled = await client.put(
-            f"{API}/professionals/requests/{first}/cancel",
-            json={"note": "Ya me atendieron"},
-            headers=_bearer(customer),
-        )
-        assert cancelled.json()["status"] == "cancelled"
-        assert cancelled.json()["cancelled_by_customer"] is True
-
-        rejected = await client.put(
-            f"{API}/professionals/me/requests/{second}/reject",
-            json={"note": "Esa semana estoy fuera de Neira"},
-            headers=_bearer(pro),
-        )
-        assert rejected.json()["status"] == "rejected"
-
-    async def test_valida_la_solicitud(self, client: httpx.AsyncClient, app: FastAPI) -> None:
-        admin = await _admin(client, app)
-        pro, pro_id = await _published(client, admin, "laura@correo.com")
-        customer = await _register(client, "cliente@correo.com")
-        url = f"{API}/professionals/{pro_id}/requests"
-
-        for change in (
-            {"modality": "online"},  # no atiende virtual
-            {"address": ""},  # a domicilio sin dirección
-            {"message": "hola"},
-            {"preferred_date": "2000-01-01"},
-        ):
-            response = await client.post(url, json={**REQUEST, **change}, headers=_bearer(customer))
-            assert response.status_code == 422, change
-            assert response.json()["code"] == "invalid_appointment_request"
-
-        self_request = await client.post(url, json=REQUEST, headers=_bearer(pro))
-        assert self_request.json()["code"] == "cannot_request_yourself"
-
-    async def test_maximo_tres_pendientes_por_profesional(
-        self, client: httpx.AsyncClient, app: FastAPI
-    ) -> None:
-        admin = await _admin(client, app)
-        _, pro_id = await _published(client, admin, "laura@correo.com")
-        customer = await _register(client, "cliente@correo.com")
-        url = f"{API}/professionals/{pro_id}/requests"
-
-        for _ in range(3):
-            assert (
-                await client.post(url, json=REQUEST, headers=_bearer(customer))
-            ).status_code == 201
-        fourth = await client.post(url, json=REQUEST, headers=_bearer(customer))
-
-        assert fourth.json()["code"] == "too_many_pending_requests"
-
-    async def test_nadie_mas_toca_la_solicitud(
-        self, client: httpx.AsyncClient, app: FastAPI
-    ) -> None:
-        admin = await _admin(client, app)
-        _, pro_id = await _published(client, admin, "laura@correo.com")
-        other_pro, _ = await _published(client, admin, "carlos@correo.com")
-        customer = await _register(client, "cliente@correo.com")
-        stranger = await _register(client, "otro@correo.com")
-        request_id = (
-            await client.post(
-                f"{API}/professionals/{pro_id}/requests", json=REQUEST, headers=_bearer(customer)
-            )
-        ).json()["id"]
-
-        by_other_pro = await client.put(
-            f"{API}/professionals/me/requests/{request_id}/reject",
-            json={},
-            headers=_bearer(other_pro),
-        )
-        by_stranger = await client.put(
-            f"{API}/professionals/requests/{request_id}/cancel", json={}, headers=_bearer(stranger)
-        )
-
-        assert by_other_pro.status_code == 404 and by_stranger.status_code == 404
-
-    async def test_no_se_programa_en_el_pasado(
-        self, client: httpx.AsyncClient, app: FastAPI
-    ) -> None:
-        admin = await _admin(client, app)
-        pro, pro_id = await _published(client, admin, "laura@correo.com")
-        customer = await _register(client, "cliente@correo.com")
-        request_id = (
-            await client.post(
-                f"{API}/professionals/{pro_id}/requests", json=REQUEST, headers=_bearer(customer)
-            )
-        ).json()["id"]
-
-        response = await client.put(
-            f"{API}/professionals/me/requests/{request_id}/schedule",
-            json={"scheduled_at": "2001-01-10T15:00:00-05:00"},
-            headers=_bearer(pro),
-        )
-
-        assert response.status_code == 422
-
-
 async def _inbox(client: httpx.AsyncClient, tokens: dict[str, Any]) -> dict[str, Any]:
     response = await client.get(f"{API}/notifications", headers=_bearer(tokens))
     assert response.status_code == 200, response.text
     return response.json()  # type: ignore[no-any-return]
 
 
+async def _grant_month(client: httpx.AsyncClient, admin: dict[str, Any], pro_id: str) -> None:
+    """El administrador le activa un mes de plan: le deja un aviso (que aquí sí se conserva)."""
+    response = await client.put(
+        f"{API}/professionals/{pro_id}/plan", json={"plan": "unico"}, headers=_bearer(admin)
+    )
+    assert response.status_code == 200, response.text
+
+
 class TestNotificaciones:
-    async def test_avisos_de_una_cita_a_cada_lado(
-        self, client: httpx.AsyncClient, app: FastAPI, clock: FakeClock
-    ) -> None:
-        admin = await _admin(client, app)
-        pro, pro_id = await _published(client, admin, "laura@correo.com")
-        customer = await _register(client, "cliente@correo.com")
-        request_id = (
-            await client.post(
-                f"{API}/professionals/{pro_id}/requests", json=REQUEST, headers=_bearer(customer)
-            )
-        ).json()["id"]
-
-        pro_inbox = await _inbox(client, pro)
-        assert pro_inbox["unread"] == 1
-        assert pro_inbox["items"][0]["kind"] == "request_new"
-        assert pro_inbox["items"][0]["link"] == "/profesional?seccion=requests"
-
-        await client.put(
-            f"{API}/professionals/me/requests/{request_id}/schedule",
-            json={"scheduled_at": "2030-01-10T15:00:00Z", "note": "Traer el carné"},
-            headers=_bearer(pro),
-        )
-        clock.advance(minutes=5)
-        await client.put(
-            f"{API}/professionals/me/requests/{request_id}/schedule",
-            json={"scheduled_at": "2030-01-11T15:00:00Z"},
-            headers=_bearer(pro),
-        )
-        customer_inbox = await _inbox(client, customer)
-        kinds = [n["kind"] for n in customer_inbox["items"]]
-        assert kinds == ["request_rescheduled", "request_scheduled"]
-        scheduled = customer_inbox["items"][1]
-        assert (
-            "Dra. Laura Torres te espera el jueves 10 de enero a las 10:00 a. m."
-            in scheduled["body"]
-        )
-        assert "Traer el carné" in scheduled["body"]
-
-        await client.put(
-            f"{API}/professionals/requests/{request_id}/cancel",
-            json={"note": "Ya me siento mejor"},
-            headers=_bearer(customer),
-        )
-        pro_inbox = await _inbox(client, pro)
-        assert pro_inbox["items"][0]["kind"] == "request_cancelled"
-        assert "Ya me siento mejor" in pro_inbox["items"][0]["body"]
-
     async def test_aviso_de_certificado_revisado(
         self, client: httpx.AsyncClient, app: FastAPI
     ) -> None:
@@ -935,11 +730,8 @@ class TestNotificaciones:
     async def test_leer_y_borrar(self, client: httpx.AsyncClient, app: FastAPI) -> None:
         admin = await _admin(client, app)
         pro, pro_id = await _published(client, admin, "laura@correo.com")
-        customer = await _register(client, "cliente@correo.com")
         for _ in range(2):
-            await client.post(
-                f"{API}/professionals/{pro_id}/requests", json=REQUEST, headers=_bearer(customer)
-            )
+            await _grant_month(client, admin, pro_id)
         first, second = (await _inbox(client, pro))["items"]
 
         await client.put(f"{API}/notifications/{first['id']}/read", headers=_bearer(pro))
@@ -958,9 +750,7 @@ class TestNotificaciones:
         admin = await _admin(client, app)
         pro, pro_id = await _published(client, admin, "laura@correo.com")
         customer = await _register(client, "cliente@correo.com")
-        await client.post(
-            f"{API}/professionals/{pro_id}/requests", json=REQUEST, headers=_bearer(customer)
-        )
+        await _grant_month(client, admin, pro_id)
         notification_id = (await _inbox(client, pro))["items"][0]["id"]
 
         read = await client.put(
@@ -981,11 +771,10 @@ class TestConfiguracion:
     ) -> None:
         admin = await _admin(client, app)
         pro, pro_id = await _published(client, admin, "laura@correo.com")
-        customer = await _register(client, "cliente@correo.com")
 
         saved = await client.put(
             f"{API}/professionals/me/settings",
-            json={"is_listed": False, "accepts_requests": True},
+            json={"is_listed": False},
             headers=_bearer(pro),
         )
         assert saved.status_code == 200
@@ -994,38 +783,15 @@ class TestConfiguracion:
         directory = await client.get(f"{API}/professionals")
         assert pro_id not in [p["user_id"] for p in directory.json()]
         assert (await client.get(f"{API}/professionals/{pro_id}")).status_code == 404
-        sent = await client.post(
-            f"{API}/professionals/{pro_id}/requests", json=REQUEST, headers=_bearer(customer)
-        )
-        assert sent.status_code == 404
-
         # Su perfil sigue intacto y lo puede volver a mostrar.
         mine = await client.get(f"{API}/professionals/me", headers=_bearer(pro))
         assert mine.json()["headline"] == PROFILE["headline"]
         await client.put(
             f"{API}/professionals/me/settings",
-            json={"is_listed": True, "accepts_requests": True},
+            json={"is_listed": True},
             headers=_bearer(pro),
         )
         assert (await client.get(f"{API}/professionals/{pro_id}")).status_code == 200
-
-    async def test_pausar_solicitudes(self, client: httpx.AsyncClient, app: FastAPI) -> None:
-        admin = await _admin(client, app)
-        pro, pro_id = await _published(client, admin, "laura@correo.com")
-        customer = await _register(client, "cliente@correo.com")
-        await client.put(
-            f"{API}/professionals/me/settings",
-            json={"is_listed": True, "accepts_requests": False},
-            headers=_bearer(pro),
-        )
-
-        public = await client.get(f"{API}/professionals/{pro_id}")
-        assert public.json()["accepts_requests"] is False
-        sent = await client.post(
-            f"{API}/professionals/{pro_id}/requests", json=REQUEST, headers=_bearer(customer)
-        )
-        assert sent.status_code == 422
-        assert sent.json()["code"] == "requests_paused"
 
     async def test_guardar_el_perfil_no_cambia_los_ajustes(
         self, client: httpx.AsyncClient, app: FastAPI
@@ -1034,17 +800,16 @@ class TestConfiguracion:
         pro, _ = await _published(client, admin, "laura@correo.com")
         await client.put(
             f"{API}/professionals/me/settings",
-            json={"is_listed": False, "accepts_requests": False},
+            json={"is_listed": False},
             headers=_bearer(pro),
         )
         saved = await client.put(f"{API}/professionals/me", json=PROFILE, headers=_bearer(pro))
         assert saved.json()["is_listed"] is False
-        assert saved.json()["accepts_requests"] is False
 
     async def test_requiere_perfil_y_rol(self, client: httpx.AsyncClient, app: FastAPI) -> None:
         admin = await _admin(client, app)
         pro = await _professional(client, admin, "nuevo@correo.com")
-        body = {"is_listed": False, "accepts_requests": True}
+        body = {"is_listed": False}
         no_profile = await client.put(
             f"{API}/professionals/me/settings", json=body, headers=_bearer(pro)
         )
@@ -1228,7 +993,6 @@ class TestPlanes:
         user_id = (
             await client.put(f"{API}/professionals/me", json=PROFILE, headers=_bearer(pro))
         ).json()["user_id"]
-        customer = await _register(client, "cliente@correo.com")
 
         for n in range(3):
             added = await client.post(
@@ -1244,17 +1008,8 @@ class TestPlanes:
         )
         assert fourth.json()["code"] == "too_many_images"
 
-        sent = await client.post(
-            f"{API}/professionals/{user_id}/requests", json=REQUEST, headers=_bearer(customer)
-        )
-        assert sent.json()["code"] == "requests_not_in_plan"
-
-        # Con el plan Profesional ya puede recibir solicitudes y subir más fotos.
+        # Con el plan Profesional ya puede subir más fotos.
         await _set_plan(client, admin, pro, "pro")
-        sent = await client.post(
-            f"{API}/professionals/{user_id}/requests", json=REQUEST, headers=_bearer(customer)
-        )
-        assert sent.status_code == 201, sent.text
         fourth = await client.post(
             f"{API}/professionals/me/gallery",
             json={"url": _photo(9), "caption": ""},
@@ -1351,7 +1106,6 @@ class TestPlanUnico:
         assert status["current"]["plan"] == "unico"
         assert status["max_images"] == 5
         assert status["shows_certificates"] is True
-        assert status["receives_requests"] is True
         public = (await client.get(f"{API}/professionals/{user_id}")).json()
         assert public["is_featured"] is True  # destacado, como el Premium
 

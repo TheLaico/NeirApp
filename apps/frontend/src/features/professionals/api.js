@@ -39,16 +39,6 @@ export const professionalsApi = {
   // Solo administrador.
   pendingCertificates: () => authRequest(`${API}/certificates/pending`),
   reviewCertificate: (id, approve, note = '') => authRequest(`${API}/certificates/${id}/review`, { method: 'PUT', body: { approve, note } }),
-  // Solicitudes de cita: el profesional las recibe y las gestiona…
-  receivedRequests: () => authRequest(`${API}/me/requests`),
-  scheduleRequest: (id, scheduledAt, note = '') => authRequest(`${API}/me/requests/${id}/schedule`, { method: 'PUT', body: { scheduled_at: scheduledAt, note } }),
-  rejectRequest: (id, note = '') => authRequest(`${API}/me/requests/${id}/reject`, { method: 'PUT', body: { note } }),
-  completeRequest: (id) => authRequest(`${API}/me/requests/${id}/complete`, { method: 'PUT', body: {} }),
-  cancelRequestAsProfessional: (id, note = '') => authRequest(`${API}/me/requests/${id}/cancel`, { method: 'PUT', body: { note } }),
-  // …y quien la pide la envía, ve su estado y puede cancelarla.
-  sendRequest: (userId, body) => authRequest(`${API}/${userId}/requests`, { method: 'POST', body }),
-  sentRequests: () => authRequest(`${API}/requests/mine`),
-  cancelRequest: (id, note = '') => authRequest(`${API}/requests/${id}/cancel`, { method: 'PUT', body: { note } }),
   gallery: (userId) => authRequest(`${API}/${userId}/gallery`),
   services: (userId) => authRequest(`${API}/${userId}/services`),
   get: (userId) => authRequest(`${API}/${userId}`),

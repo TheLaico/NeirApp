@@ -5,7 +5,6 @@ export const NAV = [
   { key: 'home', label: 'Inicio', icon: 'home' },
   { key: 'profile', label: 'Mi perfil', icon: 'user' },
   { key: 'services', label: 'Mis servicios', icon: 'briefcase' },
-  { key: 'requests', label: 'Citas y solicitudes', icon: 'calendar' },
   { key: 'gallery', label: 'Galería de imágenes', icon: 'image' },
   { key: 'certificates', label: 'Certificados', icon: 'award' },
   { key: 'notifications', label: 'Notificaciones', icon: 'bell' },
@@ -22,26 +21,15 @@ export const TABS = [
 
 export const QUICK_ACCESS = [
   { key: 'profile', title: 'Editar perfil', text: 'Actualiza tus datos personales y de contacto.', icon: 'user', tone: 'green' },
-  { key: 'requests', title: 'Gestionar citas', text: 'Revisa y administra tus solicitudes.', icon: 'calendar', tone: 'gold' },
   { key: 'gallery', title: 'Galería de servicios', text: 'Muestra tu trabajo y experiencias.', icon: 'image', tone: 'blue' },
   { key: 'certificates', title: 'Certificados', text: 'Sube y gestiona tus documentos.', icon: 'award', tone: 'terra' },
 ];
 
 /**
- * Tarjetas de "Lo más relevante para ti", según la actividad del profesional: solicitudes nuevas si hay,
- * y consejos para el perfil mientras le falte descripción o imágenes.
+ * Tarjetas de "Lo más relevante para ti", según la actividad del profesional: consejos para el perfil mientras le falte descripción o imágenes.
  */
-export function relevantItems({ newRequests = 0, hasDescription = false, images = 0 }) {
+export function relevantItems({ hasDescription = false, images = 0 }) {
   const items = [];
-  if (newRequests > 0) {
-    items.push({
-      id: 'requests',
-      kind: 'requests',
-      go: 'requests',
-      title: 'Nuevas solicitudes de cita',
-      text: `Tienes ${newRequests} ${newRequests === 1 ? 'solicitud' : 'solicitudes'} de personas interesadas en tus servicios. Respóndelas pronto.`,
-    });
-  }
   if (!hasDescription || images === 0) {
     items.push({
       id: 'tips',

@@ -1,4 +1,4 @@
-import { CalendarCheck, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import HeroSearch from '../../components/common/HeroSearch.jsx';
 import PageShell from '../../components/layout/PageShell.jsx';
@@ -59,9 +59,6 @@ export default function ProfessionalsPage({ user, onLogout }) {
               Conecta con profesionales de confianza de diferentes áreas. Revisa su información, especialidades y
               contáctalos de forma rápida y sencilla.
             </p>
-            <button type="button" className="pros-my-requests" onClick={() => navigate('/profesionales/mis-solicitudes')}>
-              <CalendarCheck size={16} aria-hidden="true" /> Mis solicitudes de cita
-            </button>
           </div>
         </section>
 

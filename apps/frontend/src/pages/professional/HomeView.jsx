@@ -1,4 +1,4 @@
-import { AlertTriangle, ArrowRight, BriefcaseBusiness, ChevronRight, Crown, Hourglass, Lightbulb, MessageCircle, Sprout } from 'lucide-react';
+import { AlertTriangle, ArrowRight, BriefcaseBusiness, ChevronRight, Crown, Hourglass, Lightbulb, Sprout } from 'lucide-react';
 import neira from '../../assets/professionals/fondo.png';
 import SolidIcon from '../../components/icons/Solid.jsx';
 import { dayLabel, paidUntil } from '../../features/professionals/subscription.js';
@@ -6,7 +6,7 @@ import { QUICK_ACCESS, relevantItems } from './model.js';
 
 const PLAN_ICON = { basic: Sprout, pro: BriefcaseBusiness, premium: Crown };
 
-const RELEVANT_ICON = { requests: MessageCircle, tips: Lightbulb };
+const RELEVANT_ICON = { tips: Lightbulb };
 
 /**
  * Inicio del panel del profesional: bienvenida con su plan actual, estado del perfil, accesos rápidos, avisos y

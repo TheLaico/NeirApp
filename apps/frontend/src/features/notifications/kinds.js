@@ -1,6 +1,7 @@
 import { BadgeCheck, BedDouble, Bike, Car, CircleCheckBig, CalendarCheck, CalendarClock, CalendarPlus, CalendarX, Crown, FileWarning, Flag, MessageSquareReply, ReceiptText, ShieldOff, Sofa, Sparkles, Star, Warehouse } from 'lucide-react';
 
-// Íconos y color de los avisos que vienen de la API (citas, certificados y planes de profesionales).
+// Íconos y color de los avisos que vienen de la API (certificados y planes de profesionales; los de citas son
+// de cuando existían las solicitudes de cita y se conservan para mostrar los avisos viejos).
 export const SERVER_KINDS = {
   request_new: { Icon: CalendarPlus, tone: 'new' },
   request_scheduled: { Icon: CalendarCheck, tone: 'good' },

@@ -1,7 +1,7 @@
-from datetime import date, datetime
+from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import Date, ForeignKey, String, Text, Uuid
+from sqlalchemy import ForeignKey, String, Text, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from neirapp.shared.infrastructure.db import Base, UTCDateTime
@@ -31,7 +31,6 @@ class ProfessionalProfileModel(Base):
     photo_url: Mapped[str] = mapped_column(String(300), default="")
     is_featured: Mapped[bool] = mapped_column(default=False)
     is_listed: Mapped[bool] = mapped_column(default=True)
-    accepts_requests: Mapped[bool] = mapped_column(default=True)
     created_at: Mapped[datetime] = mapped_column(UTCDateTime)
     updated_at: Mapped[datetime] = mapped_column(UTCDateTime)
 
@@ -109,29 +108,6 @@ class CertificateModel(Base):
     created_at: Mapped[datetime] = mapped_column(UTCDateTime)
     updated_at: Mapped[datetime] = mapped_column(UTCDateTime)
     reviewed_at: Mapped[datetime | None] = mapped_column(UTCDateTime, default=None)
-
-
-class AppointmentRequestModel(Base):
-    __tablename__ = "professionals_appointment_request"
-
-    id: Mapped[UUID] = mapped_column(Uuid, primary_key=True)
-    professional_id: Mapped[UUID] = mapped_column(Uuid, index=True)
-    customer_id: Mapped[UUID] = mapped_column(Uuid, index=True)
-    customer_name: Mapped[str] = mapped_column(String(80))
-    customer_phone: Mapped[str] = mapped_column(String(10))
-    modality: Mapped[str] = mapped_column(String(10))
-    preferred_date: Mapped[date | None] = mapped_column(Date, default=None)
-    preferred_time: Mapped[str] = mapped_column(String(10))
-    message: Mapped[str] = mapped_column(String(500))
-    address: Mapped[str] = mapped_column(String(160), default="")
-    service_id: Mapped[UUID | None] = mapped_column(Uuid, default=None)
-    service_name: Mapped[str] = mapped_column(String(80), default="")
-    status: Mapped[str] = mapped_column(String(10), index=True)
-    scheduled_at: Mapped[datetime | None] = mapped_column(UTCDateTime, default=None)
-    note: Mapped[str] = mapped_column(String(300), default="")
-    cancelled_by_customer: Mapped[bool] = mapped_column(default=False)
-    created_at: Mapped[datetime] = mapped_column(UTCDateTime)
-    updated_at: Mapped[datetime] = mapped_column(UTCDateTime)
 
 
 class NotificationModel(Base):

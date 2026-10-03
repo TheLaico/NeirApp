@@ -4,7 +4,7 @@ import { notificationsApi } from './api.js';
 
 // Avisos de la app. Hay dos fuentes y se muestran juntas, las más nuevas primero:
 //  - locales (en este navegador): bienvenida y avances de los pedidos (los agrega `OrderTracker`);
-//  - de la API: citas con profesionales y certificados. Se revisan cada minuto; su id empieza por "srv-"
+//  - de la API: planes y certificados de profesionales. Se revisan cada minuto; su id empieza por "srv-"
 //    y traen `link`, a dónde lleva tocarlas.
 const POLL_MS = 60000;
 const fromServer = (n) => ({
@@ -79,7 +79,7 @@ export function NotificationsProvider({ children }) {
     return {
       items,
       unreadCount: items.filter((n) => !n.read).length,
-      // Solo los de la API (citas y certificados): los usa el panel del profesional.
+      // Solo los de la API (planes y certificados): los usa el panel del profesional.
       serverItems: server,
       serverUnread: server.filter((n) => !n.read).length,
       reload,

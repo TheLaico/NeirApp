@@ -2,7 +2,7 @@ import { Bell, BellOff, CheckCheck, ChevronRight, Trash2, X } from 'lucide-react
 import { useState } from 'react';
 import { useNotifications } from '../../features/notifications/NotificationsContext.jsx';
 import { SERVER_KINDS } from '../../features/notifications/kinds.js';
-import { sinceLabel } from '../../features/professionals/appointments.js';
+import { sinceLabel } from '../../lib/sinceLabel.js';
 
 
 // "Hoy", "Ayer" o "Antes", según la fecha del aviso en este dispositivo.
@@ -16,7 +16,7 @@ function groupOf(iso) {
 }
 
 /**
- * "Notificaciones" del panel del profesional: solicitudes nuevas o canceladas y certificados revisados. Al tocar un
+ * "Notificaciones" del panel del profesional: su plan y los certificados revisados. Al tocar un
  * aviso se marca como leído y se abre la sección correspondiente del panel (`onGo`). Sirve también para el panel del
  * proveedor: `panelPath` es la ruta del panel y `about`/`empty` los textos de qué se avisa.
  */
@@ -24,7 +24,7 @@ export default function NotificationsView({
   onGo,
   onNavigate,
   panelPath = '/profesional',
-  about = 'Aquí te avisamos de nuevas solicitudes, citas canceladas y certificados revisados.',
+  about = 'Aquí te avisamos de tu plan y de los certificados revisados.',
   empty = empty,
 }) {
   const { serverItems: items, serverUnread: unread, markRead, markAllRead, remove, clear } = useNotifications();
@@ -86,7 +86,7 @@ export default function NotificationsView({
       {shown.length === 0 ? (
         <section className="rq-empty">
           {onlyUnread ? <Bell size={34} aria-hidden="true" /> : <BellOff size={34} aria-hidden="true" />}
-          <p>{onlyUnread ? 'No tienes avisos sin leer.' : 'Todavía no tienes notificaciones. Cuando alguien te pida una cita o revisemos tus certificados, te avisaremos aquí.'}</p>
+          <p>{onlyUnread ? 'No tienes avisos sin leer.' : 'Todavía no tienes notificaciones. Cuando revisemos tus certificados o se active tu plan, te avisaremos aquí.'}</p>
         </section>
       ) : (
         groups.map((group) => (

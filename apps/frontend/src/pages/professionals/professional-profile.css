@@ -103,8 +103,6 @@
 .pp-certs a { flex: none; align-self: center; font-size: 13.5px; font-weight: 700; color: #0f5238; }
 
 /* Pedir una cita */
-.pp-request { background: #e8a92c; color: #3d2a00; box-shadow: 0 4px 12px rgba(232, 169, 44, .35); }
-.pp-request:hover { filter: brightness(1.05); }
 .pp-paused { padding: 10px 12px; border-radius: 12px; background: #fbeec8; color: #7a5a10; font-size: 13.5px; font-weight: 700; line-height: 1.4; }
 .pp-contact-note button { padding: 0; border: 0; background: none; color: #0f5238; font: inherit; font-weight: 700; text-decoration: underline; cursor: pointer; }
 

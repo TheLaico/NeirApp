@@ -116,14 +116,11 @@ class UpdateMySettings:
     def __init__(self, repo: ProfileRepository) -> None:
         self._repo = repo
 
-    async def __call__(
-        self, user_id: UUID, *, is_listed: bool, accepts_requests: bool
-    ) -> ProfessionalProfile:
+    async def __call__(self, user_id: UUID, *, is_listed: bool) -> ProfessionalProfile:
         profile = await self._repo.get(user_id)
         if profile is None:
             raise ProfileNotFound()
         profile.is_listed = is_listed
-        profile.accepts_requests = accepts_requests
         await self._repo.save(profile)
         return profile
 

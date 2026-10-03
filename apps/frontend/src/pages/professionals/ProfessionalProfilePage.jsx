@@ -1,4 +1,4 @@
-import { ArrowLeft, BadgeCheck, CalendarCheck, Briefcase, Clock, Home, Mail, MapPin, MessageCircle, Monitor, Phone, Star, User } from 'lucide-react';
+import { ArrowLeft, BadgeCheck, Briefcase, Clock, Home, Mail, MapPin, MessageCircle, Monitor, Phone, Star, User } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import Lightbox from '../../components/common/Lightbox.jsx';
 import PageShell from '../../components/layout/PageShell.jsx';
@@ -8,7 +8,6 @@ import { telLink, toCard, whatsappLink } from '../../features/professionals/dire
 import { isPdf, issuerLine, kindOf } from '../../features/professionals/certificates.js';
 import { durationLabel, fromApi as serviceFromApi, priceLabel } from '../../features/professionals/services.js';
 import { useNavigate } from '../../lib/router.jsx';
-import RequestDialog from './RequestDialog.jsx';
 import './professional-profile.css';
 import './subcategory-page.css'; // botones de contacto, estado y "Volver" compartidos con el listado
 
@@ -35,7 +34,6 @@ export default function ProfessionalProfilePage({ user, onLogout }) {
   const [gallery, setGallery] = useState([]);
   const [certificates, setCertificates] = useState([]);
   const [viewer, setViewer] = useState(null);
-  const [asking, setAsking] = useState(false);
   const { categories } = useProfessionalCategories();
 
   useEffect(() => {
@@ -133,14 +131,6 @@ export default function ProfessionalProfilePage({ user, onLogout }) {
 
             <aside className="pp-contact" aria-label="Contactar">
               <h2>Contactar</h2>
-              {p.user_id !== user.id && p.plan !== 'basic' &&
-                (p.accepts_requests ? (
-                  <button type="button" className="subcat-btn pp-request" onClick={() => setAsking(true)}>
-                    <CalendarCheck size={16} aria-hidden="true" /> Pedir una cita
-                  </button>
-                ) : (
-                  <p className="pp-paused">Por ahora no está recibiendo solicitudes de cita. Puedes llamarle o escribirle.</p>
-                ))}
               {p.user_id === user.id && !p.plan && <p className="pp-paused">Tu perfil no se publica: no tienes un plan activo. Elige uno en Planes para profesionales.</p>}
               {p.user_id === user.id && p.plan && !p.is_listed && <p className="pp-paused">Tu perfil está oculto: solo tú lo ves. Puedes volver a mostrarlo en Configuración.</p>}
               <a className="subcat-btn" href={telLink(card.phone)}>
@@ -154,12 +144,7 @@ export default function ProfessionalProfilePage({ user, onLogout }) {
                   <Mail size={16} aria-hidden="true" /> Enviar correo
                 </a>
               )}
-              <p className="pp-contact-note">
-                Cuéntale que lo encontraste en NeirAPP.{' '}
-                <button type="button" onClick={() => navigate('/profesionales/mis-solicitudes')}>
-                  Ver mis solicitudes
-                </button>
-              </p>
+              <p className="pp-contact-note">Cuéntale que lo encontraste en NeirAPP. La cita la acuerdan directamente entre ustedes.</p>
             </aside>
 
             <div className="pp-main">
@@ -280,7 +265,6 @@ export default function ProfessionalProfilePage({ user, onLogout }) {
           </div>
         )}
       </div>
-      {asking && p && <RequestDialog profile={p} services={services} user={user} onClose={() => setAsking(false)} />}
       {viewer !== null && <Lightbox images={gallery} index={viewer} onIndex={setViewer} onClose={() => setViewer(null)} />}
     </PageShell>
   );

@@ -1,4 +1,4 @@
-import { CalendarCheck, ChevronRight, Crown, Eye, EyeOff, KeyRound, Loader2, LogOut, Mail, Search, UserRound } from 'lucide-react';
+import { ChevronRight, Crown, Eye, EyeOff, KeyRound, Loader2, LogOut, Mail, Search, UserRound } from 'lucide-react';
 import { useState } from 'react';
 import { isMobile } from '../../features/professionals/profile.js';
 import { dayLabel, paidUntil } from '../../features/professionals/subscription.js';
@@ -14,7 +14,7 @@ const localPhone = (phone) =>
     .replace(/^(\d{3})(\d{3})(\d{4})$/, '$1 $2 $3');
 
 /**
- * "Configuración" del panel del profesional: quién ve su perfil y si recibe solicitudes, los datos de su cuenta,
+ * "Configuración" del panel del profesional: quién ve su perfil, los datos de su cuenta,
  * la contraseña, su plan y cerrar sesión. Los datos públicos del perfil se cambian en "Mi perfil".
  */
 export default function SettingsView({ user, profile, published, plan, onSaveSettings, onUserChange, onGo, onPlans, onLogout }) {
@@ -57,7 +57,7 @@ export default function SettingsView({ user, profile, published, plan, onSaveSet
         <div className="st-row">
           <span>
             <strong>Cerrar sesión en este dispositivo</strong>
-            <small>Tu perfil, tus servicios y tus solicitudes quedan guardados.</small>
+            <small>Tu perfil y tus servicios quedan guardados.</small>
           </span>
           <button type="button" className="cr-btn ghost danger-text" onClick={onLogout}>
             <LogOut size={17} aria-hidden="true" /> Cerrar sesión
@@ -68,7 +68,7 @@ export default function SettingsView({ user, profile, published, plan, onSaveSet
   );
 }
 
-/** Mostrar el perfil en el directorio y recibir solicitudes: se guardan al tocar el interruptor. */
+/** Mostrar el perfil en el directorio: se guarda al tocar el interruptor. */
 function VisibilityCard({ profile, published, onSave, onGoProfile }) {
   const [saving, setSaving] = useState('');
   const [notice, setNotice] = useState({ text: '', bad: false });
@@ -82,7 +82,7 @@ function VisibilityCard({ profile, published, onSave, onGoProfile }) {
         <div className="st-row">
           <span>
             <strong>Todavía no has publicado tu perfil</strong>
-            <small>Cuando lo publiques podrás pausarlo o dejar de recibir solicitudes desde aquí.</small>
+            <small>Cuando lo publiques podrás ocultarlo desde aquí.</small>
           </span>
           <button type="button" className="cr-btn primary" onClick={onGoProfile}>
             Armar mi perfil
@@ -93,19 +93,14 @@ function VisibilityCard({ profile, published, onSave, onGoProfile }) {
   }
 
   const toggle = async (key) => {
-    const next = { listed: profile.listed, acceptsRequests: profile.acceptsRequests, [key]: !profile[key] };
+    const next = { listed: profile.listed, [key]: !profile[key] };
     setSaving(key);
     setNotice({ text: '', bad: false });
     try {
       await onSave(next);
-      const text =
-        key === 'listed'
-          ? next.listed
-            ? 'Tu perfil vuelve a aparecer en el directorio.'
-            : 'Tu perfil quedó oculto. Nadie lo verá hasta que lo vuelvas a mostrar.'
-          : next.acceptsRequests
-            ? 'Listo, ya puedes recibir solicitudes de cita.'
-            : 'Pausaste las solicitudes. Tu perfil se sigue viendo, pero sin el botón "Pedir una cita".';
+      const text = next.listed
+        ? 'Tu perfil vuelve a aparecer en el directorio.'
+        : 'Tu perfil quedó oculto. Nadie lo verá hasta que lo vuelvas a mostrar.';
       setNotice({ text, bad: false });
     } catch (err) {
       setNotice({ text: err.message, bad: true });
@@ -120,14 +115,7 @@ function VisibilityCard({ profile, published, onSave, onGoProfile }) {
       Icon: Search,
       label: 'Mostrar mi perfil en el directorio',
       on: 'Las personas te encuentran en Profesionales y pueden ver tu perfil.',
-      off: 'Tu perfil está oculto: nadie lo ve ni te puede pedir citas. Útil si sales de vacaciones.',
-    },
-    {
-      key: 'acceptsRequests',
-      Icon: CalendarCheck,
-      label: 'Recibir solicitudes de cita',
-      on: 'Las personas te pueden pedir una cita desde tu perfil.',
-      off: 'Pausadas: tu perfil se ve, pero sin el botón "Pedir una cita". Te siguen pudiendo llamar o escribir.',
+      off: 'Tu perfil está oculto: nadie lo ve ni te puede contactar desde NeirAPP. Útil si sales de vacaciones.',
     },
   ];
 
@@ -139,7 +127,7 @@ function VisibilityCard({ profile, published, onSave, onGoProfile }) {
       <ul className="st-switches">
         {options.map(({ key, Icon, label, on, off }) => {
           const value = profile[key];
-          const disabled = Boolean(saving) || (key === 'acceptsRequests' && !profile.listed);
+          const disabled = Boolean(saving);
           return (
             <li key={key} className={disabled && saving !== key ? 'muted' : ''}>
               <span className={`st-ico${value ? ' on' : ''}`}>
@@ -147,7 +135,7 @@ function VisibilityCard({ profile, published, onSave, onGoProfile }) {
               </span>
               <span className="st-text">
                 <strong id={`st-${key}`}>{label}</strong>
-                <small>{key === 'acceptsRequests' && !profile.listed ? 'Con tu perfil oculto nadie te puede pedir citas.' : value ? on : off}</small>
+                <small>{value ? on : off}</small>
               </span>
               {saving === key ? (
                 <Loader2 size={22} className="cr-spin st-spin" aria-label="Guardando" />

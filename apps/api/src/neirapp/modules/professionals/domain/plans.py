@@ -32,16 +32,15 @@ class PlanSpec:
     price_cop: int
     max_images: int
     shows_certificates: bool  # Certificados verificados (y la insignia) visibles en su perfil
-    receives_requests: bool  # Las personas le pueden pedir citas desde su perfil
     featured: bool  # Aparece primero en su especialidad
 
 
 PLANS: dict[PlanId, PlanSpec] = {
-    PlanId.BASIC: PlanSpec(PlanId.BASIC, "Básico", 14_900, 3, False, False, False),
-    PlanId.PRO: PlanSpec(PlanId.PRO, "Profesional", 29_900, 20, True, True, False),
+    PlanId.BASIC: PlanSpec(PlanId.BASIC, "Básico", 14_900, 3, False, False),
+    PlanId.PRO: PlanSpec(PlanId.PRO, "Profesional", 29_900, 20, True, False),
     # "Galería ilimitada": el tope solo evita abusos.
-    PlanId.PREMIUM: PlanSpec(PlanId.PREMIUM, "Premium", 59_900, 100, True, True, True),
-    PlanId.UNICO: PlanSpec(PlanId.UNICO, "Profesional NeirAPP", 15_000, 5, True, True, True),
+    PlanId.PREMIUM: PlanSpec(PlanId.PREMIUM, "Premium", 59_900, 100, True, True),
+    PlanId.UNICO: PlanSpec(PlanId.UNICO, "Profesional NeirAPP", 15_000, 5, True, True),
 }
 
 # Planes que se pueden pedir o activar hoy. Por ahora solo el único de $ 15.000; Básico,

@@ -34,7 +34,6 @@ from neirapp.modules.professionals.domain.errors import (
     NoModality,
     TextTooLong,
 )
-from neirapp.modules.professionals.domain.notifications import when_label
 from neirapp.modules.professionals.domain.services import (
     PriceKind,
     ProfessionalService,
@@ -217,10 +216,3 @@ class TestCertificados:
             NOW,
         )
         assert certificate.status is CertificateStatus.PENDING
-
-
-def test_fecha_de_la_cita_en_hora_de_colombia() -> None:
-    # 15:30 UTC son las 10:30 a. m. en Colombia (UTC-5).
-    moment = datetime(2026, 10, 2, 15, 30, tzinfo=UTC)
-    assert when_label(moment) == "viernes 2 de octubre a las 10:30 a. m."
-    assert when_label(datetime(2026, 10, 2, 23, 5, tzinfo=UTC)).endswith("a las 6:05 p. m.")

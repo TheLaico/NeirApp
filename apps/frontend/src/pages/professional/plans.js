@@ -34,7 +34,6 @@ export const PLANS = [
     features: [
       'Galería de hasta 20 imágenes',
       'Certificados visibles en tu perfil',
-      'Gestión de citas y solicitudes de contacto',
       'Insignia de perfil verificado',
     ],
     audience: 'Para profesionales que ya atienden clientes y quieren crecer en Neira.',
@@ -73,7 +72,6 @@ export const PLANS = [
       'Botones de llamada y WhatsApp',
       'Galería de hasta 5 imágenes',
       'Certificados visibles e insignia de perfil verificado',
-      'Gestión de citas y solicitudes de contacto',
       'Perfil destacado al inicio de tu especialidad',
       'Aparición en las recomendaciones de la página de inicio',
     ],

@@ -38,7 +38,7 @@ export default function NotificationsPage({ user, onLogout }) {
             <div className="empty-state">
               <BellOff size={46} aria-hidden="true" />
               <p>No tienes notificaciones.</p>
-              <small>Aquí verás los avisos de tus pedidos, tus citas con profesionales y las novedades de NeirAPP.</small>
+              <small>Aquí verás los avisos de tus pedidos y las novedades de NeirAPP.</small>
             </div>
           </section>
         ) : (
